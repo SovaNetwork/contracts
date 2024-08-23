@@ -12,3 +12,12 @@ docs/
 
 # Dotenv file
 .env
+
+# Workspace settings
+.vscode
+
+# MacOS files
+.DS_Store
+
+# Soldeer dependencies
+dependencies/
