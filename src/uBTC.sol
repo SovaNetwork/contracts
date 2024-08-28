@@ -89,7 +89,7 @@ contract uBTC is WETH, Ownable {
             revert InsufficientInput();
         }
 
-        (success, ) = CHECKSIG_PRECOMPILE.call(abi.encode(btcTx.inputs[0]));
+        (success,) = CHECKSIG_PRECOMPILE.call(abi.encode(btcTx.inputs[0]));
 
         if (!success) {
             revert UnsignedInput();
@@ -101,7 +101,7 @@ contract uBTC is WETH, Ownable {
 
         _mint(msg.sender, amount);
 
-        (success, ) = BROADCAST_PRECOMPILE.call(abi.encodePacked(signedTx));
+        (success,) = BROADCAST_PRECOMPILE.call(abi.encodePacked(signedTx));
 
         if (!success) {
             revert BroadcastFailure();
@@ -111,7 +111,7 @@ contract uBTC is WETH, Ownable {
     function withdraw(uint256 amount, string calldata dest) public {
         _burn(msg.sender, amount);
 
-        (bool success, ) = SEND_BTC_PRECOMPILE.call(abi.encodePacked(address(this), dest, amount));
+        (bool success,) = SEND_BTC_PRECOMPILE.call(abi.encodePacked(address(this), dest, amount));
 
         if (!success) {
             revert BroadcastFailure();
