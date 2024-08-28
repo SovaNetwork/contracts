@@ -3,20 +3,23 @@ pragma solidity 0.8.26;
 
 contract GetBlockCount {
     address private constant BTC_PRECOMPILE = address(0x999);
-    bytes4 private constant GETBLOCK_LEADING_BYTES = bytes4("0x01");
+    bytes1 private constant GETBLOCK_LEADING_BYTES = 0x01;
 
     error PrecompileFailure();
 
-    event BlockCount(uint256 count);
+    event BlockCount(uint64 count);
 
-    function getBlockCount() public {
+    function getBlockCount() public returns (uint64) {
         (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(abi.encodePacked(GETBLOCK_LEADING_BYTES));
         if (!success) {
             revert PrecompileFailure();
         }
 
-        uint256 count = abi.decode(returndata, (uint256));
+        require(returndata.length == 8, "Unexpected result length");
 
-        emit BlockCount(count);
+        uint64 blockCount = uint64(bytes8(returndata));
+        emit BlockCount(blockCount);
+
+        return blockCount;
     }
 }
