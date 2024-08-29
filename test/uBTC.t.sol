@@ -11,12 +11,12 @@ contract uBTCTest is Test {
         ubtc = new uBTC();
     }
 
-    function testTokenName() public {
+    function testTokenName() public view {
         string memory expectedName = "Universal Bitcoin";
         assertEq(ubtc.name(), expectedName);
     }
 
-    function testTokenSymbol() public {
+    function testTokenSymbol() public view {
         string memory expectedSymbol = "uBTC";
         assertEq(ubtc.symbol(), expectedSymbol);
     }
