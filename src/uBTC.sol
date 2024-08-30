@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.26;
 
-import "@solady/tokens/WETH.sol";
-import "@solady/auth/Ownable.sol";
+import "@solady/src/tokens/WETH.sol";
+import "@solady/src/auth/Ownable.sol";
 
 contract uBTC is WETH, Ownable {
     address private constant DECODE_PRECOMPILE = address(0x21000);

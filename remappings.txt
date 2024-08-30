@@ -1,2 +1,2 @@
-@solady=dependencies/solady-0.0.234/src
+@solady/=dependencies/solady-0.0.234/
 @solady-0.0.234=dependencies/solady-0.0.234
