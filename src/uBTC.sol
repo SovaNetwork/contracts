@@ -7,19 +7,12 @@ import "@solady/auth/Ownable.sol";
 import "./lib/CorsaBitcoin.sol";
 
 contract uBTC is WETH, Ownable {
-    error DecodeFailure();
     error InvalidOutput(string expected, string actual);
     error InsufficientDeposit();
     error InsufficientInput();
     error UnsignedInput();
     error InvalidLocktime();
     error BroadcastFailure();
-
-    event BitcoinTx_(bytes32 txid, uint256 locktime);
-    event Outputs_(string addr, uint256 value, bytes script);
-    event Inputs_(bytes32 prevTxHash, uint32 outputIndex, bytes scriptSig, bytes[] witness);
-    event ReturnData(bool success, bytes returndata);
-    event RequiredOutput(string addr);
 
     constructor() WETH() Ownable() {
         _initializeOwner(msg.sender);
@@ -96,11 +89,5 @@ contract uBTC is WETH, Ownable {
 
     function adminBurn(address wallet, uint256 amount) public onlyOwner {
         _burn(wallet, amount);
-    }
-
-    // ============================= HELPER FUNCTIONS ============================
-
-    function strcompare(string memory a, string memory b) internal pure returns (bool) {
-        return (keccak256(bytes(a)) == keccak256(bytes(b)));
     }
 }
