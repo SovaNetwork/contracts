@@ -1,24 +1,23 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-// import {Test, console} from "forge-std/Test.sol";
-// import {Counter} from "../src/uBTC.sol";
+import {Test, console} from "forge-std/Test.sol";
+import {uBTC} from "../src/uBTC.sol";
 
-// contract CounterTest is Test {
-//     Counter public counter;
+contract uBTCTest is Test {
+    uBTC public ubtc;
 
-//     function setUp() public {
-//         counter = new Counter();
-//         counter.setNumber(0);
-//     }
+    function setUp() public {
+        ubtc = new uBTC();
+    }
 
-//     function test_Increment() public {
-//         counter.increment();
-//         assertEq(counter.number(), 1);
-//     }
+    function testTokenName() public view {
+        string memory expectedName = "Universal Bitcoin";
+        assertEq(ubtc.name(), expectedName);
+    }
 
-//     function testFuzz_SetNumber(uint256 x) public {
-//         counter.setNumber(x);
-//         assertEq(counter.number(), x);
-//     }
-// }
+    function testTokenSymbol() public view {
+        string memory expectedSymbol = "uBTC";
+        assertEq(ubtc.symbol(), expectedSymbol);
+    }
+}
