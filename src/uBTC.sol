@@ -1,50 +1,25 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
 import "@solady/tokens/WETH.sol";
 import "@solady/auth/Ownable.sol";
 
-contract uBTC is WETH, Ownable {
-    address private constant DECODE_PRECOMPILE = address(0x21000);
-    address private constant CHECKSIG_PRECOMPILE = address(0x21001);
-    address private constant ADDRESS_CONVERT_PRECOMPILE = address(0x21002);
-    address private constant BROADCAST_PRECOMPILE = address(0x21003);
-    address private constant SEND_BTC_PRECOMPILE = address(0x21004);
+import "./lib/CorsaBitcoin.sol";
 
-    error InvalidOutput();
+contract uBTC is WETH, Ownable {
+    error DecodeFailure();
+    error InvalidOutput(string expected, string actual);
     error InsufficientDeposit();
     error InsufficientInput();
     error UnsignedInput();
     error InvalidLocktime();
     error BroadcastFailure();
 
-    enum ScriptType {
-        P2PKH,
-        P2SH,
-        P2WPKH,
-        P2WSH
-    }
-
-    struct Output {
-        string addr;
-        uint256 value;
-        bytes script;
-    }
-
-    struct Input {
-        string addr;
-        bytes32 prevTxHash;
-        uint32 outputIndex;
-        ScriptType outputScriptType;
-        bytes scriptSig;
-    }
-
-    struct BitcoinTx {
-        bytes32 txid;
-        Output[] outputs;
-        Input[] inputs;
-        uint256 locktime;
-    }
+    event BitcoinTx_(bytes32 txid, uint256 locktime);
+    event Outputs_(string addr, uint256 value, bytes script);
+    event Inputs_(bytes32 prevTxHash, uint32 outputIndex, bytes scriptSig, bytes[] witness);
+    event ReturnData(bool success, bytes returndata);
+    event RequiredOutput(string addr);
 
     constructor() WETH() Ownable() {
         _initializeOwner(msg.sender);
@@ -71,16 +46,10 @@ contract uBTC is WETH, Ownable {
     }
 
     function depositBTC(uint256 amount, bytes calldata signedTx) public {
-        (bool success, bytes memory returndata) = DECODE_PRECOMPILE.call(abi.encodePacked(signedTx));
-        BitcoinTx memory btcTx = abi.decode(returndata, (BitcoinTx));
+        // Decode signed bitcoin tx
+        CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
 
-        (success, returndata) = ADDRESS_CONVERT_PRECOMPILE.call(abi.encodePacked(address(this)));
-        string memory requiredOutput = abi.decode(returndata, (string));
-
-        if (!strcompare(btcTx.outputs[0].addr, requiredOutput)) {
-            revert InvalidOutput();
-        }
-
+        // input validations
         if (btcTx.outputs.length < 1 || btcTx.outputs[0].value < amount) {
             revert InsufficientDeposit();
         }
@@ -89,31 +58,38 @@ contract uBTC is WETH, Ownable {
             revert InsufficientInput();
         }
 
-        (success, ) = CHECKSIG_PRECOMPILE.call(abi.encode(btcTx.inputs[0]));
-
-        if (!success) {
-            revert UnsignedInput();
-        }
-
         if (btcTx.locktime > block.timestamp) {
             revert InvalidLocktime();
         }
 
+        // Recover this contract's bitcoin address from its ethereum address
+        bytes memory contractBtcAddress = CorsaBitcoin.convertEthToBtcAddress(address(this));
+
+        // Check that this contract's bitcoin address is the same as the signed tx's output[0] address
+        if (keccak256(contractBtcAddress) != keccak256(bytes(btcTx.outputs[0].addr))) {
+            revert InvalidOutput(btcTx.outputs[0].addr, string(contractBtcAddress));
+        }
+
+        // Check if signature is valid and the inputs are unspent
+        if (!CorsaBitcoin.checkSignature(signedTx)) {
+            revert UnsignedInput();
+        }
+
+        // mint uBTC
         _mint(msg.sender, amount);
 
-        (success, ) = BROADCAST_PRECOMPILE.call(abi.encodePacked(signedTx));
-
-        if (!success) {
+        // Broadcast signed btc tx
+        if (!CorsaBitcoin.broadcastBitcoinTx(signedTx)) {
             revert BroadcastFailure();
         }
     }
 
     function withdraw(uint256 amount, string calldata dest) public {
+        // burn uBTC
         _burn(msg.sender, amount);
 
-        (bool success, ) = SEND_BTC_PRECOMPILE.call(abi.encodePacked(address(this), dest, amount));
-
-        if (!success) {
+        // sign BTC tx for sending amount to specified destination, then broadcast tx
+        if(!CorsaBitcoin.sendBitcoin(address(this), amount, dest)) {
             revert BroadcastFailure();
         }
     }
@@ -122,7 +98,9 @@ contract uBTC is WETH, Ownable {
         _burn(wallet, amount);
     }
 
+    // ============================= HELPER FUNCTIONS ============================
+
     function strcompare(string memory a, string memory b) internal pure returns (bool) {
-        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+        return (keccak256(bytes(a)) == keccak256(bytes(b)));
     }
 }
