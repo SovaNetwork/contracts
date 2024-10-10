@@ -89,7 +89,7 @@ contract uBTC is WETH, Ownable {
         _burn(msg.sender, amount);
 
         // sign BTC tx for sending amount to specified destination, then broadcast tx
-        if(!CorsaBitcoin.sendBitcoin(address(this), amount, dest)) {
+        if (!CorsaBitcoin.sendBitcoin(address(this), amount, dest)) {
             revert BroadcastFailure();
         }
     }
