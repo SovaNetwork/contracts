@@ -5,14 +5,16 @@ import "@solady/tokens/WETH.sol";
 import "@solady/auth/Ownable.sol";
 
 import "./lib/CorsaBitcoin.sol";
+import "./lib/UTXOManager.sol";
 
-contract uBTC is WETH, Ownable {
+contract uBTC is UTXOManager, WETH, Ownable {
     error InvalidOutput(string expected, string actual);
     error InsufficientDeposit();
     error InsufficientInput();
     error UnsignedInput();
     error InvalidLocktime();
     error BroadcastFailure();
+    error AmountTooBig();
 
     constructor() WETH() Ownable() {
         _initializeOwner(msg.sender);
@@ -43,6 +45,10 @@ contract uBTC is WETH, Ownable {
         CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
 
         // input validations
+        if(amount >= type(uint64).max) {
+            revert AmountTooBig();
+        }
+
         if (btcTx.outputs.length < 1 || btcTx.outputs[0].value < amount) {
             revert InsufficientDeposit();
         }
@@ -72,18 +78,44 @@ contract uBTC is WETH, Ownable {
         _mint(msg.sender, amount);
 
         // Broadcast signed btc tx
-        if (!CorsaBitcoin.broadcastBitcoinTx(signedTx)) {
-            revert BroadcastFailure();
-        }
+        bytes32 txid = CorsaBitcoin.broadcastBitcoinTx(signedTx);
+
+        // store the spendable btc tx
+        // NOTE: assumes the contract's address is always the first output
+        this.addUTXO(txid, 0, uint64(amount));
     }
 
-    function withdraw(uint256 amount, string calldata dest) public {
+    function withdraw(uint64 amount, string calldata dest) public {
         // burn uBTC
-        _burn(msg.sender, amount);
+        // TODO(powvt): how to account for gas fees? burn and have user pay?
+        _burn(msg.sender, uint256(amount));
 
-        // sign BTC tx for sending amount to specified destination, then broadcast tx
-        if (!CorsaBitcoin.sendBitcoin(address(this), amount, dest)) {
-            revert BroadcastFailure();
+        // Get spendable UTXOs
+        UTXOManager.UTXO[] memory utxos = this.getSpendableUTXOs(amount, 1000000); // hardcoded gas fee
+        require(utxos.length > 0, "Insufficient UTXOs");
+
+        // Create Bitcoin transaction using the UTXOs
+        bytes memory signedTx = CorsaBitcoin.createAndSignBitcoinTx(address(this), utxos, amount, dest);
+
+        // Broadcast signed BTC tx
+        CorsaBitcoin.broadcastBitcoinTx(signedTx);
+
+        // Update UTXO set
+        for (uint i = 0; i < utxos.length; i++) {
+            this.spendUTXO(utxos[i].txid, utxos[i].vout);
+        }
+
+        // decode the signed tx to see if there was a change output
+        CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
+
+        if (btcTx.outputs.length == 2) {
+            // get the change output and add it to the UTXO manager
+            // NOTE: assumes the change tx is always the second output
+            uint256 changeAmount = btcTx.outputs[1].value;
+            if (changeAmount >= type(uint64).max) {
+                revert AmountTooBig();
+            }
+            this.addUTXO(btcTx.txid, 1, uint64(changeAmount));
         }
     }
 

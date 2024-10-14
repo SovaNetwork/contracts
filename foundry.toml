@@ -7,6 +7,7 @@ libs = ["lib"]
 
 [dependencies]
 solady = "0.0.234"
+"@openzeppelin-contracts" = "5.1.0-rc.0"
 
 [profile.soldeer]
 # whether soldeer manages remappings

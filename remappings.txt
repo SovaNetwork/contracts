@@ -1,1 +1,2 @@
+@openzeppelin-contracts/=dependencies/@openzeppelin-contracts-5.1.0-rc.0/
 @solady=dependencies/solady-0.0.234/src
