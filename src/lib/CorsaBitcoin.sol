@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import "./UTXOManager.sol";
-
 library CorsaBitcoin {
     address private constant BTC_PRECOMPILE = address(0x999);
 
-    bytes4 private constant BROADCAST_LEADING_BYTES = 0x00000000;
-    bytes4 private constant GET_BLOCK_HEIGHT_LEADING_BYTES = 0x00000001;
+    bytes4 private constant BROADCAST_LEADING_BYTES = 0x00000001;
     bytes4 private constant DECODE_LEADING_BYTES = 0x00000002;
     bytes4 private constant CHECKSIG_LEADING_BYTES = 0x00000003;
     bytes4 private constant ADDRESS_CONVERT_LEADING_BYTES = 0x00000004;
@@ -70,29 +67,21 @@ library CorsaBitcoin {
 
     function createAndSignBitcoinTx(
         address signer,
-        UTXOManager.UTXO[] memory inputs,
         uint64 amount,
+        uint64 blockHeight,
         string memory destinationAddress
     ) internal returns (bytes memory) {
         bytes memory inputData = abi.encode(
             CREATE_AND_SIGN_LEADING_BYTES,
             signer,
             amount,
-            destinationAddress,
-            inputs
+            blockHeight,
+            destinationAddress
         );
 
         (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(inputData);
         if (!success) revert PrecompileCallFailed();
 
-        // returns the signed tx
         return returndata;
-    }
-
-    function getCurrentBlockHeight() internal view returns (uint256) {
-        (bool success, bytes memory returndata) =
-            BTC_PRECOMPILE.staticcall(abi.encodePacked(GET_BLOCK_HEIGHT_LEADING_BYTES));
-        if (!success) revert PrecompileCallFailed();
-        return abi.decode(returndata, (uint256));
     }
 }
