@@ -1,12 +1,6 @@
 [[dependencies]]
-name = "@openzeppelin-contracts"
-version = "5.1.0-rc.0"
-source = "https://soldeer-revisions.s3.amazonaws.com/@openzeppelin-contracts/5_1_0-rc_0_04-10-2024_19:20:01_contracts.zip"
-checksum = "642a59e89329abd51254468f4607a0e3b3b99d0981cf5c6caf34d8f1dd9cb4b6"
-integrity = "4f363171ffce91dfeec58d04ffc2fa96c527a547f324e71065256a58b3fe1578"
-
-[[dependencies]]
 name = "solady"
 version = "0.0.234"
 source = "https://soldeer-revisions.s3.amazonaws.com/solady/0_0_234_19-08-2024_05:13:28_solady.zip"
 checksum = "a33f6d46a65c6a1adebed83365c128eab4c3e9d124b68fe5dea1a675a7f661a8"
+integrity = "afedc5ab760d5e83fcb7d4181fdb77fa2d829e6aca88653536c258fbd8656cdc"
