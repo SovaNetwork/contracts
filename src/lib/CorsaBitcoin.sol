@@ -52,32 +52,26 @@ library CorsaBitcoin {
     }
 
     function broadcastBitcoinTx(bytes memory signedTx) internal returns (bytes32) {
-        (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(abi.encodePacked(BROADCAST_LEADING_BYTES, signedTx));
+        (bool success, bytes memory returndata) =
+            BTC_PRECOMPILE.call(abi.encodePacked(BROADCAST_LEADING_BYTES, signedTx));
         if (!success) revert PrecompileCallFailed();
-        
+
         require(returndata.length == 32, "Invalid txid length");
-    
+
         bytes32 txid;
         assembly {
             txid := mload(add(returndata, 32))
         }
-        
+
         return txid;
     }
 
-    function createAndSignBitcoinTx(
-        address signer,
-        uint64 amount,
-        uint64 blockHeight,
-        string memory destinationAddress
-    ) internal returns (bytes memory) {
-        bytes memory inputData = abi.encode(
-            CREATE_AND_SIGN_LEADING_BYTES,
-            signer,
-            amount,
-            blockHeight,
-            destinationAddress
-        );
+    function createAndSignBitcoinTx(address signer, uint64 amount, uint64 blockHeight, string memory destinationAddress)
+        internal
+        returns (bytes memory)
+    {
+        bytes memory inputData =
+            abi.encode(CREATE_AND_SIGN_LEADING_BYTES, signer, amount, blockHeight, destinationAddress);
 
         (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(inputData);
         if (!success) revert PrecompileCallFailed();

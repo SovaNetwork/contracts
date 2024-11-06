@@ -47,7 +47,7 @@ contract uBTC is WETH, Ownable {
         CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
 
         // input validations
-        if(amount >= type(uint64).max) {
+        if (amount >= type(uint64).max) {
             revert AmountTooBig();
         }
 
