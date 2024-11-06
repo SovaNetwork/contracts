@@ -13,6 +13,10 @@ contract uBTC is WETH, Ownable {
     error UnsignedInput();
     error InvalidLocktime();
     error BroadcastFailure();
+    error AmountTooBig();
+
+    event Deposit(bytes32 txid, uint256 amount);
+    event Withdraw(bytes32 txid, uint256 amount);
 
     constructor() WETH() Ownable() {
         _initializeOwner(msg.sender);
@@ -43,6 +47,10 @@ contract uBTC is WETH, Ownable {
         CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
 
         // input validations
+        if (amount >= type(uint64).max) {
+            revert AmountTooBig();
+        }
+
         if (btcTx.outputs.length < 1 || btcTx.outputs[0].value < amount) {
             revert InsufficientDeposit();
         }
@@ -72,19 +80,23 @@ contract uBTC is WETH, Ownable {
         _mint(msg.sender, amount);
 
         // Broadcast signed btc tx
-        if (!CorsaBitcoin.broadcastBitcoinTx(signedTx)) {
-            revert BroadcastFailure();
-        }
+        bytes32 txid = CorsaBitcoin.broadcastBitcoinTx(signedTx);
+
+        emit Deposit(txid, amount);
     }
 
-    function withdraw(uint256 amount, string calldata dest) public {
+    function withdraw(uint64 amount, uint32 btcBlockHeight, string calldata dest) public {
         // burn uBTC
-        _burn(msg.sender, amount);
+        // TODO(powvt): how to account for gas fees? burn and have user pay?
+        _burn(msg.sender, uint256(amount));
 
-        // sign BTC tx for sending amount to specified destination, then broadcast tx
-        if (!CorsaBitcoin.sendBitcoin(address(this), amount, dest)) {
-            revert BroadcastFailure();
-        }
+        // Create Bitcoin transaction using the UTXOs
+        bytes memory signedTx = CorsaBitcoin.createAndSignBitcoinTx(address(this), amount, btcBlockHeight, dest);
+
+        // Broadcast signed BTC tx
+        bytes32 txid = CorsaBitcoin.broadcastBitcoinTx(signedTx);
+
+        emit Withdraw(txid, amount);
     }
 
     function adminBurn(address wallet, uint256 amount) public onlyOwner {
