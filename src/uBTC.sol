@@ -7,9 +7,13 @@ import "@solady/auth/Ownable.sol";
 import "./lib/CorsaBitcoin.sol";
 
 contract uBTC is WETH, Ownable {
+    // Fixed withdrawal fee in satoshis
+    uint256 public constant WITHDRAWAL_FEE = 1000000;
+
     error InvalidOutput(string expected, string actual);
     error InsufficientDeposit();
     error InsufficientInput();
+    error InsufficientAmount();
     error UnsignedInput();
     error InvalidLocktime();
     error BroadcastFailure();
@@ -86,9 +90,14 @@ contract uBTC is WETH, Ownable {
     }
 
     function withdraw(uint64 amount, uint32 btcBlockHeight, string calldata dest) public {
-        // burn uBTC
-        // TODO(powvt): this hardcoded amount is the btc withdraw gas fee paid by the network
-        _burn(msg.sender, uint256(amount) + 1000000);
+        // Check if user has enough balance for both amount and fee
+        uint256 totalRequired = uint256(amount) + WITHDRAWAL_FEE;
+        if (balanceOf(msg.sender) < totalRequired) {
+            revert InsufficientAmount();
+        }
+
+        // Burn both the withdrawal amount and the fee
+        _burn(msg.sender, totalRequired);
 
         // Create Bitcoin transaction using the UTXOs
         bytes memory signedTx = CorsaBitcoin.createAndSignBitcoinTx(address(this), amount, btcBlockHeight, dest);
