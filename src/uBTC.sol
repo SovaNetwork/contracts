@@ -87,8 +87,8 @@ contract uBTC is WETH, Ownable {
 
     function withdraw(uint64 amount, uint32 btcBlockHeight, string calldata dest) public {
         // burn uBTC
-        // TODO(powvt): how to account for gas fees? burn and have user pay?
-        _burn(msg.sender, uint256(amount));
+        // TODO(powvt): this hardcoded amount is the btc withdraw gas fee paid by the network
+        _burn(msg.sender, uint256(amount) + 1000000);
 
         // Create Bitcoin transaction using the UTXOs
         bytes memory signedTx = CorsaBitcoin.createAndSignBitcoinTx(address(this), amount, btcBlockHeight, dest);
