@@ -52,8 +52,7 @@ library CorsaBitcoin {
     }
 
     function broadcastBitcoinTx(bytes memory signedTx) internal {
-        (bool success, ) =
-            BTC_PRECOMPILE.call(abi.encodePacked(BROADCAST_LEADING_BYTES, signedTx));
+        (bool success,) = BTC_PRECOMPILE.call(abi.encodePacked(BROADCAST_LEADING_BYTES, signedTx));
         if (!success) revert PrecompileCallFailed();
     }
 
