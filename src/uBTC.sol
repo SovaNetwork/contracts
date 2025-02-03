@@ -84,9 +84,9 @@ contract uBTC is WETH, Ownable {
         _mint(msg.sender, amount);
 
         // Broadcast signed btc tx
-        bytes32 txid = CorsaBitcoin.broadcastBitcoinTx(signedTx);
+        CorsaBitcoin.broadcastBitcoinTx(signedTx);
 
-        emit Deposit(txid, amount);
+        emit Deposit(btcTx.txid, amount);
     }
 
     function withdraw(uint64 amount, uint32 btcBlockHeight, string calldata dest) public {
@@ -102,10 +102,13 @@ contract uBTC is WETH, Ownable {
         // Create Bitcoin transaction using the UTXOs
         bytes memory signedTx = CorsaBitcoin.createAndSignBitcoinTx(address(this), amount, btcBlockHeight, dest);
 
-        // Broadcast signed BTC tx
-        bytes32 txid = CorsaBitcoin.broadcastBitcoinTx(signedTx);
+        // Decode signed bitcoin tx
+        CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
 
-        emit Withdraw(txid, amount);
+        // Broadcast signed BTC tx
+        CorsaBitcoin.broadcastBitcoinTx(signedTx);
+
+        emit Withdraw(btcTx.txid, amount);
     }
 
     function adminBurn(address wallet, uint256 amount) public onlyOwner {
