@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-library CorsaBitcoin {
+library SovaBitcoin {
     address private constant BTC_PRECOMPILE = address(0x999);
 
     bytes4 private constant BROADCAST_LEADING_BYTES = 0x00000001;

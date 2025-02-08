@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import "@solady/tokens/WETH.sol";
 import "@solady/auth/Ownable.sol";
 
-import "./lib/CorsaBitcoin.sol";
+import "./lib/SovaBitcoin.sol";
 
 contract uBTC is WETH, Ownable {
     // Fixed withdrawal fee in satoshis
@@ -48,7 +48,7 @@ contract uBTC is WETH, Ownable {
 
     function depositBTC(uint256 amount, bytes calldata signedTx) public {
         // Decode signed bitcoin tx
-        CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
+        SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
 
         // input validations
         if (amount >= type(uint64).max) {
@@ -68,7 +68,7 @@ contract uBTC is WETH, Ownable {
         }
 
         // Recover this contract's bitcoin address from its ethereum address
-        bytes memory contractBtcAddress = CorsaBitcoin.convertEthToBtcAddress(address(this));
+        bytes memory contractBtcAddress = SovaBitcoin.convertEthToBtcAddress(address(this));
 
         // Check that this contract's bitcoin address is the same as the signed tx's output[0] address
         if (keccak256(contractBtcAddress) != keccak256(bytes(btcTx.outputs[0].addr))) {
@@ -76,7 +76,7 @@ contract uBTC is WETH, Ownable {
         }
 
         // Check if signature is valid and the inputs are unspent
-        if (!CorsaBitcoin.checkSignature(signedTx)) {
+        if (!SovaBitcoin.checkSignature(signedTx)) {
             revert UnsignedInput();
         }
 
@@ -84,7 +84,7 @@ contract uBTC is WETH, Ownable {
         _mint(msg.sender, amount);
 
         // Broadcast signed btc tx
-        CorsaBitcoin.broadcastBitcoinTx(signedTx);
+        SovaBitcoin.broadcastBitcoinTx(signedTx);
 
         emit Deposit(btcTx.txid, amount);
     }
@@ -100,13 +100,13 @@ contract uBTC is WETH, Ownable {
         _burn(msg.sender, totalRequired);
 
         // Create Bitcoin transaction using the UTXOs
-        bytes memory signedTx = CorsaBitcoin.createAndSignBitcoinTx(address(this), amount, btcBlockHeight, dest);
+        bytes memory signedTx = SovaBitcoin.createAndSignBitcoinTx(address(this), amount, btcBlockHeight, dest);
 
         // Decode signed bitcoin tx
-        CorsaBitcoin.BitcoinTx memory btcTx = CorsaBitcoin.decodeBitcoinTx(signedTx);
+        SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
 
         // Broadcast signed BTC tx
-        CorsaBitcoin.broadcastBitcoinTx(signedTx);
+        SovaBitcoin.broadcastBitcoinTx(signedTx);
 
         emit Withdraw(btcTx.txid, amount);
     }
