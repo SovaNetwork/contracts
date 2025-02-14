@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import "@solady/tokens/WETH.sol";
-import "@solady/auth/Ownable.sol";
+import "solady/tokens/WETH.sol";
+import "solady/auth/Ownable.sol";
 
 import "./lib/SovaBitcoin.sol";
 
