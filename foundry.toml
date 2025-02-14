@@ -6,14 +6,3 @@ libs = ["lib"]
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 [dependencies]
-solady = "0.0.234"
-
-[profile.soldeer]
-# whether soldeer manages remappings
-remappings_generated = true
-
-# whether soldeer re-generates all remappings when installing, updating or uninstalling deps
-remappings_regenerate = true
-
-# whether to suffix the remapping with the version: `name-a.b.c`
-remappings_version = false
