@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-library Constants {
-    /// @notice The address that represents the system caller responsible for L1 attributes
-    ///         transactions.
-    address internal constant DEPOSITOR_ACCOUNT = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
-}
-
 /// @custom:proxied true
 /// @custom:predeploy 0x2100000000000000000000000000000000000015
 /// @title BitcoinBlock
@@ -15,11 +9,6 @@ library Constants {
 ///         set by the "depositor" account, a special system address. Depositor account transactions
 ///         are created by the protocol whenever we include a new Bitcoin block reference.
 contract L1Block {
-    /// @notice Address of the special depositor account.
-    function DEPOSITOR_ACCOUNT() public pure returns (address addr_) {
-        addr_ = Constants.DEPOSITOR_ACCOUNT;
-    }
-
     /// @notice The latest Bitcoin block number known by the Sova system.
     uint256 public blockHeight;
 
@@ -38,6 +27,11 @@ contract L1Block {
     /// @custom:semver 1.0.0
     function version() public pure virtual returns (string memory) {
         return "1.0.0";
+    }
+
+    /// @notice Address of the special depositor account.
+    function DEPOSITOR_ACCOUNT() public pure returns (address addr_) {
+        addr_ = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
     }
 
     /// @notice Updates the Bitcoin block values.
