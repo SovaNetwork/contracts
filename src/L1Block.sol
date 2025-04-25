@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-/// @custom:proxied true
-/// @custom:predeploy 0x2100000000000000000000000000000000000015
-/// @title L1Block
-/// @notice The BitcoinBlock predeploy gives users access to information about the last known
-///         Bitcoin block. Values within this contract are updated once per Sova block and can
-///         only be set by the system account. State updates are made by the protocol at the
-///         beginning of each Sova block.
+/**
+ * @title L1Block
+ * @notice The BitcoinBlock predeploy gives users access to information about the last known
+ *         Bitcoin block. Values within this contract are updated once per Sova block and can
+ *         only be set by the system account. State updates are made by the protocol at the
+ *         beginning of each Sova block.
+ *
+ * @custom:predeploy 0x2100000000000000000000000000000000000015
+ */
 contract L1Block {
     /// @notice The latest Bitcoin block number known by the Sova system.
     uint256 public currentBlockHeight;
@@ -31,12 +33,7 @@ contract L1Block {
     /// @notice Updates the Bitcoin block values.
     /// @param _blockHeight      Current Bitcoin block height.
     /// @param _blockHash        Bitcoin blockhash from 6 blocks back.
-    function setBitcoinBlockData(
-        uint256 _blockHeight,
-        bytes32 _blockHash
-    )
-        external
-    {
+    function setBitcoinBlockData(uint256 _blockHeight, bytes32 _blockHash) external {
         require(msg.sender == SYSTEM_ACCOUNT(), "BitcoinBlock: only the system account can set block data");
 
         currentBlockHeight = _blockHeight;
@@ -62,7 +59,7 @@ contract L1Block {
                 mstore(0x00, 0x3cc50b45) // 0x3cc50b45 is the 4-byte selector of "NotDepositor()"
                 revert(0x1C, 0x04) // returns the stored 4-byte selector from above
             }
-            
+
             // Store values directly from calldata
             sstore(currentBlockHeight.slot, calldataload(4)) // uint256
             sstore(blockHashSixBlocksBack.slot, calldataload(36)) // bytes32
@@ -70,16 +67,7 @@ contract L1Block {
     }
 
     /// @notice Get current Bitcoin block data
-    /// @return Current Bitcoin block hash and height
-    function getL1BlockInfo() external view returns (
-        bytes32,
-        uint256,
-        uint256
-    ) {
-        return (
-            blockHashSixBlocksBack,
-            currentBlockHeight,
-            lastUpdatedBlock
-        );
+    function getL1BlockInfo() external view returns (bytes32, uint256, uint256) {
+        return (blockHashSixBlocksBack, currentBlockHeight, lastUpdatedBlock);
     }
 }
