@@ -110,7 +110,7 @@ library SovaBitcoin {
      *      3. Ensures the transaction has at least one input
      *      4. Validates the locktime is not in the future
      *      5. Checks that the first output address matches the network's receive address
-     * 
+     *
      * @param signedTx The raw signed Bitcoin transaction
      * @param amount The minimum expected amount in satoshis
      * @return btcTx The decoded Bitcoin transaction if all validations pass
