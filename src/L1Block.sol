@@ -3,6 +3,7 @@ pragma solidity 0.8.26;
 
 /**
  * @title L1Block
+ * @author Sova Labs
  * @notice The BitcoinBlock predeploy gives users access to information about the last known
  *         Bitcoin block. Values within this contract are updated once per Sova block and can
  *         only be set by the system account. State updates are made by the protocol at the

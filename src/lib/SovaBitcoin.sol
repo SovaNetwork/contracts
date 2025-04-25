@@ -2,44 +2,27 @@
 pragma solidity 0.8.26;
 
 /**
- * @title SovaBitcoin Library
- * @author Sova Protocol Team
- * @notice A comprehensive library for Bitcoin integration with EVM chains
- * @dev This library provides a bridge between Bitcoin transactions and EVM smart contracts
- * through the Sova Protocol's Bitcoin precompiles at a fixed address
+ * @title Sova Bitcoin
+ * @author Sova Labs
+ * @notice A comprehensive library for integrating with Bitcoin on the Sova EVM.
  */
 library SovaBitcoin {
-    /// @dev Address of the Bitcoin precompile contract
+    /// @notice Address of the Bitcoin precompile contract
     address private constant BTC_PRECOMPILE = address(0x999);
 
-    /// @dev Function selectors for the Bitcoin precompile
+    /// @notice Bitcoin functionality selectors
     bytes4 private constant BROADCAST_BYTES = 0x00000001;
     bytes4 private constant DECODE_BYTES = 0x00000002;
     bytes4 private constant CHECKSIG_BYTES = 0x00000003;
     bytes4 private constant BTC_DEPOSIT_ADDR_BYTES = 0x00000004;
     bytes4 private constant CREATE_AND_SIGN_BYTES = 0x00000005;
 
-    /**
-     * @notice Structure representing a Bitcoin transaction output
-     * @dev Maps to Bitcoin's transaction output structure
-     * @param addr The Bitcoin address in string format
-     * @param value The amount of satoshis
-     * @param script The output script in bytes
-     */
     struct Output {
         string addr;
         uint256 value;
         bytes script;
     }
 
-    /**
-     * @notice Structure representing a Bitcoin transaction input
-     * @dev Maps to Bitcoin's transaction input structure
-     * @param prevTxHash The hash of the previous transaction
-     * @param outputIndex The index of the output being spent
-     * @param scriptSig The signature script
-     * @param witness The witness data for segwit transactions
-     */
     struct Input {
         bytes32 prevTxHash;
         uint32 outputIndex;
@@ -47,14 +30,6 @@ library SovaBitcoin {
         bytes[] witness;
     }
 
-    /**
-     * @notice Structure representing a full Bitcoin transaction
-     * @dev Core structure used throughout the library
-     * @param txid The transaction ID (hash)
-     * @param outputs Array of transaction outputs
-     * @param inputs Array of transaction inputs
-     * @param locktime The transaction's locktime
-     */
     struct BitcoinTx {
         bytes32 txid;
         Output[] outputs;
@@ -70,9 +45,8 @@ library SovaBitcoin {
 
     /**
      * @notice Decodes a raw Bitcoin transaction into a structured format
-     * @dev Calls the BTC_PRECOMPILE with the DECODE_BYTES selector
-     * @param signedTx The raw signed Bitcoin transaction
-     * @return A structured BitcoinTx object containing the decoded transaction data
+     * @param signedTx          The raw signed Bitcoin transaction
+     * @return BitcoinTx        Object containing the decoded transaction data
      */
     function decodeBitcoinTx(bytes memory signedTx) internal view returns (BitcoinTx memory) {
         (bool success, bytes memory returndata) = BTC_PRECOMPILE.staticcall(abi.encodePacked(DECODE_BYTES, signedTx));
@@ -82,19 +56,16 @@ library SovaBitcoin {
 
     /**
      * @notice Verifies the signatures in a Bitcoin transaction
-     * @dev Calls the BTC_PRECOMPILE with the CHECKSIG_BYTES selector
-     * @param signedTx The raw signed Bitcoin transaction
-     * @return Boolean indicating whether all signatures in the transaction are valid
+     * @param signedTx       The raw signed Bitcoin transaction
+     * @return success       Boolean indicating if payload is valid
      */
-    function checkSignature(bytes calldata signedTx) internal view returns (bool) {
-        (bool success,) = BTC_PRECOMPILE.staticcall(abi.encodePacked(CHECKSIG_BYTES, signedTx));
-        return success;
+    function checkSignature(bytes calldata signedTx) internal view returns (bool success) {
+        (success,) = BTC_PRECOMPILE.staticcall(abi.encodePacked(CHECKSIG_BYTES, signedTx));
     }
 
     /**
      * @notice Gets the Bitcoin deposit address for the current network
-     * @dev Calls the BTC_PRECOMPILE with the BTC_DEPOSIT_ADDR_BYTES selector
-     * @return The Bitcoin address as bytes that should receive deposits
+     * @return returnData      The Bitcoin address where the network receives deposits
      */
     function getBtcNetworkReceive() internal returns (bytes memory) {
         (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(abi.encodePacked(BTC_DEPOSIT_ADDR_BYTES));
@@ -104,8 +75,7 @@ library SovaBitcoin {
 
     /**
      * @notice Broadcasts a signed Bitcoin transaction to the Bitcoin network
-     * @dev Calls the BTC_PRECOMPILE with the BROADCAST_BYTES selector
-     * @param signedTx The raw signed Bitcoin transaction to broadcast
+     * @param signedTx         The raw signed Bitcoin transaction to broadcast
      */
     function broadcastBitcoinTx(bytes memory signedTx) internal {
         (bool success,) = BTC_PRECOMPILE.call(abi.encodePacked(BROADCAST_BYTES, signedTx));
@@ -114,12 +84,11 @@ library SovaBitcoin {
 
     /**
      * @notice Creates and signs a Bitcoin transaction
-     * @dev Calls the BTC_PRECOMPILE with the CREATE_AND_SIGN_BYTES selector
-     * @param signer The address of the entity signing the transaction
-     * @param amount The amount in satoshis to send
-     * @param blockHeight The Bitcoin block height for reference
-     * @param destinationAddress The destination Bitcoin address
-     * @return The raw signed Bitcoin transaction
+     * @param signer                 The address of the entity signing the transaction
+     * @param amount                 The amount in satoshis to send
+     * @param blockHeight            Bitcoin block height for reference
+     * @param destinationAddress     Bitcoin address receiving the funds
+     * @return signedtx              Raw signed Bitcoin transaction
      */
     function createAndSignBitcoinTx(address signer, uint64 amount, uint64 blockHeight, string memory destinationAddress)
         internal
