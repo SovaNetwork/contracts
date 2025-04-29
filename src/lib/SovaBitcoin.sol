@@ -17,6 +17,9 @@ library SovaBitcoin {
     bytes4 private constant BTC_DEPOSIT_ADDR_BYTES = 0x00000004;
     bytes4 private constant CREATE_AND_SIGN_BYTES = 0x00000005;
 
+    /// @notice Bitcoin deposit address for the current network
+    address public constant UBTC_ADDRESS = 0x2100000000000000000000000000000000000020;
+
     struct Output {
         string addr;
         uint256 value;
@@ -83,18 +86,23 @@ library SovaBitcoin {
     }
 
     /**
-     * @notice Creates and signs a Bitcoin transaction
+     * @notice Signs and broadcasts a Bitcoin transaction from the specified signer.
      * @param signer                 The address of the entity signing the transaction
      * @param amount                 The amount in satoshis to send
-     * @param blockHeight            Bitcoin block height for reference
+     * @param btcGasLimit            Specified gas limit for the Bitcoin transaction (in satoshis)
+     * @param blockHeight            The current Bitcoin block height for indexing purposes
      * @param destinationAddress     Bitcoin address receiving the funds
-     * @return signedtx              Raw signed Bitcoin transaction
+     * @return txid                  Bitcoin transaction ID
      */
-    function createAndSignBitcoinTx(address signer, uint64 amount, uint64 blockHeight, string memory destinationAddress)
-        internal
-        returns (bytes memory)
-    {
-        bytes memory inputData = abi.encode(CREATE_AND_SIGN_BYTES, signer, amount, blockHeight, destinationAddress);
+    function vaultSpend(
+        address signer,
+        uint64 amount,
+        uint64 btcGasLimit,
+        uint64 blockHeight,
+        string memory destinationAddress
+    ) internal returns (bytes memory) {
+        bytes memory inputData =
+            abi.encode(CREATE_AND_SIGN_BYTES, signer, amount, btcGasLimit, blockHeight, destinationAddress);
 
         (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(inputData);
         if (!success) revert PrecompileCallFailed();

@@ -14,11 +14,9 @@ import "./lib/SovaBitcoin.sol";
  * @custom:predeploy 0x2100000000000000000000000000000000000020
  */
 contract uBTC is WETH, Ownable {
-    /// @notice Fixed withdrawal fee in satoshis (0.01 BTC)
-    ///
-    /// TODO(powvt): This should be a value set by the user? System contract?
-    uint256 public constant WITHDRAWAL_FEE = 1000000;
-
+    /**
+     * @notice Error codes
+     */
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
@@ -27,6 +25,9 @@ contract uBTC is WETH, Ownable {
     error BroadcastFailure();
     error AmountTooBig();
 
+    /**
+     * @notice Events
+     */
     event Deposit(bytes32 txid, uint256 amount);
     event Withdraw(bytes32 txid, uint256 amount);
 
@@ -92,12 +93,15 @@ contract uBTC is WETH, Ownable {
      * @notice Withdraws Bitcoin by burning uBTC tokens
      *
      * @param amount            The amount of satoshis to withdraw
-     * @param btcBlockHeight    The current Bitcoin block height for reference
-     * @param dest              The destination Bitcoin address
+     * @param btcGasLimit       Specified gas limit for the Bitcoin transaction (in satoshis)
+     * @param btcBlockHeight    The current Bitcoin block height for indexing purposes
+     * @param dest              The destination Bitcoin address (bech32)
      */
-    function withdraw(uint64 amount, uint32 btcBlockHeight, string calldata dest) public {
-        // Validate user has enough balance for both amount and fee
-        uint256 totalRequired = uint256(amount) + WITHDRAWAL_FEE;
+    function withdraw(uint64 amount, uint64 btcGasLimit, uint32 btcBlockHeight, string calldata dest) public {
+        // TODO(powvt): Add more input validation
+
+        // Validate users balance is high enough to cover the amount and max possible gas to be used
+        uint256 totalRequired = uint256(amount) + btcGasLimit;
         if (balanceOf(msg.sender) < totalRequired) {
             revert InsufficientAmount();
         }
@@ -105,15 +109,18 @@ contract uBTC is WETH, Ownable {
         _burn(msg.sender, totalRequired);
 
         // Ask the network to send the BTC to the destination address
-        bytes memory signedTx = SovaBitcoin.createAndSignBitcoinTx(address(this), amount, btcBlockHeight, dest);
+        //
+        // NOTE(powvt): Call this valueSpend instead? we cant return the signed payload here since not every
+        // operator can call the signing service for this deposit address. The sending entity
+        // is responsible for making sure the gas fee is high enough that it gets included in
+        // the the next bitcoin block. This function should do the broadcasting for the caller.
+        //
+        // This call will set the slot locks for this contract until the slot resolution is done. Then the
+        // slot updates will either take place or be reverted.
+        bytes memory btcTxid =
+            SovaBitcoin.vaultSpend(SovaBitcoin.UBTC_ADDRESS, amount, btcGasLimit, btcBlockHeight, dest);
 
-        // Decode signed bitcoin tx
-        SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
-
-        // Broadcast signed BTC tx
-        SovaBitcoin.broadcastBitcoinTx(signedTx);
-
-        emit Withdraw(btcTx.txid, amount);
+        emit Withdraw(bytes32(btcTxid), amount);
     }
 
     /**
