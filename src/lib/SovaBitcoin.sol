@@ -71,7 +71,8 @@ library SovaBitcoin {
      * @return returnData      The Bitcoin address where the network receives deposits
      */
     function getBtcNetworkReceive() internal returns (bytes memory) {
-        (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(abi.encodePacked(BTC_DEPOSIT_ADDR_BYTES));
+        (bool success, bytes memory returndata) =
+            BTC_PRECOMPILE.call(abi.encodePacked(BTC_DEPOSIT_ADDR_BYTES, UBTC_ADDRESS));
         if (!success) revert PrecompileCallFailed();
         return returndata;
     }
