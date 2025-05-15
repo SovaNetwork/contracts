@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 /**
- * @title L1Block
+ * @title SovaL1Block
  * @author Sova Labs
  * @notice The BitcoinBlock predeploy gives users access to information about the last known
  *         Bitcoin block. Values within this contract are updated once per Sova block and can
@@ -11,7 +11,7 @@ pragma solidity 0.8.26;
  *
  * @custom:predeploy 0x2100000000000000000000000000000000000015
  */
-contract L1Block {
+contract SovaL1Block {
     /// @notice The latest Bitcoin block number known by the Sova system.
     uint256 public currentBlockHeight;
 
