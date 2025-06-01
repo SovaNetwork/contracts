@@ -1,1 +1,0 @@
-@solady=dependencies/solady-0.0.234/src

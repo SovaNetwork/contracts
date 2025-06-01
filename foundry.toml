@@ -3,6 +3,9 @@ src = "src"
 out = "out"
 libs = ["lib"]
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-optionss
 
-[dependencies]
+remappings = [
+  '@solady/=lib/solady/src/',
+  '@solady-v0.0.245/=lib/solady-v0.0.245/src/',
+]
