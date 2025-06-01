@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity 0.8.15;
 
 /**
  * @title SovaL1Block
  * @author Sova Labs
- * @notice The BitcoinBlock predeploy gives users access to information about the last known
- *         Bitcoin block. Values within this contract are updated once per Sova block and can
- *         only be set by the system account. State updates are made by the protocol at the
- *         beginning of each Sova block.
+ *
+ * SovaL1Block provides information about the last known Bitcoin block. Values
+ * within this contract are updated prior to Sova block execution and can
+ * only be set by the system account.
  *
  * @custom:predeploy 0x2100000000000000000000000000000000000015
  */
@@ -21,9 +21,9 @@ contract SovaL1Block {
     /// @notice Store the last sova block the values were updated.
     uint256 public lastUpdatedBlock;
 
-    /// @custom:semver 1.0.0
+    /// @custom:semver 0.1.0-beta.1
     function version() public pure virtual returns (string memory) {
-        return "1.0.0";
+        return "0.1.0-beta.1";
     }
 
     /// @notice Address of the special depositor account.

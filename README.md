@@ -1,17 +1,19 @@
-# Sova Network Contracts
+# Sova Contracts
 
-This repository contains the smart contracts for the Sova Network. Sova smart contracts can talk directly to Bitcoin and do things like broadcast BTC transactions, decode BTC payloads, and verify signatures. 
+This repository contains the predeploy contracts for the Sova Network.
+
+Sova smart contracts can communicate directly with Bitcoin and do things like broadcast transactions, decode payloads, verify signatures, get block height and more! 
 
 ## Details
 
-Sova Network provides direct chain interaction with Bitcoin through custom precompiles, with built-in safeguards against double-spending. Use these precompiles to add Bitcoin composability to your Sova smart contracts.
+The Sova Network provides direct communicate with Bitcoin through custom precompiles. The Sova Network uses these precompiles via predeploy contracts. These precompiles come with built-in safeguards against double-spending, payload verification, current block info, and more! These features can be witnessed in action in the `uBTC.sol` native Bitcoin wrapper contract or by importing `SovaBitcoin.sol` to add Bitcoin composability to your Sova smart contracts.
 
-### Precompile Contracts
-- **L1Block**: Provides Bitcoin block information
-- **uBTC**: Bitcoin representation on Sova Network
+## Predeploy Contracts
+- **SovaL1Block**: Provides Bitcoin block information
+- **uBTC**: Native Bitcoin wrapper on the Sova Network
 
 ### Libraries
-- **SovaBitcoin**: Integration utilities
+- **SovaBitcoin**: Sova network utilities
 
 ## Build and Test
 
@@ -19,6 +21,16 @@ Sova Network provides direct chain interaction with Bitcoin through custom preco
 # Build the project
 forge build
 
-# Run all tests
-forge test
+```
+
+## Deployed Bytecode verification
+
+Generate the deployed byte code locally to verify the predeploy contract code used on the Sova Network.
+
+```shell
+# uBTC.sol
+forge inspect src/uBTC.sol:uBTC deployedBytecode
+
+# SovaL1Block.sol
+forge inspect src/SovaL1Block.sol:SovaL1Block deployedBytecode
 ```

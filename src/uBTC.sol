@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity 0.8.15;
 
 import "solady/auth/Ownable.sol";
 import "solady/tokens/WETH.sol";
@@ -9,14 +9,12 @@ import "./lib/SovaBitcoin.sol";
 /**
  * @title Universal Bitcoin Token (uBTC)
  * @author Sova Labs
- * @notice Bitcoin meets ERC20. Bitcoin meets composability.
+ * 
+ * Bitcoin meets ERC20. Bitcoin meets composability.
  *
  * @custom:predeploy 0x2100000000000000000000000000000000000020
  */
 contract uBTC is WETH, Ownable {
-    /**
-     * @notice Error codes
-     */
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
@@ -74,7 +72,7 @@ contract uBTC is WETH, Ownable {
         }
 
         // Validate if the transaction is a network deposit and get the decoded tx
-        SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.isDepositBtc(signedTx, amount);
+        SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.isValidDeposit(signedTx, amount);
 
         // Check if signature is valid and the inputs are unspent
         if (!SovaBitcoin.checkSignature(signedTx)) {

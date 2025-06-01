@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
+pragma solidity 0.8.15;
 
 import {Test, console} from "forge-std/Test.sol";
 import {uBTC} from "../src/uBTC.sol";
