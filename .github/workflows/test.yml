@@ -29,15 +29,15 @@ jobs:
         run: |
           forge --version
 
+      - name: Run Forge Install
+        run: |
+          forge install
+        id: install
+
       - name: Run Forge fmt
         run: |
           forge fmt --check
         id: fmt
-
-      - name: Install Soldeer
-        run: |
-          forge soldeer install
-        id: soldeer
 
       - name: Run Forge build
         run: |
