@@ -9,7 +9,7 @@ import "./lib/SovaBitcoin.sol";
 /**
  * @title Universal Bitcoin Token (uBTC)
  * @author Sova Labs
- * 
+ *
  * Bitcoin meets ERC20. Bitcoin meets composability.
  *
  * @custom:predeploy 0x2100000000000000000000000000000000000020
