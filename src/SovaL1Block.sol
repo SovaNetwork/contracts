@@ -26,7 +26,7 @@ contract SovaL1Block {
         return "0.1.0-beta.1";
     }
 
-    /// @notice Address of the special depositor account.
+    /// @notice Address of the special system account of which there is no known pk.
     function SYSTEM_ACCOUNT() public pure returns (address addr_) {
         addr_ = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
     }
