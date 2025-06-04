@@ -9,16 +9,19 @@ pragma solidity 0.8.15;
  */
 library SovaBitcoin {
     /// @notice Address of the Bitcoin precompile contract
-    address private constant BTC_PRECOMPILE = address(0x999);
+    address public constant BTC_PRECOMPILE = address(0x999);
+
+    /// @notice Bitcoin context contract address
+    address public constant SOVA_L1_BLOCK_ADDRESS = 0x2100000000000000000000000000000000000015;
     /// @notice Native Bitcoin wrapper address
     address public constant UBTC_ADDRESS = 0x2100000000000000000000000000000000000020;
 
     /// @notice Bitcoin precompile selectors
-    bytes4 private constant BROADCAST_BYTES = 0x00000001;
-    bytes4 private constant DECODE_BYTES = 0x00000002;
-    bytes4 private constant CHECKSIG_BYTES = 0x00000003;
-    bytes4 private constant ADDRESS_CONVERT_LEADING_BYTES = 0x00000004;
-    bytes4 private constant CREATE_AND_SIGN_BYTES = 0x00000005;
+    bytes4 public constant BROADCAST_BYTES = 0x00000001;
+    bytes4 public constant DECODE_BYTES = 0x00000002;
+    bytes4 public constant CHECKSIG_BYTES = 0x00000003;
+    bytes4 public constant ADDRESS_CONVERT_LEADING_BYTES = 0x00000004;
+    bytes4 public constant UBTC_SIGN_TX_BYTES = 0x00000005;
 
     struct Output {
         string addr;
@@ -42,8 +45,8 @@ library SovaBitcoin {
 
     error PrecompileCallFailed();
     error InvalidOutput(string expected, string actual);
-    error InsufficientDeposit();
     error InvalidDeposit();
+    error InvalidAmount();
     error InsufficientInput();
     error InvalidLocktime();
 
@@ -101,33 +104,6 @@ library SovaBitcoin {
     }
 
     /**
-     * @notice Signs and broadcasts a Bitcoin transaction from the specified signer.
-     *
-     * @param signer                 The address of the entity signing the transaction
-     * @param amount                 The amount in satoshis to send
-     * @param btcGasLimit            Specified gas limit for the Bitcoin transaction (in satoshis)
-     * @param blockHeight            The current Bitcoin block height for indexing purposes
-     * @param destinationAddress     Bitcoin address receiving the funds
-     *
-     * @return txid                  Bitcoin transaction ID
-     */
-    function vaultSpend(
-        address signer,
-        uint64 amount,
-        uint64 btcGasLimit,
-        uint64 blockHeight,
-        string memory destinationAddress
-    ) internal returns (bytes memory) {
-        bytes memory inputData =
-            abi.encode(CREATE_AND_SIGN_BYTES, signer, amount, btcGasLimit, blockHeight, destinationAddress);
-
-        (bool success, bytes memory returndata) = BTC_PRECOMPILE.call(inputData);
-        if (!success) revert PrecompileCallFailed();
-
-        return returndata;
-    }
-
-    /**
      * @notice Validates a Bitcoin transaction for deposit purposes and returns the decoded transaction
      * @dev Performs a series of checks on the transaction structure and content:
      *      1. Verifies the transaction has between 1 and 3 outputs
@@ -144,12 +120,12 @@ library SovaBitcoin {
     function isValidDeposit(bytes memory signedTx, uint256 amount) internal returns (BitcoinTx memory) {
         BitcoinTx memory btcTx = decodeBitcoinTx(signedTx);
 
-        if (btcTx.outputs.length < 1 || btcTx.outputs.length > 3 || btcTx.outputs[0].value < amount) {
-            revert InsufficientDeposit();
+        if (btcTx.outputs.length < 1 || btcTx.outputs.length > 3) {
+            revert InvalidDeposit();
         }
 
         if (btcTx.outputs[0].value != amount) {
-            revert InvalidDeposit();
+            revert InvalidAmount();
         }
 
         if (btcTx.inputs.length < 1) {
