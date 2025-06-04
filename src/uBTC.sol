@@ -44,7 +44,7 @@ contract uBTC is WETH, Ownable, ReentrancyGuard {
     uint256 public constant MAX_WITHDRAWAL_AMOUNT = 100000000000; // 1000 BTC in satoshis
     
     /// @notice Minimum withdrawal amount
-    uint256 public constant MIN_WITHDRAWAL_AMOUNT = 10000; // 0.0001 BTC in satoshis
+    uint256 public constant MIN_WITHDRAWAL_AMOUNT = 1; // 0.00000001 BTC in satoshis
     
     /// @notice Contract paused state
     bool public paused;
@@ -196,9 +196,6 @@ contract uBTC is WETH, Ownable, ReentrancyGuard {
             revert InsufficientAmount();
         }
 
-        // Burn tokens immediately
-        _burn(msg.sender, totalRequired);
-
         // Add to withdrawal queue
         withdrawalQueue.push(WithdrawalRequest({
             user: msg.sender,
@@ -212,6 +209,8 @@ contract uBTC is WETH, Ownable, ReentrancyGuard {
 
         uint256 queuePosition = withdrawalQueue.length - 1;
         userQueuePosition[msg.sender] = queuePosition;
+
+        _burn(msg.sender, totalRequired);
 
         emit WithdrawalQueued(msg.sender, queuePosition, amount, dest);
     }
