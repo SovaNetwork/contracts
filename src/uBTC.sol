@@ -19,14 +19,14 @@ import "./lib/SovaBitcoin.sol";
  * @custom:predeploy 0x2100000000000000000000000000000000000020
  */
 contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
-    /// @notice Minimum deposit amount in satoshis (starts at 10,000 sats)
-    uint64 public minDepositAmount = 10_000;
+    /// @notice Minimum deposit amount in satoshis
+    uint64 public minDepositAmount;
 
-    /// @notice Maximum deposit amount in satoshis (starts at 1000 BTC = 100 billion sats)
-    uint64 public maxDepositAmount = 100_000_000_000;
+    /// @notice Maximum deposit amount in satoshis
+    uint64 public maxDepositAmount;
 
     /// @notice Gas limit must not exceed 0.5 BTC (50,000,000 sats)
-    uint64 public constant MAX_GAS_LIMIT = 50_000_000;
+    uint64 public maxGasLimitAmount;
 
     /// @notice Pause state of the contract
     bool private _paused;
@@ -73,6 +73,9 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
     constructor() WETH() Ownable() {
         _initializeOwner(msg.sender);
 
+        minDepositAmount = 10_000; // (starts at 10,000 sats)
+        maxDepositAmount = 100_000_000_000; // (starts at 1000 BTC = 100 billion sats)
+        maxGasLimitAmount = 50_000_000; // 0.5 BTC (50,000,000 sats)
         _paused = false;
     }
 
@@ -163,7 +166,7 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
         }
 
         // Gas limit must not exceed 0.5 BTC (50,000,000 sats)
-        if (btcGasLimit > MAX_GAS_LIMIT) {
+        if (btcGasLimit > maxGasLimitAmount) {
             revert GasLimitTooHigh();
         }
 
