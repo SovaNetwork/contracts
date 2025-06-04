@@ -14,9 +14,9 @@ import "./interfaces/ISovaL1Block.sol";
  * @custom:predeploy 0x2100000000000000000000000000000000000015
  */
 contract SovaL1Block is ISovaL1Block {
-    uint64 public currentBlockHeight;
-    bytes32 public blockHashSixBlocksBack;
-    uint256 public lastUpdatedBlock;
+    uint64 private currentBlockHeight;
+    bytes32 private blockHashSixBlocksBack;
+    uint256 private lastUpdatedBlock;
 
     function version() public pure virtual returns (string memory) {
         return "0.1.0-beta.1";
@@ -53,9 +53,5 @@ contract SovaL1Block is ISovaL1Block {
             sstore(blockHashSixBlocksBack.slot, calldataload(36)) // bytes32
             sstore(lastUpdatedBlock.slot, number()) // block.number
         }
-    }
-
-    function getL1BlockInfo() external view returns (bytes32, uint256, uint256) {
-        return (blockHashSixBlocksBack, currentBlockHeight, lastUpdatedBlock);
     }
 }
