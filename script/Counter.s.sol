@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.15;
 
-// import {Script, console} from "forge-std/Script.sol";
-// import {Counter} from "../src/Counter.sol";
+import {Script, console} from "forge-std/Script.sol";
+import {UBTC} from "../src/UBTC.sol";
 
-// contract CounterScript is Script {
-//     Counter public counter;
+contract CounterScript is Script {
+    UBTC public ubtc;
 
-//     function setUp() public {}
+    function setUp() public {}
 
-//     function run() public {
-//         vm.startBroadcast();
+    function run() public {
+        vm.startBroadcast();
 
-//         counter = new Counter();
+        ubtc = new UBTC();
 
-//         vm.stopBroadcast();
-//     }
-// }
+        vm.stopBroadcast();
+    }
+}

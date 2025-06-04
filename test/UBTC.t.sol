@@ -2,13 +2,13 @@
 pragma solidity 0.8.15;
 
 import {Test, console} from "forge-std/Test.sol";
-import {uBTC} from "../src/uBTC.sol";
+import {UBTC} from "../src/UBTC.sol";
 
-contract uBTCTest is Test {
-    uBTC public ubtc;
+contract UBTCTest is Test {
+    UBTC public ubtc;
 
     function setUp() public {
-        ubtc = new uBTC();
+        ubtc = new UBTC();
     }
 
     function testTokenName() public view {

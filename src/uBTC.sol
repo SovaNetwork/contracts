@@ -4,6 +4,9 @@ pragma solidity 0.8.15;
 import "@solady/auth/Ownable.sol";
 import "@solady/tokens/WETH.sol";
 
+import "./interfaces/ISovaL1Block.sol";
+import "./interfaces/IUBTC.sol";
+
 import "./lib/SovaBitcoin.sol";
 
 /**
@@ -14,7 +17,7 @@ import "./lib/SovaBitcoin.sol";
  *
  * @custom:predeploy 0x2100000000000000000000000000000000000020
  */
-contract uBTC is WETH, Ownable {
+contract UBTC is WETH, IUBTC, Ownable {
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
@@ -22,12 +25,28 @@ contract uBTC is WETH, Ownable {
     error InvalidLocktime();
     error BroadcastFailure();
     error AmountTooBig();
+    error DepositBelowMinimum();
+    error DepositAboveMaximum();
+    error InvalidDepositLimits();
+    error ZeroAmount();
+    error ZeroGasLimit();
+    error GasLimitTooHigh();
+    error EmptyDestination();
+    error InvalidDestinationFormat();
 
-    /**
-     * @notice Events
-     */
     event Deposit(bytes32 txid, uint256 amount);
     event Withdraw(bytes32 txid, uint256 amount);
+    event MinDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
+    event MaxDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
+
+    /// @notice Minimum deposit amount in satoshis (starts at 10,000 sats)
+    uint64 public minDepositAmount = 10_000;
+
+    /// @notice Maximum deposit amount in satoshis (starts at 1000 BTC = 100 billion sats)
+    uint64 public maxDepositAmount = 100_000_000_000;
+
+    /// @notice Gas limit must not exceed 0.5 BTC (50,000,000 sats)
+    uint64 public constant MAX_GAS_LIMIT = 50_000_000;
 
     constructor() WETH() Ownable() {
         _initializeOwner(msg.sender);
@@ -60,15 +79,20 @@ contract uBTC is WETH, Ownable {
     }
 
     /**
-     * @notice Deposits Bitcoin to mint uBTC tokens
+     * @notice Deposits Bitcoin to mint uBTC tokens.
+     *
+     * @dev The network will always broadcast this payload if not already public.
      *
      * @param amount            The amount of satoshis to deposit
      * @param signedTx          Signed Bitcoin transaction
      */
-    function depositBTC(uint256 amount, bytes calldata signedTx) public {
-        // Input validations
-        if (amount >= type(uint64).max) {
-            revert AmountTooBig();
+    function depositBTC(uint64 amount, bytes calldata signedTx) external {
+        // Check deposit limits
+        if (amount < minDepositAmount) {
+            revert DepositBelowMinimum();
+        }
+        if (amount > maxDepositAmount) {
+            revert DepositAboveMaximum();
         }
 
         // Validate if the transaction is a network deposit and get the decoded tx
@@ -88,37 +112,55 @@ contract uBTC is WETH, Ownable {
     }
 
     /**
-     * @notice Withdraws Bitcoin by burning uBTC tokens
+     * @notice Withdraws Bitcoin by burning uBTC tokens. Then triggering the signing, and broadcasting
+     *         of a Bitcoin transaction.
+     *
+     * @dev For obvious reasons the UBTC_SIGN_TX_BYTES precompile is a sensitive endpoint. It is enforced
+     *      in the execution client that only this contract can all that precompile functionality.
+     * @dev The hope is that in the future more SIGN_TX_BYTES endpoints can be added to the network
+     *      and the backends are controlled by 3rd party signer entities.
      *
      * @param amount            The amount of satoshis to withdraw
      * @param btcGasLimit       Specified gas limit for the Bitcoin transaction (in satoshis)
-     * @param btcBlockHeight    The current Bitcoin block height for indexing purposes
      * @param dest              The destination Bitcoin address (bech32)
      */
-    function withdraw(uint64 amount, uint64 btcGasLimit, uint32 btcBlockHeight, string calldata dest) public {
-        // TODO(powvt): Add more input validation
+    function withdraw(uint64 amount, uint64 btcGasLimit, string calldata dest) external {
+        // Input validation
+        if (amount == 0) {
+            revert ZeroAmount();
+        }
+
+        if (btcGasLimit == 0) {
+            revert ZeroGasLimit();
+        }
+
+        // Gas limit must not exceed 0.5 BTC (50,000,000 sats)
+        if (btcGasLimit > MAX_GAS_LIMIT) {
+            revert GasLimitTooHigh();
+        }
 
         // Validate users balance is high enough to cover the amount and max possible gas to be used
-        uint256 totalRequired = uint256(amount) + btcGasLimit;
+        uint256 totalRequired = amount + btcGasLimit;
         if (balanceOf(msg.sender) < totalRequired) {
             revert InsufficientAmount();
         }
 
         _burn(msg.sender, totalRequired);
 
-        // Ask the network to send the BTC to the destination address
-        //
-        // NOTE(powvt): Call this valueSpend instead? we cant return the signed payload here since not every
-        // operator can call the signing service for this deposit address. The sending entity
-        // is responsible for making sure the gas fee is high enough that it gets included in
-        // the the next bitcoin block. This function should do the broadcasting for the caller.
-        //
+        // read current block height from state
+        uint64 blockHeight = ISovaL1Block(SovaBitcoin.SOVA_L1_BLOCK_ADDRESS).currentBlockHeight();
+
+        bytes memory inputData =
+            abi.encode(SovaBitcoin.UBTC_SIGN_TX_BYTES, msg.sender, amount, btcGasLimit, blockHeight, dest);
+
         // This call will set the slot locks for this contract until the slot resolution is done. Then the
         // slot updates will either take place or be reverted.
-        bytes memory btcTxid =
-            SovaBitcoin.vaultSpend(SovaBitcoin.UBTC_ADDRESS, amount, btcGasLimit, btcBlockHeight, dest);
+        (bool success, bytes memory returndata) = SovaBitcoin.BTC_PRECOMPILE.call(inputData);
+        if (!success) revert SovaBitcoin.PrecompileCallFailed();
 
-        emit Withdraw(bytes32(btcTxid), amount);
+        bytes32 btcTxid = bytes32(returndata);
+
+        emit Withdraw(btcTxid, amount);
     }
 
     /**
@@ -127,7 +169,33 @@ contract uBTC is WETH, Ownable {
      * @param wallet      The address to burn tokens from
      * @param amount      The amount of tokens to burn
      */
-    function adminBurn(address wallet, uint256 amount) public onlyOwner {
+    function adminBurn(address wallet, uint256 amount) external onlyOwner {
         _burn(wallet, amount);
+    }
+
+    /**
+     * @notice Sets the minimum deposit amount (owner only)
+     * @param _minAmount New minimum deposit amount in satoshis
+     */
+    function setMinDepositAmount(uint64 _minAmount) external onlyOwner {
+        if (_minAmount >= maxDepositAmount) {
+            revert InvalidDepositLimits();
+        }
+        uint64 oldAmount = minDepositAmount;
+        minDepositAmount = _minAmount;
+        emit MinDepositAmountUpdated(oldAmount, _minAmount);
+    }
+
+    /**
+     * @notice Sets the maximum deposit amount (owner only)
+     * @param _maxAmount New maximum deposit amount in satoshis
+     */
+    function setMaxDepositAmount(uint64 _maxAmount) external onlyOwner {
+        if (_maxAmount <= minDepositAmount) {
+            revert InvalidDepositLimits();
+        }
+        uint64 oldAmount = maxDepositAmount;
+        maxDepositAmount = _maxAmount;
+        emit MaxDepositAmountUpdated(oldAmount, _maxAmount);
     }
 }
