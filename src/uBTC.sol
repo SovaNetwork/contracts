@@ -2,6 +2,7 @@
 pragma solidity 0.8.15;
 
 import "@solady/auth/Ownable.sol";
+import "@solady/utils/ReentrancyGuard.sol";
 import "@solady/tokens/WETH.sol";
 
 import "./interfaces/ISovaL1Block.sol";
@@ -17,7 +18,19 @@ import "./lib/SovaBitcoin.sol";
  *
  * @custom:predeploy 0x2100000000000000000000000000000000000020
  */
-contract UBTC is WETH, IUBTC, Ownable {
+contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
+    /// @notice Minimum deposit amount in satoshis (starts at 10,000 sats)
+    uint64 public minDepositAmount = 10_000;
+
+    /// @notice Maximum deposit amount in satoshis (starts at 1000 BTC = 100 billion sats)
+    uint64 public maxDepositAmount = 100_000_000_000;
+
+    /// @notice Gas limit must not exceed 0.5 BTC (50,000,000 sats)
+    uint64 public constant MAX_GAS_LIMIT = 50_000_000;
+
+    /// @notice Pause state of the contract
+    bool private _paused;
+
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
@@ -33,23 +46,38 @@ contract UBTC is WETH, IUBTC, Ownable {
     error GasLimitTooHigh();
     error EmptyDestination();
     error InvalidDestinationFormat();
+    error ContractPaused();
+    error ContractNotPaused();
 
     event Deposit(bytes32 txid, uint256 amount);
     event Withdraw(bytes32 txid, uint256 amount);
     event MinDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
+    event ContractPausedByOwner(address indexed account);
+    event ContractUnpausedByOwner(address indexed account);
 
-    /// @notice Minimum deposit amount in satoshis (starts at 10,000 sats)
-    uint64 public minDepositAmount = 10_000;
+    modifier whenNotPaused() {
+        if (_paused) {
+            revert ContractPaused();
+        }
+        _;
+    }
 
-    /// @notice Maximum deposit amount in satoshis (starts at 1000 BTC = 100 billion sats)
-    uint64 public maxDepositAmount = 100_000_000_000;
-
-    /// @notice Gas limit must not exceed 0.5 BTC (50,000,000 sats)
-    uint64 public constant MAX_GAS_LIMIT = 50_000_000;
+    modifier whenPaused() {
+        if (!_paused) {
+            revert ContractNotPaused();
+        }
+        _;
+    }
 
     constructor() WETH() Ownable() {
         _initializeOwner(msg.sender);
+
+        _paused = false;
+    }
+
+    function isPaused() external view returns (bool) {
+        return _paused;
     }
 
     function name() public view virtual override returns (string memory) {
@@ -86,7 +114,7 @@ contract UBTC is WETH, IUBTC, Ownable {
      * @param amount            The amount of satoshis to deposit
      * @param signedTx          Signed Bitcoin transaction
      */
-    function depositBTC(uint64 amount, bytes calldata signedTx) external {
+    function depositBTC(uint64 amount, bytes calldata signedTx) external nonReentrant whenNotPaused {
         // Check deposit limits
         if (amount < minDepositAmount) {
             revert DepositBelowMinimum();
@@ -124,7 +152,7 @@ contract UBTC is WETH, IUBTC, Ownable {
      * @param btcGasLimit       Specified gas limit for the Bitcoin transaction (in satoshis)
      * @param dest              The destination Bitcoin address (bech32)
      */
-    function withdraw(uint64 amount, uint64 btcGasLimit, string calldata dest) external {
+    function withdraw(uint64 amount, uint64 btcGasLimit, string calldata dest) external nonReentrant whenNotPaused {
         // Input validation
         if (amount == 0) {
             revert ZeroAmount();
@@ -197,5 +225,23 @@ contract UBTC is WETH, IUBTC, Ownable {
         uint64 oldAmount = maxDepositAmount;
         maxDepositAmount = _maxAmount;
         emit MaxDepositAmountUpdated(oldAmount, _maxAmount);
+    }
+
+    /**
+     * @notice Pauses the contract
+     * @dev Only the owner can pause the contract
+     */
+    function pause() external onlyOwner whenNotPaused {
+        _paused = true;
+        emit ContractPausedByOwner(msg.sender);
+    }
+
+    /**
+     * @notice Unpauses the contract
+     * @dev Only the owner can unpause the contract
+     */
+    function unpause() external onlyOwner whenPaused {
+        _paused = false;
+        emit ContractUnpausedByOwner(msg.sender);
     }
 }
