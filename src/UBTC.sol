@@ -153,9 +153,14 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
      *
      * @param amount            The amount of satoshis to withdraw
      * @param btcGasLimit       Specified gas limit for the Bitcoin transaction (in satoshis)
+     * @param btcBlockHeight    The current BTC block height. This is used to source spendable Bitcoin UTXOs
      * @param dest              The destination Bitcoin address (bech32)
      */
-    function withdraw(uint64 amount, uint64 btcGasLimit, string calldata dest) external nonReentrant whenNotPaused {
+    function withdraw(uint64 amount, uint64 btcGasLimit, uint32 btcBlockHeight, string calldata dest)
+        external
+        nonReentrant
+        whenNotPaused
+    {
         // Input validation
         if (amount == 0) {
             revert ZeroAmount();
@@ -178,11 +183,8 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
 
         _burn(msg.sender, totalRequired);
 
-        // read current block height from state
-        uint64 blockHeight = ISovaL1Block(SovaBitcoin.SOVA_L1_BLOCK_ADDRESS).currentBlockHeight();
-
         bytes memory inputData =
-            abi.encode(SovaBitcoin.UBTC_SIGN_TX_BYTES, msg.sender, amount, btcGasLimit, blockHeight, dest);
+            abi.encode(SovaBitcoin.UBTC_SIGN_TX_BYTES, msg.sender, amount, btcGasLimit, btcBlockHeight, dest);
 
         // This call will set the slot locks for this contract until the slot resolution is done. Then the
         // slot updates will either take place or be reverted.
