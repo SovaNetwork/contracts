@@ -15,12 +15,11 @@ The Sova Network provides direct communicate with Bitcoin through custom precomp
 ### Libraries
 - **SovaBitcoin**: Sova network utilities
 
-## Build and Test
+## Build
 
 ```shell
 # Build the project
 forge build
-
 ```
 
 ## Deployed Bytecode verification
@@ -29,7 +28,7 @@ Generate the deployed byte code locally to verify the predeploy contract code us
 
 ```shell
 # uBTC.sol
-forge inspect src/uBTC.sol:uBTC deployedBytecode
+forge inspect src/UBTC.sol:UBTC deployedBytecode
 
 # SovaL1Block.sol
 forge inspect src/SovaL1Block.sol:SovaL1Block deployedBytecode
