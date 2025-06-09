@@ -11,5 +11,5 @@ interface IUBTC {
     function setMinDepositAmount(uint64 _minAmount) external;
     function setMaxDepositAmount(uint64 _maxAmount) external;
     function pause() external;
-    function unpause()external;
+    function unpause() external;
 }
