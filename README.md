@@ -2,14 +2,14 @@
 
 This repository contains the predeploy contracts for the Sova Network.
 
-Sova smart contracts can communicate directly with Bitcoin and do things like broadcast transactions, decode payloads, verify signatures, get block height and more! 
+The Sova Network enables smart contract to directly interact with the Bitcoin blockchain. This interaction is done through the use of custom precompiles and predeployed contracts. This feature set allows smart contract to do things like broadcast transactions, decode payloads, verify signatures, get block height and more!
 
 ## Details
 
-The Sova Network provides direct communicate with Bitcoin through custom precompiles. The Sova Network uses these precompiles via predeploy contracts. These precompiles come with built-in safeguards against double-spending, payload verification, current block info, and more! These features can be witnessed in action in the `uBTC.sol` native Bitcoin wrapper contract or by importing `SovaBitcoin.sol` to add Bitcoin composability to your Sova smart contracts.
+The Sova precompiles come with built-in safeguards against double-spending, payload verification, current block info, and more! These features are put to work in the `uBTC.sol` native Bitcoin wrapper contract or you can use them yourself by importing `SovaBitcoin.sol`. Our goal is to make it as easy as possible to add Bitcoin composability to your Sova smart contracts.
 
 ## Predeploy Contracts
-- **SovaL1Block**: Provides Bitcoin block information
+- **SovaL1Block**: Provides information about the state on Bitcoin
 - **uBTC**: Native Bitcoin wrapper on the Sova Network
 
 ### Libraries
