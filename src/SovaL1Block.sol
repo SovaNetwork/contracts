@@ -4,14 +4,18 @@ pragma solidity 0.8.15;
 import "./interfaces/ISovaL1Block.sol";
 
 /**
+ * @custom:proxied true
+ * @custom:predeploy 0x2100000000000000000000000000000000000015
+ *
  * @title SovaL1Block
  * @author Sova Labs
  *
- * SovaL1Block provides information about the last known Bitcoin block. Values
- * within this contract are updated prior to Sova block execution and can
- * only be set by the system account.
+ * SovaL1Block provides information about the state of the Bitcoin chain.
+ * Values stored in this contract are used by validators to verify block execution.
+ * The primary values used here are the Bitcoin block hieght and trailing block hash.
  *
- * @custom:predeploy 0x2100000000000000000000000000000000000015
+ * Values within this contract are updated prior to Sova block execution via a system
+ * tx and can only be set by the system account.
  */
 contract SovaL1Block is ISovaL1Block {
     uint64 private currentBlockHeight;

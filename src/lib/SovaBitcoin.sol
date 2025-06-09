@@ -5,10 +5,10 @@ pragma solidity 0.8.15;
  * @title SovaBitcoin
  * @author Sova Labs
  *
- * A library for integrating with native Bitcoin precompiles on Sova.
+ * A library for integrating with Bitcoin precompiles on Sova.
  */
 library SovaBitcoin {
-    /// @notice Address of the Bitcoin precompile contract
+    /// @notice Bitcoin precompile address
     address public constant BTC_PRECOMPILE = address(0x999);
 
     /// @notice Bitcoin context contract address

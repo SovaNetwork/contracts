@@ -11,12 +11,13 @@ import "./interfaces/IUBTC.sol";
 import "./lib/SovaBitcoin.sol";
 
 /**
+ * @custom:proxied true
+ * @custom:predeploy 0x2100000000000000000000000000000000000020
+ *
  * @title Universal Bitcoin Token (uBTC)
  * @author Sova Labs
  *
  * Bitcoin meets ERC20. Bitcoin meets composability.
- *
- * @custom:predeploy 0x2100000000000000000000000000000000000020
  */
 contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
