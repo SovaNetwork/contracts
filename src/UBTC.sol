@@ -5,7 +5,6 @@ import "@solady/auth/Ownable.sol";
 import "@solady/utils/ReentrancyGuard.sol";
 import "@solady/tokens/WETH.sol";
 
-import "./interfaces/ISovaL1Block.sol";
 import "./interfaces/IUBTC.sol";
 
 import "./lib/SovaBitcoin.sol";
