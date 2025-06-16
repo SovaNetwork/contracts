@@ -166,7 +166,7 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
      * @param btcBlockHeight    The current BTC block height. This is used to source spendable Bitcoin UTXOs
      * @param dest              The destination Bitcoin address (bech32)
      */
-    function withdraw(uint64 amount, uint64 btcGasLimit, uint32 btcBlockHeight, string calldata dest)
+    function withdraw(uint64 amount, uint64 btcGasLimit, uint64 btcBlockHeight, string calldata dest)
         external
         nonReentrant
         whenNotPaused
