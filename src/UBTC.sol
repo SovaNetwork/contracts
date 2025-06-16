@@ -31,7 +31,7 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
     /// @notice Pause state of the contract
     bool private _paused;
 
-    /// @notice Mapping to track used Bitcoin txids
+    /// @notice Mapping to track Bitcoin txids that have been used for deposits
     mapping(bytes32 => bool) private usedTxids;
 
     error InsufficientDeposit();
