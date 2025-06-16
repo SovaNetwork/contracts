@@ -4,7 +4,7 @@ pragma solidity 0.8.15;
 interface IUBTC {
     /// @notice Bitcoin-specific functions
     function depositBTC(uint64 amount, bytes calldata signedTx) external;
-    function withdraw(uint64 amount, uint64 btcGasLimit, uint32 btcBlockHeight, string calldata dest) external;
+    function withdraw(uint64 amount, uint64 btcGasLimit, uint64 btcBlockHeight, string calldata dest) external;
     function isTransactionUsed(bytes32 txid) external view returns (bool);
 
     /// @notice Admin functions
