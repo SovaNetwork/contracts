@@ -5,6 +5,7 @@ interface IUBTC {
     /// @notice Bitcoin-specific functions
     function depositBTC(uint64 amount, bytes calldata signedTx) external;
     function withdraw(uint64 amount, uint64 btcGasLimit, uint32 btcBlockHeight, string calldata dest) external;
+    function isTransactionUsed(bytes32 txid) external view returns (bool);
 
     /// @notice Admin functions
     function adminBurn(address wallet, uint256 amount) external;

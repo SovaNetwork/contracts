@@ -31,6 +31,9 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
     /// @notice Pause state of the contract
     bool private _paused;
 
+    /// @notice Mapping to track Bitcoin txids that have been used for deposits
+    mapping(bytes32 => bool) private usedTxids;
+
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
@@ -48,6 +51,7 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
     error InvalidDestinationFormat();
     error ContractPaused();
     error ContractNotPaused();
+    error TransactionAlreadyUsed();
 
     event Deposit(bytes32 txid, uint256 amount);
     event Withdraw(bytes32 txid, uint256 amount);
@@ -97,9 +101,20 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @notice Check if a Bitcoin txid has been used for deposit prior.
+     *
+     * @param txid The Bitcoin txid to check
+     *
+     * @return bool Boolean indicating if the txid has been used or not
+     */
+    function isTransactionUsed(bytes32 txid) external view returns (bool) {
+        return usedTxids[txid];
+    }
+
+    /**
      * @notice Deposits Bitcoin to mint uBTC tokens.
      *
-     * @dev The network will always broadcast this payload if not already public.
+     * @dev The network will broadcast this payload if not already public.
      *
      * @param amount            The amount of satoshis to deposit
      * @param signedTx          Signed Bitcoin transaction
@@ -116,10 +131,18 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
         // Validate if the transaction is a network deposit and get the decoded tx
         SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.isValidDeposit(signedTx, amount);
 
+        // Ensure this Bitcoin transaction hasn't been used before
+        if (usedTxids[btcTx.txid]) {
+            revert TransactionAlreadyUsed();
+        }
+
         // Check if signature is valid and the inputs are unspent
         if (!SovaBitcoin.checkSignature(signedTx)) {
             revert UnsignedInput();
         }
+
+        // Mark transaction as used to prevent replay attacks
+        usedTxids[btcTx.txid] = true;
 
         _mint(msg.sender, amount);
 
