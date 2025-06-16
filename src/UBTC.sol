@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 import "@solady/auth/Ownable.sol";
 import "@solady/utils/ReentrancyGuard.sol";
-import "@solady/tokens/WETH.sol";
+import "@solady/tokens/ERC20.sol";
 
 import "./interfaces/IUBTC.sol";
 
@@ -18,7 +18,7 @@ import "./lib/SovaBitcoin.sol";
  *
  * Bitcoin meets ERC20. Bitcoin meets composability.
  */
-contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
+contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
     uint64 public minDepositAmount;
 
@@ -71,7 +71,7 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor() WETH() Ownable() {
+    constructor() Ownable() {
         _initializeOwner(msg.sender);
 
         minDepositAmount = 10_000; // (starts at 10,000 sats)
@@ -94,20 +94,6 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
 
     function decimals() public view virtual override returns (uint8) {
         return 8;
-    }
-
-    /**
-     * @notice Overrides the standard WETH deposit method. Always reverts.
-     */
-    function deposit() public payable override {
-        revert("uBTC: must deposit with native BTC");
-    }
-
-    /**
-     * @notice Overrides the WETH withdraw method. Always reverts.
-     */
-    function withdraw(uint256) public pure override {
-        revert("uBTC: must use withdraw with destination");
     }
 
     /**
