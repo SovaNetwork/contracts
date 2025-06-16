@@ -53,6 +53,7 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
     event Withdraw(bytes32 txid, uint256 amount);
     event MinDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
+    event MaxGasLimitAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event ContractPausedByOwner(address indexed account);
     event ContractUnpausedByOwner(address indexed account);
 
@@ -75,7 +76,7 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
 
         minDepositAmount = 10_000; // (starts at 10,000 sats)
         maxDepositAmount = 100_000_000_000; // (starts at 1000 BTC = 100 billion sats)
-        maxGasLimitAmount = 50_000_000; // 0.5 BTC (50,000,000 sats)
+        maxGasLimitAmount = 50_000_000; // (starts at 0.5 BTC = 50,000,000 sats)
         _paused = false;
     }
 
@@ -197,7 +198,7 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Administrative function to burn tokens from a specific wallet
+     * @notice Admin function to burn tokens from a specific wallet
      *
      * @param wallet      The address to burn tokens from
      * @param amount      The amount of tokens to burn
@@ -207,46 +208,68 @@ contract UBTC is WETH, IUBTC, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Sets the minimum deposit amount (owner only)
+     * @notice Admin function to set the minimum deposit amount
+     *
      * @param _minAmount New minimum deposit amount in satoshis
      */
     function setMinDepositAmount(uint64 _minAmount) external onlyOwner {
         if (_minAmount >= maxDepositAmount) {
             revert InvalidDepositLimits();
         }
+
         uint64 oldAmount = minDepositAmount;
         minDepositAmount = _minAmount;
+
         emit MinDepositAmountUpdated(oldAmount, _minAmount);
     }
 
     /**
-     * @notice Sets the maximum deposit amount (owner only)
+     * @notice Admin function to set the maximum deposit amount
+     *
      * @param _maxAmount New maximum deposit amount in satoshis
      */
     function setMaxDepositAmount(uint64 _maxAmount) external onlyOwner {
         if (_maxAmount <= minDepositAmount) {
             revert InvalidDepositLimits();
         }
+
         uint64 oldAmount = maxDepositAmount;
         maxDepositAmount = _maxAmount;
+
         emit MaxDepositAmountUpdated(oldAmount, _maxAmount);
     }
 
     /**
-     * @notice Pauses the contract
-     * @dev Only the owner can pause the contract
+     * @notice Admin function to set the maximum gas limit amount
+     *
+     * @param _maxGasLimitAmount New maximum gas limit amount in satoshis
+     */
+    function setMaxGasLimitAmount(uint64 _maxGasLimitAmount) external onlyOwner {
+        if (_maxGasLimitAmount == 0) {
+            revert ZeroAmount();
+        }
+
+        uint64 oldAmount = maxGasLimitAmount;
+        maxGasLimitAmount = _maxGasLimitAmount;
+
+        emit MaxGasLimitAmountUpdated(oldAmount, _maxGasLimitAmount);
+    }
+
+    /**
+     * @notice Admin function to pause the contract
      */
     function pause() external onlyOwner whenNotPaused {
         _paused = true;
+
         emit ContractPausedByOwner(msg.sender);
     }
 
     /**
-     * @notice Unpauses the contract
-     * @dev Only the owner can unpause the contract
+     * @notice Admin function to unpause the contract
      */
     function unpause() external onlyOwner whenPaused {
         _paused = false;
+
         emit ContractUnpausedByOwner(msg.sender);
     }
 }
