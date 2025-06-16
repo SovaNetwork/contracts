@@ -12,7 +12,7 @@ import "./interfaces/ISovaL1Block.sol";
  *
  * SovaL1Block provides information about the state of the Bitcoin chain.
  * Values stored in this contract are used by validators to verify block execution.
- * The primary values used here are the Bitcoin block hieght and trailing block hash.
+ * The primary values used here are the Bitcoin block height and trailing block hash.
  *
  * Values within this contract are updated prior to Sova block execution via a system
  * tx and can only be set by the system account.
@@ -22,40 +22,17 @@ contract SovaL1Block is ISovaL1Block {
     bytes32 private blockHashSixBlocksBack;
     uint256 private lastUpdatedBlock;
 
-    function version() public pure virtual returns (string memory) {
+    address private constant SYSTEM_ACCOUNT_ADDRESS = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
+
+    function version() external pure virtual returns (string memory) {
         return "0.1.0-beta.1";
     }
 
-    function SYSTEM_ACCOUNT() public pure returns (address addr_) {
-        addr_ = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
-    }
-
     function setBitcoinBlockData(uint64 _blockHeight, bytes32 _blockHash) external {
-        require(msg.sender == SYSTEM_ACCOUNT(), "BitcoinBlock: only the system account can set block data");
+        require(msg.sender == SYSTEM_ACCOUNT_ADDRESS, "BitcoinBlock: only the system account can set block data");
 
         currentBlockHeight = _blockHeight;
         blockHashSixBlocksBack = _blockHash;
         lastUpdatedBlock = block.number;
-    }
-
-    function setBitcoinBlockDataCompact() public {
-        _setBitcoinBlockDataCompact();
-    }
-
-    /// @notice Internal implementation of setBitcoinBlockDataCompact
-    function _setBitcoinBlockDataCompact() internal {
-        address depositor = SYSTEM_ACCOUNT();
-        assembly {
-            // Revert if the caller is not the depositor account.
-            if xor(caller(), depositor) {
-                mstore(0x00, 0x3cc50b45) // 0x3cc50b45 is the 4-byte selector of "NotDepositor()"
-                revert(0x1C, 0x04) // returns the stored 4-byte selector from above
-            }
-
-            // Store values directly from calldata
-            sstore(currentBlockHeight.slot, and(calldataload(4), 0xffffffffffffffff)) // uint64
-            sstore(blockHashSixBlocksBack.slot, calldataload(36)) // bytes32
-            sstore(lastUpdatedBlock.slot, number()) // block.number
-        }
     }
 }
