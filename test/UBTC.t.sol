@@ -12,7 +12,7 @@ contract UBTCTest is Test {
     }
 
     function testTokenName() public view {
-        string memory expectedName = "Universal Bitcoin";
+        string memory expectedName = "Sova Wrapped Bitcoin";
         assertEq(sovaBtc.name(), expectedName);
     }
 
