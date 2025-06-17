@@ -70,7 +70,6 @@ abstract contract UBTC20 is ERC20 {
         }
     }
 
-    /// @dev use this in deposit logic
     function _setPendingDeposit(address user, uint256 amount) internal {
         _pendingDeposits[user] = Pending({amount: amount, timestamp: block.timestamp});
     }

@@ -51,6 +51,8 @@ contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
     error ContractPaused();
     error ContractNotPaused();
     error TransactionAlreadyUsed();
+    error PendingDepositExists();
+    error PendingWithdrawalExists();
 
     event Deposit(bytes32 txid, uint256 amount);
     event Withdraw(bytes32 txid, uint256 amount);
@@ -140,10 +142,12 @@ contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
             revert InvalidSignature();
         }
 
+        if (_pendingDeposits[msg.sender].amount > 0) revert PendingDepositExists();
+
         usedTxids[btcTx.txid] = true;
 
-        // Lock pending portion in internal accounting
-        _setPendingDeposit(msg.sender, _pendingDeposits[msg.sender].amount + amount);
+        // Lock pending deposit
+        _setPendingDeposit(msg.sender, amount);
 
         // Broadcast the BTC tx
         SovaBitcoin.broadcastBitcoinTx(signedTx);
@@ -188,8 +192,10 @@ contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
             revert InsufficientAmount();
         }
 
-        // Track as pending withdrawal to prevent transfer race conditions
-        _setPendingWithdrawal(msg.sender, _pendingWithdrawals[msg.sender].amount + totalRequired);
+        if (_pendingWithdrawals[msg.sender].amount > 0) revert PendingWithdrawalExists();
+
+        // Track pending withdrawal
+        _setPendingWithdrawal(msg.sender, totalRequired);
 
         // Call Bitcoin precompile to construct the BTC tx and lock the slot
         bytes memory inputData =
