@@ -68,7 +68,6 @@ abstract contract UBTC20 is ERC20 {
 
             _burn(user, amount);
         }
-
     }
 
     /// @dev use this in deposit logic
