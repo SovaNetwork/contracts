@@ -17,7 +17,7 @@ import "./UBTC20.sol";
  *
  * Bitcoin meets ERC20. Bitcoin meets composability.
  */
-contract sovaBTC is UBTC20, Ownable, ReentrancyGuard {
+contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
     uint64 public minDepositAmount;
 

@@ -2,17 +2,17 @@
 pragma solidity 0.8.15;
 
 import {Script, console} from "forge-std/Script.sol";
-import {UBTC} from "../src/UBTC.sol";
+import {SovaBTC} from "../src/SovaBTC.sol";
 
 contract CounterScript is Script {
-    UBTC public ubtc;
+    SovaBTC public sovaBtc;
 
     function setUp() public {}
 
     function run() public {
         vm.startBroadcast();
 
-        ubtc = new UBTC();
+        sovaBtc = new SovaBTC();
 
         vm.stopBroadcast();
     }
