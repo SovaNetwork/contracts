@@ -8,6 +8,15 @@ import "./lib/SovaBitcoin.sol";
 
 import "./UBTC20.sol";
 
+/**
+ * @custom:proxied true
+ * @custom:predeploy 0x2100000000000000000000000000000000000020
+ *
+ * @title Sova Bitcoin (sovaBTC)
+ * @author Sova Labs
+ *
+ * Bitcoin meets ERC20. Bitcoin meets composability.
+ */
 contract sovaBTC is UBTC20, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
     uint64 public minDepositAmount;
@@ -15,7 +24,7 @@ contract sovaBTC is UBTC20, Ownable, ReentrancyGuard {
     /// @notice Maximum deposit amount in satoshis
     uint64 public maxDepositAmount;
 
-    /// @notice Gas limit must not exceed 0.5 BTC (50,000,000 sats)
+    /// @notice Maximum gas limit amount in satoshis
     uint64 public maxGasLimitAmount;
 
     /// @notice Pause state of the contract
@@ -133,8 +142,6 @@ contract sovaBTC is UBTC20, Ownable, ReentrancyGuard {
 
         usedTxids[btcTx.txid] = true;
 
-        _mint(msg.sender, amount);
-
         // Lock pending portion in internal accounting
         _setPendingDeposit(msg.sender, _pendingDeposits[msg.sender].amount + amount);
 
@@ -181,9 +188,6 @@ contract sovaBTC is UBTC20, Ownable, ReentrancyGuard {
             revert InsufficientAmount();
         }
 
-        // Burn tokens upfront (optimistic)
-        _burn(msg.sender, totalRequired);
-
         // Track as pending withdrawal to prevent transfer race conditions
         _setPendingWithdrawal(msg.sender, _pendingWithdrawals[msg.sender].amount + totalRequired);
 
@@ -197,18 +201,6 @@ contract sovaBTC is UBTC20, Ownable, ReentrancyGuard {
         bytes32 btcTxid = bytes32(returndata);
 
         emit Withdraw(btcTxid, amount);
-    }
-
-    /// @notice User can clear confirmed deposits manually
-    /// @dev No minting, no state reversion, no events. Just bookkeeping.
-    function finalizeDeposit() external {
-        _clearPendingDeposit(msg.sender);
-    }
-
-    /// @notice User can confirm completed BTC withdrawal
-    /// @dev No UBTC gets returned or removed. Just bookkeeping.
-    function finalizeWithdrawal() external {
-        _clearPendingWithdrawal(msg.sender);
     }
 
     /**
