@@ -29,7 +29,7 @@ contract SovaL1Block is ISovaL1Block {
     }
 
     function setBitcoinBlockData(uint64 _blockHeight, bytes32 _blockHash) external {
-        require(msg.sender == SYSTEM_ACCOUNT_ADDRESS, "BitcoinBlock: only the system account can set block data");
+        require(msg.sender == SYSTEM_ACCOUNT_ADDRESS, "SovaL1Block: only the system account can set block data");
 
         currentBlockHeight = _blockHeight;
         blockHashSixBlocksBack = _blockHash;
