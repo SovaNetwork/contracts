@@ -16,6 +16,11 @@ library SovaBitcoin {
     /// @notice Native Bitcoin wrapper address
     address public constant UBTC_ADDRESS = 0x2100000000000000000000000000000000000020;
 
+    /// @notice Bitcoin locktime threshold
+    /// @dev Below this value locktime is interpreted as block number, otherwise as timestamp.
+    /// @dev https://github.com/bitcoin/bitcoin/blob/084eee029199a741c58e5537b332bd8360a1bdc3/src/script/script.h#L47
+    uint256 public constant LOCKTIME_THRESHOLD = 500000000;
+
     /// @notice Bitcoin precompile selectors
     bytes4 public constant BROADCAST_BYTES = 0x00000001;
     bytes4 public constant DECODE_BYTES = 0x00000002;
@@ -134,6 +139,19 @@ library SovaBitcoin {
 
         if (btcTx.locktime > block.timestamp) {
             revert InvalidLocktime();
+        }
+
+        // Locktime validation, only allow timestamp-based locktimes or zero
+        if (btcTx.locktime != 0) {
+            if (btcTx.locktime < LOCKTIME_THRESHOLD) {
+                // Reject all block-number based locktimes
+                revert InvalidLocktime();
+            }
+
+            // Validate timestamp-based locktime
+            if (btcTx.locktime > block.timestamp) {
+                revert InvalidLocktime();
+            }
         }
 
         // Recover the callers unique bitcoin deposit address
