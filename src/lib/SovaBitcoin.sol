@@ -132,7 +132,7 @@ library SovaBitcoin {
             revert InsufficientInput();
         }
 
-        if (btcTx.locktime > block.timestamp) {
+        if (btcTx.locktime != 0) {
             revert InvalidLocktime();
         }
 
