@@ -19,9 +19,8 @@ library SovaBitcoin {
     /// @notice Bitcoin precompile selectors
     bytes4 public constant BROADCAST_BYTES = 0x00000001;
     bytes4 public constant DECODE_BYTES = 0x00000002;
-    bytes4 public constant CHECKSIG_BYTES = 0x00000003;
-    bytes4 public constant ADDRESS_CONVERT_LEADING_BYTES = 0x00000004;
-    bytes4 public constant UBTC_SIGN_TX_BYTES = 0x00000005;
+    bytes4 public constant ADDRESS_CONVERT_LEADING_BYTES = 0x00000003;
+    bytes4 public constant UBTC_SIGN_TX_BYTES = 0x00000004;
 
     struct Output {
         string addr;
@@ -66,17 +65,6 @@ library SovaBitcoin {
         (bool success, bytes memory returndata) = BTC_PRECOMPILE.staticcall(abi.encodePacked(DECODE_BYTES, signedTx));
         if (!success) revert PrecompileCallFailed();
         return abi.decode(returndata, (BitcoinTx));
-    }
-
-    /**
-     * @notice Verifies the signatures in a Bitcoin transaction
-     *
-     * @param signedTx       The raw signed Bitcoin transaction
-     *
-     * @return success       Boolean indicating if payload is valid
-     */
-    function checkSignature(bytes calldata signedTx) internal view returns (bool success) {
-        (success,) = BTC_PRECOMPILE.staticcall(abi.encodePacked(CHECKSIG_BYTES, signedTx));
     }
 
     /**
