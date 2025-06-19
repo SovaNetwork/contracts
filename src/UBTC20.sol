@@ -14,12 +14,20 @@ abstract contract UBTC20 is ERC20 {
 
     /* --------------------------- GETTERS ---------------------------- */
 
-    function pendingDepositOf(address user) public view returns (uint256) {
+    function pendingDepositAmountOf(address user) public view returns (uint256) {
         return _pendingDeposits[user].amount;
     }
 
-    function pendingWithdrawalOf(address user) public view returns (uint256) {
+    function pendingDepositTimestampOf(address user) public view returns (uint256) {
+        return _pendingDeposits[user].timestamp;
+    }
+
+    function pendingWithdrawalAmountOf(address user) public view returns (uint256) {
         return _pendingWithdrawals[user].amount;
+    }
+
+    function pendingWithdrawalTimestampOf(address user) public view returns (uint256) {
+        return _pendingWithdrawals[user].timestamp;
     }
 
     /// @notice Returns the number of tokens the user can actually transfer.
@@ -34,21 +42,21 @@ abstract contract UBTC20 is ERC20 {
         return balanceOf(user) - _pendingDeposits[user].amount;
     }
 
-    /* ------------------------- TRANSFER OVERRIDES ------------------------- */
+    /* --------------------------- TRANSFER OVERRIDES ------------------------- */
 
     function transfer(address to, uint256 amount) public override returns (bool) {
         _maybeFinalize(msg.sender);
-        require(amount <= unlockedBalanceOf(msg.sender), "UBTC: transfer > unlocked");
+        require(amount <= unlockedBalanceOf(msg.sender), "UBTC20: transfer amount > unlocked amount");
         return super.transfer(to, amount);
     }
 
     function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
         _maybeFinalize(from);
-        require(amount <= unlockedBalanceOf(from), "UBTC: transferFrom > unlocked");
+        require(amount <= unlockedBalanceOf(from), "UBTC20: transferFrom amount > unlocked amount");
         return super.transferFrom(from, to, amount);
     }
 
-    /* ------------------------- INTERNAL HOUSEKEEPING ------------------------- */
+    /* ------------------------------- INTERNAL ------------------------------- */
 
     /// @notice Deferred accounting mechanism. The update of _pendingDeposits
     /// state triggers slot locking checks and will be reverted if locks are active
@@ -78,7 +86,7 @@ abstract contract UBTC20 is ERC20 {
         _pendingWithdrawals[user] = Pending({amount: amount, timestamp: block.timestamp});
     }
 
-    /* ---------------------------------- PUBLIC ----------------------------------- */
+    /* -------------------------------- PUBLIC --------------------------------- */
 
     function finalize(address user) external {
         _maybeFinalize(user);
