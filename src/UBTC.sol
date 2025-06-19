@@ -136,11 +136,6 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
             revert TransactionAlreadyUsed();
         }
 
-        // Check if signature is valid and the inputs are unspent
-        if (!SovaBitcoin.checkSignature(signedTx)) {
-            revert UnsignedInput();
-        }
-
         // Mark transaction as used to prevent replay attacks
         usedTxids[btcTx.txid] = true;
 
