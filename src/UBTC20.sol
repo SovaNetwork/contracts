@@ -32,11 +32,12 @@ abstract contract UBTC20 is ERC20 {
 
     /* ------------------------------- INTERNAL ------------------------------- */
 
-    /** @notice Deferred accounting mechanism. The 'pending' mechanics are enforced
+    /**
+     * @notice Deferred accounting mechanism. The 'pending' mechanics are enforced
      *         by the EVM execution engine's slot locking feature. Deposits and
      *         withdrawals are not finalized until the _pendingDeposits/_pendingWithdrawals
      *         mappings are 'unlocked'. The pending state allows for the transaction to be
-     *         finalized on Bitcoin before updating any base ERC20 state like balance or 
+     *         finalized on Bitcoin before updating any base ERC20 state like balance or
      *         total supply.
      */
     function _maybeFinalize(address user) internal {
