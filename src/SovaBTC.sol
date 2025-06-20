@@ -36,7 +36,6 @@ contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
-    error InvalidSignature();
     error InvalidLocktime();
     error BroadcastFailure();
     error AmountTooBig();
