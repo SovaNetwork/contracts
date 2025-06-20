@@ -30,36 +30,15 @@ abstract contract UBTC20 is ERC20 {
         return _pendingWithdrawals[user].timestamp;
     }
 
-    /// @notice Returns the number of tokens the user can actually transfer.
-    /// @dev This subtracts any pending deposit amounts that have not yet been
-    ///      finalized via `_mint`. Even though `balanceOf(user)` may reflect
-    ///      zero, a future `_maybeFinalize()` could mint tokens. This function
-    ///      ensures a user cannot transfer unfinalized deposit amounts in the
-    ///      same transaction.
-    /// @param user The address to query for unlocked (finalized) token balance.
-    /// @return uint256 Transferable token balance, minus any unminted pending deposits.
-    function unlockedBalanceOf(address user) public view returns (uint256) {
-        return balanceOf(user) - _pendingDeposits[user].amount;
-    }
-
-    /* --------------------------- TRANSFER OVERRIDES ------------------------- */
-
-    function transfer(address to, uint256 amount) public override returns (bool) {
-        _maybeFinalize(msg.sender);
-        require(amount <= unlockedBalanceOf(msg.sender), "UBTC20: transfer amount > unlocked amount");
-        return super.transfer(to, amount);
-    }
-
-    function transferFrom(address from, address to, uint256 amount) public override returns (bool) {
-        _maybeFinalize(from);
-        require(amount <= unlockedBalanceOf(from), "UBTC20: transferFrom amount > unlocked amount");
-        return super.transferFrom(from, to, amount);
-    }
-
     /* ------------------------------- INTERNAL ------------------------------- */
 
-    /// @notice Deferred accounting mechanism. The update of _pendingDeposits
-    /// state triggers slot locking checks and will be reverted if locks are active
+    /** @notice Deferred accounting mechanism. The 'pending' mechanics are enforced
+     *         by the EVM execution engine's slot locking feature. Deposits and
+     *         withdrawals are not finalized until the _pendingDeposits/_pendingWithdrawals
+     *         mappings are 'unlocked'. The pending state allows for the transaction to be
+     *         finalized on Bitcoin before updating any base ERC20 state like balance or 
+     *         total supply.
+     */
     function _maybeFinalize(address user) internal {
         // Finalize deposit if slot is unlocked
         if (_pendingDeposits[user].amount > 0) {
@@ -67,6 +46,8 @@ abstract contract UBTC20 is ERC20 {
             delete _pendingDeposits[user];
 
             _mint(user, amount);
+
+            // TODO(powvt): check locks here
         }
 
         // Finalize withdrawal if slot is unlocked
@@ -75,6 +56,8 @@ abstract contract UBTC20 is ERC20 {
             delete _pendingWithdrawals[user];
 
             _burn(user, amount);
+
+            // TODO(powvt): check locks here
         }
     }
 
