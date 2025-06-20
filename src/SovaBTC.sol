@@ -146,6 +146,8 @@ contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
         // Broadcast the BTC tx
         SovaBitcoin.broadcastBitcoinTx(signedTx);
 
+        // TODO(powvt): check locks here
+
         emit Deposit(btcTx.txid, amount);
     }
 
@@ -199,6 +201,8 @@ contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
         if (!success) revert SovaBitcoin.PrecompileCallFailed();
 
         bytes32 btcTxid = bytes32(returndata);
+
+        // TODO(powvt): check locks here
 
         emit Withdraw(btcTxid, amount);
     }
