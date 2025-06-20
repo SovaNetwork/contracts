@@ -137,11 +137,6 @@ contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
             revert TransactionAlreadyUsed();
         }
 
-        // Validate all inputs are signed and unspent
-        if (!SovaBitcoin.checkSignature(signedTx)) {
-            revert InvalidSignature();
-        }
-
         if (_pendingDeposits[msg.sender].amount > 0) revert PendingDepositExists();
 
         usedTxids[btcTx.txid] = true;
