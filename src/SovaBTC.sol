@@ -3,29 +3,28 @@ pragma solidity 0.8.15;
 
 import "@solady/auth/Ownable.sol";
 import "@solady/utils/ReentrancyGuard.sol";
-import "@solady/tokens/ERC20.sol";
-
-import "./interfaces/IUBTC.sol";
 
 import "./lib/SovaBitcoin.sol";
+
+import "./UBTC20.sol";
 
 /**
  * @custom:proxied true
  * @custom:predeploy 0x2100000000000000000000000000000000000020
  *
- * @title Universal Bitcoin Token (uBTC)
+ * @title Sova Bitcoin (sovaBTC)
  * @author Sova Labs
  *
  * Bitcoin meets ERC20. Bitcoin meets composability.
  */
-contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
+contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
     uint64 public minDepositAmount;
 
     /// @notice Maximum deposit amount in satoshis
     uint64 public maxDepositAmount;
 
-    /// @notice Gas limit must not exceed 0.5 BTC (50,000,000 sats)
+    /// @notice Maximum gas limit amount in satoshis
     uint64 public maxGasLimitAmount;
 
     /// @notice Pause state of the contract
@@ -37,7 +36,6 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
-    error UnsignedInput();
     error InvalidLocktime();
     error BroadcastFailure();
     error AmountTooBig();
@@ -52,6 +50,8 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
     error ContractPaused();
     error ContractNotPaused();
     error TransactionAlreadyUsed();
+    error PendingDepositExists();
+    error PendingWithdrawalExists();
 
     event Deposit(bytes32 txid, uint256 amount);
     event Withdraw(bytes32 txid, uint256 amount);
@@ -88,15 +88,15 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
         return _paused;
     }
 
-    function name() public view virtual override returns (string memory) {
-        return "Universal Bitcoin";
+    function name() public pure override returns (string memory) {
+        return "Sova Wrapped Bitcoin";
     }
 
-    function symbol() public view virtual override returns (string memory) {
-        return "uBTC";
+    function symbol() public pure override returns (string memory) {
+        return "sovaBTC";
     }
 
-    function decimals() public view virtual override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 8;
     }
 
@@ -120,7 +120,7 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
      * @param signedTx          Signed Bitcoin transaction
      */
     function depositBTC(uint64 amount, bytes calldata signedTx) external nonReentrant whenNotPaused {
-        // Check deposit limits
+        // Enforce deposit amount limits
         if (amount < minDepositAmount) {
             revert DepositBelowMinimum();
         }
@@ -128,21 +128,25 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
             revert DepositAboveMaximum();
         }
 
-        // Validate if the transaction is a network deposit and get the decoded tx
+        // Validate the BTC transaction and extract metadata
         SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.isValidDeposit(signedTx, amount);
 
-        // Ensure this Bitcoin transaction hasn't been used before
+        // Prevent re-use of the same txid
         if (usedTxids[btcTx.txid]) {
             revert TransactionAlreadyUsed();
         }
 
-        // Mark transaction as used to prevent replay attacks
+        if (_pendingDeposits[msg.sender].amount > 0) revert PendingDepositExists();
+
         usedTxids[btcTx.txid] = true;
 
-        _mint(msg.sender, amount);
+        // Lock pending deposit
+        _setPendingDeposit(msg.sender, amount);
 
-        // Broadcast signed btc tx
+        // Broadcast the BTC tx
         SovaBitcoin.broadcastBitcoinTx(signedTx);
+
+        // TODO(powvt): check locks here
 
         emit Deposit(btcTx.txid, amount);
     }
@@ -175,28 +179,30 @@ contract UBTC is ERC20, IUBTC, Ownable, ReentrancyGuard {
             revert ZeroGasLimit();
         }
 
-        // Gas limit must not exceed 0.5 BTC (50,000,000 sats)
         if (btcGasLimit > maxGasLimitAmount) {
             revert GasLimitTooHigh();
         }
 
-        // Validate users balance is high enough to cover the amount and max possible gas to be used
         uint256 totalRequired = amount + btcGasLimit;
         if (balanceOf(msg.sender) < totalRequired) {
             revert InsufficientAmount();
         }
 
-        _burn(msg.sender, totalRequired);
+        if (_pendingWithdrawals[msg.sender].amount > 0) revert PendingWithdrawalExists();
 
+        // Track pending withdrawal
+        _setPendingWithdrawal(msg.sender, totalRequired);
+
+        // Call Bitcoin precompile to construct the BTC tx and lock the slot
         bytes memory inputData =
             abi.encode(SovaBitcoin.UBTC_SIGN_TX_BYTES, msg.sender, amount, btcGasLimit, btcBlockHeight, dest);
 
-        // This call will set the slot locks for this contract until the slot resolution is done. Then the
-        // slot updates will either take place or be reverted.
         (bool success, bytes memory returndata) = SovaBitcoin.BTC_PRECOMPILE.call(inputData);
         if (!success) revert SovaBitcoin.PrecompileCallFailed();
 
         bytes32 btcTxid = bytes32(returndata);
+
+        // TODO(powvt): check locks here
 
         emit Withdraw(btcTxid, amount);
     }
