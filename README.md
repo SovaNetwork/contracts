@@ -6,14 +6,13 @@ The Sova Network enables smart contract to directly interact with the Bitcoin bl
 
 ## Details
 
-The Sova precompiles come with built-in safeguards against double-spending, payload verification, current block info, and more! These features are put to work in the `uBTC.sol` native Bitcoin wrapper contract or you can use them yourself by importing `SovaBitcoin.sol`. Our goal is to make it as easy as possible to add Bitcoin composability to your Sova smart contracts.
+The Sova precompiles provide built-in Bitcoin transaction validation, broadcast capabilities, and UTXO management with safeguards against double-spending and replay attacks. These features power the SovaBTC.sol predeploy contract and are available to any developer through the SovaBitcoin.sol library. Our goal is to make it as easy as possible to add native Bitcoin functionality to your Sova smart contracts.
 
-## Predeploy Contracts
-- **SovaL1Block**: Provides information about the state on Bitcoin
-- **uBTC**: Native Bitcoin wrapper on the Sova Network
-
-### Libraries
-- **SovaBitcoin**: Sova network utilities
+## Contracts
+- **SovaL1Block** (`0x2100000000000000000000000000000000000015`) - Bitcoin state tracking
+- **SovaBTC** (`0x2100000000000000000000000000000000000020`) - Bitcoin-backed ERC20 token
+- **SovaBitcoin** - Library for Bitcoin precompile interactions
+- **UBTC20** - Abstract base contract extending ERC20 with pending transaction states and slot locking. Prevents transfers during pending Bitcoin operations and handles deferred accounting for cross-chain finalization.
 
 ## Build
 
