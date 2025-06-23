@@ -4,6 +4,7 @@ pragma solidity 0.8.15;
 import "@solady/auth/Ownable.sol";
 import "@solady/utils/ReentrancyGuard.sol";
 
+import "./interfaces/ISovaBTC.sol";
 import "./lib/SovaBitcoin.sol";
 
 import "./UBTC20.sol";
@@ -17,7 +18,7 @@ import "./UBTC20.sol";
  *
  * Bitcoin meets ERC20. Bitcoin meets composability.
  */
-contract SovaBTC is UBTC20, Ownable, ReentrancyGuard {
+contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
     uint64 public minDepositAmount;
 
