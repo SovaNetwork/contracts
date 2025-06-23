@@ -16,10 +16,7 @@ abstract contract UBTC20 is ERC20 {
 
     /* --------------------------- MODIFIERS ---------------------------- */
 
-    /**
-     * @notice Modifier to prevent transfers or approvals when user has a pending
-     *         deposit or withdrawal.
-     */
+    /// @notice Modifier to prevent transfers when user has a pending deposit or withdrawal.
     modifier noPendingTransactions(address user) {
         if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
             revert PendingTransactionExists();
@@ -60,16 +57,6 @@ abstract contract UBTC20 is ERC20 {
         returns (bool)
     {
         return super.transferFrom(from, to, amount);
-    }
-
-    /// @notice Override approve to prevent approvals during pending states
-    function approve(address spender, uint256 amount)
-        public
-        override
-        noPendingTransactions(msg.sender)
-        returns (bool)
-    {
-        return super.approve(spender, amount);
     }
 
     /* ------------------------------- INTERNAL ------------------------------- */
