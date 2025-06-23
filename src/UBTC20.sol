@@ -12,7 +12,22 @@ abstract contract UBTC20 is ERC20 {
     mapping(address => Pending) internal _pendingDeposits;
     mapping(address => Pending) internal _pendingWithdrawals;
 
-    /* --------------------------- GETTERS ---------------------------- */
+    error PendingTransactionExists();
+
+    /* --------------------------- MODIFIERS ---------------------------- */
+
+    /**
+     * @notice Modifier to prevent transfers or approvals when user has a pending
+     *         deposit or withdrawal.
+     */
+    modifier noPendingTransactions(address user) {
+        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
+            revert PendingTransactionExists();
+        }
+        _;
+    }
+
+    /* ------------------------------ GETTERS ------------------------------ */
 
     function pendingDepositAmountOf(address user) public view returns (uint256) {
         return _pendingDeposits[user].amount;
@@ -28,6 +43,33 @@ abstract contract UBTC20 is ERC20 {
 
     function pendingWithdrawalTimestampOf(address user) public view returns (uint256) {
         return _pendingWithdrawals[user].timestamp;
+    }
+
+    /* ----------------------------- OVERRIDES ------------------------------ */
+
+    /// @notice Override transfer to prevent transfers during pending states
+    function transfer(address to, uint256 amount) public override noPendingTransactions(msg.sender) returns (bool) {
+        return super.transfer(to, amount);
+    }
+
+    /// @notice Override transferFrom to prevent transfers during pending states
+    function transferFrom(address from, address to, uint256 amount)
+        public
+        override
+        noPendingTransactions(from)
+        returns (bool)
+    {
+        return super.transferFrom(from, to, amount);
+    }
+
+    /// @notice Override approve to prevent approvals during pending states
+    function approve(address spender, uint256 amount)
+        public
+        override
+        noPendingTransactions(msg.sender)
+        returns (bool)
+    {
+        return super.approve(spender, amount);
     }
 
     /* ------------------------------- INTERNAL ------------------------------- */
