@@ -62,7 +62,6 @@ abstract contract UBTC20 is ERC20 {
         return super.transferFrom(from, to, amount);
     }
 
-
     /// @notice Override approve to prevent approvals during pending states
     function approve(address spender, uint256 amount)
         public
