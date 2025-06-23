@@ -17,9 +17,8 @@ abstract contract UBTC20 is ERC20 {
     /* --------------------------- MODIFIERS ---------------------------- */
 
     /**
-     * @notice Modifier to check if user has any pending transactions
-     * @dev Prevents transfers when user has pending deposits or withdrawals
-     * @param user The address to check for pending transactions
+     * @notice Modifier to prevent transfers or approvals when user has a pending
+     *         deposit or withdrawal.
      */
     modifier noPendingTransactions(address user) {
         if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
@@ -28,7 +27,7 @@ abstract contract UBTC20 is ERC20 {
         _;
     }
 
-    /* --------------------------- GETTERS ---------------------------- */
+    /* ------------------------------ GETTERS ------------------------------ */
 
     function pendingDepositAmountOf(address user) public view returns (uint256) {
         return _pendingDeposits[user].amount;
@@ -46,25 +45,14 @@ abstract contract UBTC20 is ERC20 {
         return _pendingWithdrawals[user].timestamp;
     }
 
-    /* --------------------------- OVERRIDES ---------------------------- */
+    /* ----------------------------- OVERRIDES ------------------------------ */
 
-    /**
-     * @notice Override transfer to prevent transfers during pending states
-     * @param to The recipient address
-     * @param amount The amount to transfer
-     * @return bool Success status
-     */
+    /// @notice Override transfer to prevent transfers during pending states
     function transfer(address to, uint256 amount) public override noPendingTransactions(msg.sender) returns (bool) {
         return super.transfer(to, amount);
     }
 
-    /**
-     * @notice Override transferFrom to prevent transfers during pending states
-     * @param from The sender address
-     * @param to The recipient address
-     * @param amount The amount to transfer
-     * @return bool Success status
-     */
+    /// @notice Override transferFrom to prevent transfers during pending states
     function transferFrom(address from, address to, uint256 amount)
         public
         override
@@ -74,12 +62,8 @@ abstract contract UBTC20 is ERC20 {
         return super.transferFrom(from, to, amount);
     }
 
-    /**
-     * @notice Override approve to prevent approvals during pending states
-     * @param spender The spender address
-     * @param amount The amount to approve
-     * @return bool Success status
-     */
+
+    /// @notice Override approve to prevent approvals during pending states
     function approve(address spender, uint256 amount)
         public
         override
