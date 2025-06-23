@@ -12,6 +12,22 @@ abstract contract UBTC20 is ERC20 {
     mapping(address => Pending) internal _pendingDeposits;
     mapping(address => Pending) internal _pendingWithdrawals;
 
+    error PendingTransactionExists();
+
+    /* --------------------------- MODIFIERS ---------------------------- */
+
+    /**
+     * @notice Modifier to check if user has any pending transactions
+     * @dev Prevents transfers when user has pending deposits or withdrawals
+     * @param user The address to check for pending transactions
+     */
+    modifier noPendingTransactions(address user) {
+        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
+            revert PendingTransactionExists();
+        }
+        _;
+    }
+
     /* --------------------------- GETTERS ---------------------------- */
 
     function pendingDepositAmountOf(address user) public view returns (uint256) {
@@ -28,6 +44,49 @@ abstract contract UBTC20 is ERC20 {
 
     function pendingWithdrawalTimestampOf(address user) public view returns (uint256) {
         return _pendingWithdrawals[user].timestamp;
+    }
+
+    /* --------------------------- OVERRIDES ---------------------------- */
+
+    /**
+     * @notice Override transfer to prevent transfers during pending states
+     * @param to The recipient address
+     * @param amount The amount to transfer
+     * @return bool Success status
+     */
+    function transfer(address to, uint256 amount) public override noPendingTransactions(msg.sender) returns (bool) {
+        return super.transfer(to, amount);
+    }
+
+    /**
+     * @notice Override transferFrom to prevent transfers during pending states
+     * @param from The sender address
+     * @param to The recipient address
+     * @param amount The amount to transfer
+     * @return bool Success status
+     */
+    function transferFrom(address from, address to, uint256 amount)
+        public
+        override
+        noPendingTransactions(from)
+        returns (bool)
+    {
+        return super.transferFrom(from, to, amount);
+    }
+
+    /**
+     * @notice Override approve to prevent approvals during pending states
+     * @param spender The spender address
+     * @param amount The amount to approve
+     * @return bool Success status
+     */
+    function approve(address spender, uint256 amount)
+        public
+        override
+        noPendingTransactions(msg.sender)
+        returns (bool)
+    {
+        return super.approve(spender, amount);
     }
 
     /* ------------------------------- INTERNAL ------------------------------- */
