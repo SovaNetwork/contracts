@@ -106,7 +106,10 @@ library SovaBitcoin {
      *
      * @return btcTx            The decoded Bitcoin transaction
      */
-    function isValidDeposit(bytes memory signedTx, uint256 amount, uint8 voutIndex) internal returns (BitcoinTx memory) {
+    function isValidDeposit(bytes memory signedTx, uint256 amount, uint8 voutIndex)
+        internal
+        returns (BitcoinTx memory)
+    {
         BitcoinTx memory btcTx = decodeBitcoinTx(signedTx);
 
         if (btcTx.outputs.length < 1 || btcTx.outputs.length > 3) {
