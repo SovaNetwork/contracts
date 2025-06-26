@@ -146,7 +146,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
 
         // Broadcast the BTC tx
         SovaBitcoin.broadcastBitcoinTx(signedTx);
-        
+
         // Lock the slots touch till now in this transaction
         SovaBitcoin.lockSlots();
 
