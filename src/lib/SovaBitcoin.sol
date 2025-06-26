@@ -21,8 +21,7 @@ library SovaBitcoin {
     bytes4 public constant DECODE_BYTES = 0x00000002;
     bytes4 public constant ADDRESS_CONVERT_LEADING_BYTES = 0x00000003;
     bytes4 public constant UBTC_SIGN_TX_BYTES = 0x00000004;
-    bytes4 public constant LOCK_SLOTS_BYTES = 0x00000005;
-    bytes4 public constant CHECK_LOCKS_BYTES = 0x00000006;
+    bytes4 public constant CHECK_LOCKS_BYTES = 0x00000005;
 
     struct Output {
         string addr;
@@ -137,17 +136,8 @@ library SovaBitcoin {
     }
 
     /**
-     * @notice Trigger for slot locking on Sova Network.
-     * @dev Locks the SSTORES touched in the current transaction BEFORE the LockSlots method is called
-     */
-    function lockSlots() internal {
-        (bool success,) = BTC_PRECOMPILE.call(abi.encodePacked(LOCK_SLOTS_BYTES));
-        if (!success) revert PrecompileCallFailed();
-    }
-
-    /**
      * @notice Trigger for checking locks on Sova Network.
-     * @dev Performs all lock-checks for touched slots BEFORE the LockSlots method is called
+     * @dev Performs all lock-checks for touched slots BEFORE the CheckLocks method is called
      */
     function checkLocks() internal {
         (bool success,) = BTC_PRECOMPILE.call(abi.encodePacked(CHECK_LOCKS_BYTES));
