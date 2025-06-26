@@ -2,6 +2,7 @@
 pragma solidity 0.8.15;
 
 import "@solady/tokens/ERC20.sol";
+import "./lib/SovaBitcoin.sol";
 
 abstract contract UBTC20 is ERC20 {
     struct Pending {
@@ -77,7 +78,9 @@ abstract contract UBTC20 is ERC20 {
 
             _mint(user, amount);
 
-            // TODO(powvt): check locks here
+            // Check the locks touched till here in this tx
+            // This prevents funding a user's wallet till the deposit is finalized
+            SovaBitcoin.checkLocks();
         }
 
         // Finalize withdrawal if slot is unlocked
@@ -87,7 +90,9 @@ abstract contract UBTC20 is ERC20 {
 
             _burn(user, amount);
 
-            // TODO(powvt): check locks here
+            // Check the locks touched till here in this tx
+            // This prevents funding a user's wallet till the deposit is finalized
+            SovaBitcoin.checkLocks();
         }
     }
 
