@@ -79,7 +79,7 @@ abstract contract UBTC20 is ERC20 {
             _mint(user, amount);
 
             // Check the locks touched till here in this tx
-            // This prevents funding a user's wallet till the deposit is finalized
+            // This prevents minting to a user's wallet until their deposit is finalized
             SovaBitcoin.checkLocks();
         }
 
@@ -91,7 +91,6 @@ abstract contract UBTC20 is ERC20 {
             _burn(user, amount);
 
             // Check the locks touched till here in this tx
-            // This prevents funding a user's wallet till the deposit is finalized
             SovaBitcoin.checkLocks();
         }
     }
