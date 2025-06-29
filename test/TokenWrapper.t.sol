@@ -183,5 +183,58 @@ contract TokenWrapperTest is Test {
         );
         wrapper.redeem(address(lbtc), 1e8);
     }
+
+    function testDepositWithMintFee() public {
+        vm.prank(admin);
+        wrapper.setMintFee(true, 50); // 0.5%
+
+        uint256 amount = 1e8;
+        vm.prank(user1);
+        wrapper.deposit(address(wbtc), amount);
+
+        uint256 fee = (amount * 50) / 10_000;
+        uint256 minted = amount - fee;
+        assertEq(sovaBTC.balanceOf(user1), minted);
+        assertEq(sovaBTC.balanceOf(admin), fee);
+    }
+
+    function testRedeemWithBurnFee() public {
+        // deposit without mint fee first
+        vm.prank(user1);
+        wrapper.deposit(address(wbtc), 1e8);
+        uint256 bal = sovaBTC.balanceOf(user1);
+
+        vm.prank(admin);
+        wrapper.setBurnFee(true, 100); // 1%
+
+        vm.prank(user1);
+        wrapper.redeem(address(wbtc), bal);
+
+        uint256 fee = (1e8 * 100) / 10_000;
+        assertEq(wbtc.balanceOf(user1), 1e8 - fee);
+        assertEq(wbtc.balanceOf(admin), fee);
+    }
+
+    function testOnlyOwnerCanSetMintFee() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
+                user1
+            )
+        );
+        vm.prank(user1);
+        wrapper.setMintFee(true, 10);
+    }
+
+    function testOnlyOwnerCanSetBurnFee() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
+                user1
+            )
+        );
+        vm.prank(user1);
+        wrapper.setBurnFee(true, 10);
+    }
 }
 
