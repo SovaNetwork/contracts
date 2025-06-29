@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../src/SovaBTC.sol";
 import "../src/TokenWrapper.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./mocks/MockERC20BTC.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 contract TokenWrapperTest is Test {
     SovaBTC internal sovaBTC;
@@ -56,7 +58,7 @@ contract TokenWrapperTest is Test {
     function testDepositAndWrap() public {
         uint256 amount = 1e8; // 1 WBTC
         vm.expectEmit(true, true, false, true);
-        emit TokenWrapped(user1, address(wbtc), amount, amount);
+        emit TokenWrapper.TokenWrapped(user1, address(wbtc), amount, amount);
         vm.prank(user1);
         wrapper.deposit(address(wbtc), amount);
         assertEq(sovaBTC.balanceOf(user1), amount);
@@ -107,11 +109,21 @@ contract TokenWrapperTest is Test {
     }
 
     function testNonOwnerCannotAddOrPause() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
+                user1
+            )
+        );
         vm.prank(user1);
         wrapper.addAllowedToken(address(0xDEAD));
 
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
+                user1
+            )
+        );
         vm.prank(user1);
         wrapper.pause();
     }
@@ -120,7 +132,7 @@ contract TokenWrapperTest is Test {
         vm.prank(admin);
         wrapper.pause();
 
-        vm.expectRevert("Pausable: paused");
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
         vm.prank(user1);
         wrapper.deposit(address(wbtc), 1e8);
 
@@ -135,7 +147,9 @@ contract TokenWrapperTest is Test {
         fakeBTC.mint(user1, 1000);
         vm.startPrank(user1);
         fakeBTC.approve(address(wrapper), 1000);
-        vm.expectRevert(TokenWrapper.TokenNotAllowed.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenWrapper.TokenNotAllowed.selector, address(fakeBTC))
+        );
         wrapper.deposit(address(fakeBTC), 1000);
         vm.stopPrank();
     }
@@ -147,7 +161,9 @@ contract TokenWrapperTest is Test {
         wbtc.mint(user1, 50);
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), 50);
-        vm.expectRevert(TokenWrapper.DepositBelowMinimum.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenWrapper.DepositBelowMinimum.selector, 50, 100)
+        );
         wrapper.deposit(address(wbtc), 50);
         vm.stopPrank();
     }
@@ -157,7 +173,14 @@ contract TokenWrapperTest is Test {
         wrapper.deposit(address(wbtc), 1e8);
 
         vm.prank(user1);
-        vm.expectRevert(TokenWrapper.InsufficientReserve.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenWrapper.InsufficientReserve.selector,
+                address(lbtc),
+                1e18,
+                0
+            )
+        );
         wrapper.redeem(address(lbtc), 1e8);
     }
 }

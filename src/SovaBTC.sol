@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.20;
 
 import "@solady/auth/Ownable.sol";
 import "@solady/utils/ReentrancyGuard.sol";
@@ -209,16 +209,6 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Admin function to burn tokens from a specific wallet
-     *
-     * @param wallet      The address to burn tokens from
-     * @param amount      The amount of tokens to burn
-     */
-    function adminBurn(address wallet, uint256 amount) external onlyOwner {
-        _burn(wallet, amount);
-    }
-
-    /**
      * @notice Admin function to set the minimum deposit amount
      *
      * @param _minAmount New minimum deposit amount in satoshis
@@ -282,5 +272,19 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         _paused = false;
 
         emit ContractUnpausedByOwner(msg.sender);
+    }
+
+    /* ------------------- ADMIN MINT/BURN -------------------- */
+
+    /**
+     * @notice Mint uBTC to a wallet (wrapper or bridge usage).
+     * @dev Only owner. Primarily intended for bridging wrappers on other chains.
+     */
+    function adminMint(address wallet, uint256 amount) external onlyOwner {
+        _mint(wallet, amount);
+    }
+
+    function adminBurn(address wallet, uint256 amount) external onlyOwner {
+        _burn(wallet, amount);
     }
 }

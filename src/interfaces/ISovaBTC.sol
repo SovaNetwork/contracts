@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.20;
 
 interface ISovaBTC {
     /// @notice Bitcoin-specific functions
@@ -15,4 +15,7 @@ interface ISovaBTC {
     function setMaxGasLimitAmount(uint64 _maxGasLimitAmount) external;
     function pause() external;
     function unpause() external;
+
+    // Admin mint/burn for wrapper usage
+    function adminMint(address wallet, uint256 amount) external;
 }

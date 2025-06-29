@@ -1,22 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-interface IERC20Metadata is IERC20 {
-    function decimals() external view returns (uint8);
-}
-
-/// @notice Partial interface for the SovaBTC (uBTC) token, which the wrapper will mint/burn
-interface ISovaBTC is IERC20 {
-    function adminBurn(address wallet, uint256 amount) external;
-    function adminMint(address wallet, uint256 amount) external;
-}
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "./interfaces/ISovaBTC.sol";
 
 contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
     using SafeERC20 for IERC20;
@@ -58,7 +50,7 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
      * @param _sovaBTC Address of the SovaBTC (uBTC) token contract.
      */
     function initialize(address _sovaBTC) external initializer {
-        __Ownable_init();
+        __Ownable_init(msg.sender);
         __Pausable_init();
         __ReentrancyGuard_init();
         __UUPSUpgradeable_init();
@@ -117,7 +109,7 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
         if (dec > 8) {
             // Token has more than 8 decimals (e.g. 18): divide to convert to 8-decimal (sat) units
             uint256 factor = 10 ** (dec - 8);
-            // Ensure deposit amount is an exact multiple of 1 satoshi in this token’s units
+            // Ensure deposit amount is an exact multiple of 1 satoshi in this token's units
             if (amount % factor != 0) {
                 // `factor` here represents the smallest deposit amount that equals 1 satoshi of value
                 revert DepositBelowMinimum(amount, factor);
