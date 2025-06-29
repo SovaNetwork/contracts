@@ -42,7 +42,9 @@ forge inspect src/SovaL1Block.sol:SovaL1Block deployedBytecode
 - **1:1 conversions:** every sovaBTC is backed by exactly one Bitcoin's worth of the underlying token.
 - **Cross-asset conversion:** deposit one wrapped BTC token and redeem another when available.
 - **Governance controlled allowlist:** only tokens approved by the owner can be deposited.
+- **Configurable fee system:** optional mint and burn fees controlled by governance.
 - **Upgradeable & pausable:** the contract uses the UUPS proxy pattern and can be paused in emergencies.
+- **Reentrancy protection:** all user-facing functions are protected against reentrancy attacks.
 
 ### Supported Tokens
 Supported tokens are managed by the owner via an allowlist:
@@ -51,21 +53,40 @@ Supported tokens are managed by the owner via an allowlist:
 
 Any ERC20 representing BTC can be added, e.g. WBTC (8 decimals) or tBTC v2 (18 decimals). The wrapper handles decimal differences so that sovaBTC always has 8 decimals.
 
+### Fee System
+The contract implements an optional fee system for both deposits and redemptions:
+
+#### Mint Fees
+- Applied when users deposit tokens to receive sovaBTC
+- Configurable via `setMintFee(bool enabled, uint256 bps)`
+- Fees are collected in sovaBTC and sent to the contract owner
+- Users receive `depositAmount - feeAmount` of sovaBTC
+
+#### Burn Fees  
+- Applied when users redeem sovaBTC for underlying tokens
+- Configurable via `setBurnFee(bool enabled, uint256 bps)`
+- Fees are collected in the underlying token and sent to the contract owner
+- Users receive `redeemAmount - feeAmount` of the underlying token
+
+Fees are specified in basis points (bps) where 10,000 bps = 100%.
+
 ### Deposit Flow
 1. Approve the TokenWrapper to spend your BTC token.
 2. Call `deposit(token, amount)` with an allowed token address and amount.
-3. The contract locks your tokens and mints the BTC-equivalent amount of sovaBTC to you.
+3. The contract locks your tokens and mints the BTC-equivalent amount of sovaBTC to you (minus any applicable mint fees).
 
 ### Redeem Flow
 1. Hold sovaBTC and decide which underlying token you want back.
 2. Call `redeem(token, sovaAmount)` specifying the token and amount of sovaBTC to burn.
-3. The contract burns your sovaBTC and transfers the chosen BTC token from its reserves to you.
+3. The contract burns your sovaBTC and transfers the chosen BTC token from its reserves to you (minus any applicable burn fees).
 
 ### Governance Functions
-- `addAllowedToken(address token)`
-- `removeAllowedToken(address token)`
-- `setMinDepositSatoshi(uint256 minSats)` – set minimum deposit (default 10,000 sats).
-- `pause()` / `unpause()` – emergency stop for deposits and redeems.
+- `addAllowedToken(address token)` – add a token to the allowlist
+- `removeAllowedToken(address token)` – remove a token from the allowlist
+- `setMinDepositSatoshi(uint256 minSats)` – set minimum deposit (default 10,000 sats)
+- `setMintFee(bool enabled, uint256 bps)` – configure mint fees
+- `setBurnFee(bool enabled, uint256 bps)` – configure burn fees
+- `pause()` / `unpause()` – emergency stop for deposits and redeems
 
 ### Contract Function List
 - `initialize(address sovaBTC)` – UUPS initializer.
@@ -74,14 +95,37 @@ Any ERC20 representing BTC can be added, e.g. WBTC (8 decimals) or tBTC v2 (18 d
 - `addAllowedToken(address token)` – owner only.
 - `removeAllowedToken(address token)` – owner only.
 - `setMinDepositSatoshi(uint256 minSats)` – owner only.
+- `setMintFee(bool enabled, uint256 bps)` – owner only.
+- `setBurnFee(bool enabled, uint256 bps)` – owner only.
 - `pause()` / `unpause()` – owner only.
 - `owner()` – from `OwnableUpgradeable`.
+
+### Events
+The contract emits the following events for tracking:
+- `TokenWrapped(address indexed user, address indexed token, uint256 amountIn, uint256 sovaAmount)` – emitted on successful deposits
+- `TokenUnwrapped(address indexed user, address indexed token, uint256 amountOut, uint256 sovaAmount)` – emitted on successful redemptions
+- `AllowedTokenAdded(address indexed token)` – emitted when a token is added to allowlist
+- `AllowedTokenRemoved(address indexed token)` – emitted when a token is removed from allowlist
+- `MintFeeUpdated(bool enabled, uint256 bps)` – emitted when mint fees are updated
+- `BurnFeeUpdated(bool enabled, uint256 bps)` – emitted when burn fees are updated
+
+### Error Handling
+The contract includes comprehensive error handling with custom errors:
+- `TokenNotAllowed(address token)` – attempted deposit of non-allowlisted token
+- `DepositBelowMinimum(uint256 amount, uint256 minimum)` – deposit amount below minimum threshold
+- `InsufficientReserve(address token, uint256 requested, uint256 available)` – insufficient token reserves for redemption
+- `AlreadyAllowed(address token)` – trying to add a token that's already allowlisted
+- `NotInAllowlist(address token)` – trying to remove a token that's not allowlisted
+- `ZeroAddress()` – invalid zero address provided
+- `ZeroAmount()` – invalid zero amount provided
 
 ### Security Considerations
 - The total supply of sovaBTC is always backed by the BTC-value of tokens held by the contract.
 - Deposits that would result in fractional satoshis are rejected to avoid rounding issues.
-- Only the owner can manage the allowlist or pause the contract.
+- Only the owner can manage the allowlist, configure fees, or pause the contract.
 - The UUPS upgrade pattern allows the contract logic to be upgraded if required.
+- All user-facing functions include reentrancy protection.
+- Fee collection ensures the owner can monetize the service while maintaining full transparency.
 
 ### Running Tests
 This repository uses Foundry for testing. Run all tests with:
