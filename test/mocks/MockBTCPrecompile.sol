@@ -106,11 +106,10 @@ contract MockBTCPrecompile {
         }
 
         // Extract the 4-byte selector from calldata.
-        bytes4 selector;
-        assembly {
-            // Right-shift to isolate the first 4 bytes of calldata.
-            selector := shr(224, calldataload(0))
+        if (data.length < 4) {
+            return "";
         }
+        bytes4 selector = bytes4(data[:4]);
 
         if (selector == BROADCAST_BYTES) {
             // Do nothing – considered successful broadcast (no return data required).
@@ -121,10 +120,9 @@ contract MockBTCPrecompile {
             // Return a minimally-valid BitcoinTx whose first output `value` mirrors the `amount`
             // embedded by the test in the first 32 bytes of `signedTx`.
             // The library only checks: outputs length, value equality, inputs length, locktime.
-            uint256 amount;
-            assembly {
-                // Skip selector – load next 32 bytes which our tests encode as `amount`.
-                amount := calldataload(4)
+            uint256 amount = 0;
+            if (data.length >= 36) { // 4 bytes selector + 32 bytes amount
+                amount = abi.decode(data[4:36], (uint256));
             }
             return _encodeTx(mockValue > 0 ? mockValue : amount);
         }
