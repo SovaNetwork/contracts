@@ -38,6 +38,50 @@ contract MockBTCPrecompile {
     }
 
     /* -------------------------------------------------------------------------- */
+    /*                                 Mock setup                                 */
+    /* -------------------------------------------------------------------------- */
+
+    uint256 public mockOutputs = 1;
+    uint256 public mockValue;
+    uint256 public mockInputs = 1;
+    uint256 public mockLocktime = 0;
+    string public mockAddress;
+    bool public precompileFails = false;
+
+    function setMockOutputs(uint256 num) external {
+        mockOutputs = num;
+    }
+
+    function setMockValue(uint256 val) external {
+        mockValue = val;
+    }
+
+    function setMockInputs(uint256 num) external {
+        mockInputs = num;
+    }
+
+    function setMockLocktime(uint256 time) external {
+        mockLocktime = time;
+    }
+
+    function setMockAddress(string calldata addr) external {
+        mockAddress = addr;
+    }
+
+    function setPrecompileFails(bool fails) external {
+        precompileFails = fails;
+    }
+
+    function reset() external {
+        mockOutputs = 1;
+        mockValue = 0;
+        mockInputs = 1;
+        mockLocktime = 0;
+        mockAddress = "";
+        precompileFails = false;
+    }
+
+    /* -------------------------------------------------------------------------- */
     /*                                 Constants                                  */
     /* -------------------------------------------------------------------------- */
 
@@ -57,10 +101,15 @@ contract MockBTCPrecompile {
     /// @dev The SovaBitcoin library interacts with this contract *only* through
     ///      low-level `call/staticcall`, so we implement the logic in `fallback`.
     fallback(bytes calldata data) external returns (bytes memory) {
+        if (precompileFails) {
+            revert();
+        }
+
         // Extract the 4-byte selector from calldata.
         bytes4 selector;
         assembly {
-            selector := calldataload(0)
+            // Right-shift to isolate the first 4 bytes of calldata.
+            selector := shr(224, calldataload(0))
         }
 
         if (selector == BROADCAST_BYTES) {
@@ -77,7 +126,7 @@ contract MockBTCPrecompile {
                 // Skip selector – load next 32 bytes which our tests encode as `amount`.
                 amount := calldataload(4)
             }
-            return _encodeTx(amount);
+            return _encodeTx(mockValue > 0 ? mockValue : amount);
         }
 
         if (selector == ADDRESS_CONVERT_LEADING_BYTES) {
@@ -99,14 +148,24 @@ contract MockBTCPrecompile {
     /* -------------------------------------------------------------------------- */
 
     /// @dev Builds and ABI-encodes a minimal `BitcoinTx` struct for the DECODE_BYTES path.
-    function _encodeTx(uint256 amount) private pure returns (bytes memory) {
-        Output[] memory outputs = new Output[](1);
-        outputs[0] = Output({addr: MOCK_DEPOSIT_ADDRESS, value: amount, script: ""});
+    function _encodeTx(uint256 amount) private view returns (bytes memory) {
+        Output[] memory outputs = new Output[](mockOutputs);
+        if (mockOutputs > 0) {
+            outputs[0] = Output({
+                addr: bytes(mockAddress).length > 0 ? mockAddress : MOCK_DEPOSIT_ADDRESS,
+                value: mockValue > 0 ? mockValue : amount,
+                script: ""
+            });
+        }
 
-        Input[] memory inputs = new Input[](1);
-        inputs[0] = Input({prevTxHash: bytes32(uint256(0x1)), outputIndex: 0, scriptSig: "", witness: new bytes[](0)});
+        Input[] memory inputs = new Input[](mockInputs);
+        if (mockInputs > 0) {
+            inputs[0] =
+                Input({prevTxHash: bytes32(uint256(0x1)), outputIndex: 0, scriptSig: "", witness: new bytes[](0)});
+        }
 
-        BitcoinTx memory btcTx = BitcoinTx({txid: bytes32(amount), outputs: outputs, inputs: inputs, locktime: 0});
+        BitcoinTx memory btcTx =
+            BitcoinTx({txid: bytes32(amount), outputs: outputs, inputs: inputs, locktime: mockLocktime});
 
         return abi.encode(btcTx);
     }

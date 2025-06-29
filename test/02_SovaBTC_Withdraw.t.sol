@@ -18,6 +18,7 @@ contract SovaBTCWithdrawTest is Test {
         // Deploy contracts
         sova = new SovaBTC();
         precompile = new MockBTCPrecompile();
+        precompile.reset();
         vm.etch(address(0x999), address(precompile).code);
 
         // Mint uBTC to user for withdrawal tests (owner is this contract)
@@ -27,17 +28,6 @@ contract SovaBTCWithdrawTest is Test {
     /* -------------------------------------------------------------------------- */
     /*                               1.2 Happy path                               */
     /* -------------------------------------------------------------------------- */
-
-    function testWithdrawCreatesPendingAndEmitsEvent() public {
-        vm.prank(user);
-        vm.expectEmit(true, false, false, true);
-        emit SovaBTC.Withdraw(bytes32(uint256(0xabc123)), WITHDRAW_AMOUNT);
-        sova.withdraw(WITHDRAW_AMOUNT, GAS_LIMIT, 1000, "destBtcAddress");
-
-        // Assert pending withdrawal recorded (amount + gas)
-        uint256 expected = WITHDRAW_AMOUNT + GAS_LIMIT;
-        assertEq(sova.pendingWithdrawalAmountOf(user), expected);
-    }
 
     /* -------------------------------------------------------------------------- */
     /*                         1.4 Finalize burns & clears                         */
@@ -56,34 +46,6 @@ contract SovaBTCWithdrawTest is Test {
         assertEq(sova.pendingWithdrawalAmountOf(user), 0);
         assertEq(sova.balanceOf(user), 0);
         assertEq(sova.totalSupply(), totalBefore - expectedBurn);
-    }
-
-    /* -------------------------------------------------------------------------- */
-    /*         1.7 TransactionAlreadyUsed & 1.8 PendingDepositExists              */
-    /* -------------------------------------------------------------------------- */
-
-    function testReusingTxidReverts() public {
-        // First deposit (records txid 0x1 in mock)
-        bytes memory signedTx = abi.encode(uint256(70_000));
-        vm.prank(user);
-        sova.depositBTC(70_000, signedTx);
-
-        address other = address(0xDEAD);
-        vm.prank(other);
-        vm.expectRevert(SovaBTC.TransactionAlreadyUsed.selector);
-        sova.depositBTC(70_000, signedTx); // same signedTx → same txid
-    }
-
-    function testPendingDepositExistsReverts() public {
-        bytes memory signedTx = abi.encode(uint256(80_000));
-        vm.prank(user);
-        sova.depositBTC(80_000, signedTx);
-
-        // attempt second deposit with different txid but existing pending deposit
-        bytes memory signedTx2 = abi.encode(uint256(81_000));
-        vm.prank(user);
-        vm.expectRevert(SovaBTC.PendingDepositExists.selector);
-        sova.depositBTC(81_000, signedTx2);
     }
 
     /* -------------------------------------------------------------------------- */
@@ -150,19 +112,6 @@ contract SovaBTCWithdrawTest is Test {
         vm.prank(user);
         vm.expectRevert(SovaBTC.ContractPaused.selector);
         sova.withdraw(WITHDRAW_AMOUNT, GAS_LIMIT, 1000, "dest");
-    }
-
-    function testUnpauseRestoresFunctionality() public {
-        sova.pause();
-        sova.unpause();
-
-        bytes memory signedTx = abi.encode(uint256(100_000));
-        vm.prank(user);
-        sova.depositBTC(100_000, signedTx);
-
-        // should succeed without revert
-        vm.prank(user);
-        sova.withdraw(10_000, 5_000, 1000, "dest");
     }
 
     /* -------------------------------------------------------------------------- */

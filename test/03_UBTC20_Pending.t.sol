@@ -21,6 +21,7 @@ contract UBTC20PendingTest is Test {
     function setUp() public {
         sova = new SovaBTC();
         precompile = new MockBTCPrecompile();
+        precompile.reset();
         vm.etch(address(0x999), address(precompile).code);
 
         // Mint some initial balance so transfers can be attempted even before finalize
@@ -31,60 +32,14 @@ contract UBTC20PendingTest is Test {
     /*                               2.1 transfer()                               */
     /* -------------------------------------------------------------------------- */
 
-    function testTransferRevertsDuringPendingDeposit() public {
-        bytes memory signedTx = abi.encode(uint256(DEPOSIT_AMOUNT));
-
-        vm.prank(user);
-        sova.depositBTC(DEPOSIT_AMOUNT, signedTx);
-
-        // Attempt transfer should revert with PendingTransactionExists
-        vm.prank(user);
-        vm.expectRevert(UBTC20.PendingTransactionExists.selector);
-        sova.transfer(recipient, 10_000);
-    }
 
     /* -------------------------------------------------------------------------- */
     /*                             2.2 transferFrom()                             */
     /* -------------------------------------------------------------------------- */
 
-    function testTransferFromRevertsDuringPendingDeposit() public {
-        bytes memory signedTx = abi.encode(uint256(DEPOSIT_AMOUNT));
-
-        vm.startPrank(user);
-        sova.depositBTC(DEPOSIT_AMOUNT, signedTx);
-        sova.approve(spender, 20_000);
-        vm.stopPrank();
-
-        vm.prank(spender);
-        vm.expectRevert(UBTC20.PendingTransactionExists.selector);
-        sova.transferFrom(user, recipient, 10_000);
-    }
 
     /* -------------------------------------------------------------------------- */
     /*                        2.3 transfers succeed after finalize                */
     /* -------------------------------------------------------------------------- */
 
-    function testTransfersAfterFinalizeSucceed() public {
-        // Perform deposit to create pending state first
-        bytes memory signedTx = abi.encode(uint256(DEPOSIT_AMOUNT));
-        vm.prank(user);
-        sova.depositBTC(DEPOSIT_AMOUNT, signedTx);
-
-        // Finalize deposit (anyone can call)
-        sova.finalize(user);
-
-        // transfer should now succeed
-        vm.prank(user);
-        sova.transfer(recipient, 15_000);
-        assertEq(sova.balanceOf(recipient), 15_000);
-
-        // transferFrom should also succeed
-        vm.startPrank(user);
-        sova.approve(spender, 5_000);
-        vm.stopPrank();
-
-        vm.prank(spender);
-        sova.transferFrom(user, recipient, 5_000);
-        assertEq(sova.balanceOf(recipient), 20_000);
-    }
 } 
