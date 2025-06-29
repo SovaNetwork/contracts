@@ -37,6 +37,57 @@ forge inspect src/SovaL1Block.sol:SovaL1Block deployedBytecode
 
 `TokenWrapper` allows users to wrap various BTC-pegged ERC20 tokens into a single unified token – **sovaBTC**. The contract maintains a 1:1 BTC backing and enables cross-asset swaps between supported wrapped BTC tokens.
 
+### System Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant TokenWrapper_Contract
+    participant SovaBTC_Contract
+    participant Owner_Governance
+    participant Bitcoin_Network
+
+    Note over User,SovaBTC_Contract: **TokenWrapper Multi-Token Deposit Flow**
+    Owner_Governance ->> TokenWrapper_Contract: addAllowedToken(WBTC)
+    Owner_Governance ->> TokenWrapper_Contract: setMintFee(enabled, bps)
+    User ->> TokenWrapper_Contract: approve(WBTC, amount)
+    User ->> TokenWrapper_Contract: deposit(WBTC, amount)
+    TokenWrapper_Contract ->> SovaBTC_Contract: adminMint(user, amount - fees)
+    TokenWrapper_Contract ->> SovaBTC_Contract: adminMint(owner, fees)
+    SovaBTC_Contract ->> User: transfer SovaBTC (1:1 BTC value minus fees)
+    
+    Note over User,TokenWrapper_Contract: (TokenWrapper now holds WBTC collateral)
+    
+    Note over User: **Cross-Asset Token Redemption Flow**
+    User ->> TokenWrapper_Contract: redeem(tBTC, sovaAmount)
+    TokenWrapper_Contract ->> SovaBTC_Contract: adminBurn(user, sovaAmount)
+    TokenWrapper_Contract ->> User: transfer tBTC (minus burn fees)
+    TokenWrapper_Contract ->> Owner_Governance: transfer burn fees (in tBTC)
+    
+    Note over User,TokenWrapper_Contract: (User deposited WBTC, redeemed tBTC!)
+
+    %% Blank line to separate flows
+    
+    Note over User: **Native BTC Deposit Flow**
+    User ->> SovaBTC_Contract: depositBTC(signed BTC tx)
+    SovaBTC_Contract ->> Bitcoin_Network: validate & broadcast BTC tx
+    Bitcoin_Network -->> SovaBTC_Contract: BTC confirmed (funds secured)
+    SovaBTC_Contract -->> User: finalize mint of SovaBTC
+
+    Note over User: **Native BTC Redemption Flow**
+    User ->> SovaBTC_Contract: withdraw(amount in sats, dest BTC address)
+    SovaBTC_Contract ->> Bitcoin_Network: initiate BTC tx (sign & broadcast)
+    Bitcoin_Network -->> User: receive BTC on Bitcoin (to provided dest)
+
+    Note over Owner_Governance,TokenWrapper_Contract: **Governance Controls**
+    Owner_Governance ->> TokenWrapper_Contract: removeAllowedToken(token)
+    Owner_Governance ->> TokenWrapper_Contract: setBurnFee(enabled, bps)
+    Owner_Governance ->> TokenWrapper_Contract: pause() / unpause()
+    Owner_Governance ->> TokenWrapper_Contract: setMinDepositSatoshi(amount)
+```
+
+This sequence diagram illustrates the complete SovaBTC ecosystem, showing both the TokenWrapper's multi-token functionality and the native Bitcoin integration that makes Sova unique.
+
 ### Key Features
 - **Multi-token support:** deposit or redeem any allowed BTC-pegged ERC20 (WBTC, tBTC, etc.).
 - **1:1 conversions:** every sovaBTC is backed by exactly one Bitcoin's worth of the underlying token.
