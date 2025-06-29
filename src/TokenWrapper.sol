@@ -24,6 +24,17 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
     /// @notice Minimum deposit amount in satoshis (to prevent dust deposits)
     uint256 public minDepositSatoshi;
 
+    /// @notice Whether mint fee is enabled
+    bool public mintFeeEnabled;
+    /// @notice Fee in basis points applied when minting
+    uint256 public mintFeeBps;
+    /// @notice Whether burn fee is enabled
+    bool public burnFeeEnabled;
+    /// @notice Fee in basis points applied when burning
+    uint256 public burnFeeBps;
+
+    uint256 internal constant FEE_DENOMINATOR = 10_000;
+
     // ----------- Custom Errors -----------
     error TokenNotAllowed(address token);
     error DepositBelowMinimum(uint256 amount, uint256 minimum);
@@ -38,6 +49,8 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
     event TokenUnwrapped(address indexed user, address indexed token, uint256 amountOut, uint256 sovaAmount);
     event AllowedTokenAdded(address indexed token);
     event AllowedTokenRemoved(address indexed token);
+    event MintFeeUpdated(bool enabled, uint256 bps);
+    event BurnFeeUpdated(bool enabled, uint256 bps);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -130,8 +143,19 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
 
         // Transfer underlying tokens from sender to this contract as collateral
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        // Mint equivalent sovaBTC to sender (wrapper contract must be SovaBTC owner)
-        sovaBTC.adminMint(msg.sender, sovaAmount);
+
+        uint256 feeAmount;
+        uint256 mintAmount = sovaAmount;
+        if (mintFeeEnabled && mintFeeBps > 0) {
+            feeAmount = (sovaAmount * mintFeeBps) / FEE_DENOMINATOR;
+            mintAmount = sovaAmount - feeAmount;
+        }
+
+        // Mint sovaBTC to sender and fee to owner if applicable
+        sovaBTC.adminMint(msg.sender, mintAmount);
+        if (feeAmount > 0) {
+            sovaBTC.adminMint(owner(), feeAmount);
+        }
 
         emit TokenWrapped(msg.sender, token, amount, sovaAmount);
     }
@@ -170,10 +194,20 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
             revert InsufficientReserve(token, underlyingAmount, available);
         }
 
+        uint256 feeAmount;
+        uint256 amountOut = underlyingAmount;
+        if (burnFeeEnabled && burnFeeBps > 0) {
+            feeAmount = (underlyingAmount * burnFeeBps) / FEE_DENOMINATOR;
+            amountOut = underlyingAmount - feeAmount;
+        }
+
         // Burn the specified amount of sovaBTC from the sender (wrapper is SovaBTC owner)
         sovaBTC.adminBurn(msg.sender, sovaAmount);
-        // Transfer out the underlying tokens to the sender
-        IERC20(token).safeTransfer(msg.sender, underlyingAmount);
+        // Transfer out the underlying tokens to the sender and fee to owner if applicable
+        IERC20(token).safeTransfer(msg.sender, amountOut);
+        if (feeAmount > 0) {
+            IERC20(token).safeTransfer(owner(), feeAmount);
+        }
 
         emit TokenUnwrapped(msg.sender, token, underlyingAmount, sovaAmount);
     }
@@ -187,6 +221,28 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
      */
     function setMinDepositSatoshi(uint256 minimumSats) external onlyOwner {
         minDepositSatoshi = minimumSats;
+    }
+
+    /**
+     * @notice Configure the mint fee
+     * @param enabled Whether mint fee is enabled
+     * @param bps Fee in basis points
+     */
+    function setMintFee(bool enabled, uint256 bps) external onlyOwner {
+        mintFeeEnabled = enabled;
+        mintFeeBps = bps;
+        emit MintFeeUpdated(enabled, bps);
+    }
+
+    /**
+     * @notice Configure the burn fee
+     * @param enabled Whether burn fee is enabled
+     * @param bps Fee in basis points
+     */
+    function setBurnFee(bool enabled, uint256 bps) external onlyOwner {
+        burnFeeEnabled = enabled;
+        burnFeeBps = bps;
+        emit BurnFeeUpdated(enabled, bps);
     }
 
     /**
