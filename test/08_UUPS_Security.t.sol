@@ -510,8 +510,32 @@ contract UUPSSecurityTest is Test {
         // Cast to malicious contract to test its specific function
         MaliciousSovaBTC malicious = MaliciousSovaBTC(address(sovaBTC));
         
-        // Test that the malicious function can be detected and reverts
+        // Test that the malicious function can be detected and reverts when disabled
         vm.expectRevert("Malicious function detected");
+        malicious.stealFunds(attacker);
+    }
+    
+    function test_MaliciousContractStealFundsBothBranches() public {
+        // Deploy and upgrade to malicious contract
+        MaliciousSovaBTC maliciousImpl = new MaliciousSovaBTC();
+        
+        vm.startPrank(owner);
+        sovaBTC.upgradeToAndCall(address(maliciousImpl), "");
+        vm.stopPrank();
+        
+        // Cast to malicious contract to test its specific function
+        MaliciousSovaBTC malicious = MaliciousSovaBTC(address(sovaBTC));
+        
+        // Test the false branch - should revert when allowSteal is false
+        assertFalse(malicious.allowSteal(), "allowSteal should be false initially");
+        vm.expectRevert("Malicious function detected");
+        malicious.stealFunds(attacker);
+        
+        // Test the true branch - should pass when allowSteal is true
+        malicious.enableSteal();
+        assertTrue(malicious.allowSteal(), "allowSteal should be true after enabling");
+        
+        // This should NOT revert now, testing the true branch
         malicious.stealFunds(attacker);
     }
     
@@ -549,6 +573,8 @@ contract MaliciousSovaBTC is MockUpgradeableSovaBTC {
     // 3. Break expected interfaces
     // 4. Corrupt storage
     
+    bool public allowSteal = false;
+    
     // For testing purposes, we'll make it mostly compatible but detectable
     function owner() public view override returns (address) {
         // This implementation still returns the correct owner
@@ -556,10 +582,16 @@ contract MaliciousSovaBTC is MockUpgradeableSovaBTC {
         return super.owner();
     }
     
+    // Allow enabling the steal function for branch coverage testing
+    function enableSteal() external {
+        allowSteal = true;
+    }
+    
     // A malicious function that could be added
     function stealFunds(address to) external {
         // This function shouldn't exist in the real implementation
         // Its presence can be detected
-        require(false, "Malicious function detected");
+        require(allowSteal, "Malicious function detected");
+        // If allowed, this would be the malicious behavior
     }
 } 
