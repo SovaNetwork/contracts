@@ -176,4 +176,4 @@ contract TokenWrapperEdgeTest is Test {
         vm.prank(user);
         wrapper.redeem(address(wbtc), 10000);
     }
-} 
+}

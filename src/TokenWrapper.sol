@@ -16,7 +16,7 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
     /// @notice The unified Sova BTC token (uBTC) to mint/burn
     ISovaBTC public sovaBTC;
 
-    /// @notice Mapping of allowed underlying token addresses (BTC-pegged ERC20) 
+    /// @notice Mapping of allowed underlying token addresses (BTC-pegged ERC20)
     mapping(address => bool) public allowedTokens;
     /// @notice Cached decimals for each allowed token (to optimize conversion calculations)
     mapping(address => uint8) public tokenDecimals;
@@ -261,4 +261,3 @@ contract TokenWrapper is OwnableUpgradeable, PausableUpgradeable, ReentrancyGuar
         _unpause();
     }
 }
-

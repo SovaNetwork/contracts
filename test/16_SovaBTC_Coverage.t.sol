@@ -27,11 +27,11 @@ contract SovaBTCCoverageTest is Test {
         sova = new SovaBTC();
         precompile = new MockBTCPrecompile();
         precompile.reset();
-        
+
         // Configure mock precompile
         precompile.setMockValue(DEPOSIT_AMOUNT);
         precompile.setMockAddress("mockDepositAddress");
-        
+
         vm.etch(address(0x999), address(precompile).code);
 
         // Mint initial balances
@@ -46,11 +46,11 @@ contract SovaBTCCoverageTest is Test {
     function test_isPaused() public {
         // Test initial state
         assertFalse(sova.isPaused(), "Contract should not be paused initially");
-        
+
         // Test after pausing
         sova.pause();
         assertTrue(sova.isPaused(), "Contract should be paused after pause()");
-        
+
         // Test after unpausing
         sova.unpause();
         assertFalse(sova.isPaused(), "Contract should not be paused after unpause()");
@@ -58,10 +58,10 @@ contract SovaBTCCoverageTest is Test {
 
     function test_isTransactionUsed() public {
         bytes32 testTxid = keccak256("test_txid");
-        
+
         // Test unused txid
         assertFalse(sova.isTransactionUsed(testTxid), "Unused txid should return false");
-        
+
         // Test with a random txid that will never be used
         bytes32 randomTxid = keccak256("random_unused_txid");
         assertFalse(sova.isTransactionUsed(randomTxid), "Random txid should return false");
@@ -70,16 +70,12 @@ contract SovaBTCCoverageTest is Test {
     function test_isTransactionUsedWithManualSetup() public {
         // Create a custom test that manually tracks txid usage
         bytes memory signedTx = abi.encode(uint256(DEPOSIT_AMOUNT));
-        
+
         // Mock the decode to return a specific txid
         MockBTCPrecompile.BitcoinTx memory btcTx;
         btcTx.txid = keccak256("specific_test_txid");
         btcTx.outputs = new MockBTCPrecompile.Output[](1);
-        btcTx.outputs[0] = MockBTCPrecompile.Output({
-            addr: "mockDepositAddress",
-            value: DEPOSIT_AMOUNT,
-            script: ""
-        });
+        btcTx.outputs[0] = MockBTCPrecompile.Output({addr: "mockDepositAddress", value: DEPOSIT_AMOUNT, script: ""});
         btcTx.inputs = new MockBTCPrecompile.Input[](1);
         btcTx.inputs[0] = MockBTCPrecompile.Input({
             prevTxHash: bytes32(uint256(0x1)),
@@ -91,27 +87,15 @@ contract SovaBTCCoverageTest is Test {
 
         // Mock decode call
         bytes memory decodeCallData = abi.encodePacked(hex"00000002", signedTx);
-        vm.mockCall(
-            address(0x999),
-            decodeCallData,
-            abi.encode(btcTx)
-        );
+        vm.mockCall(address(0x999), decodeCallData, abi.encode(btcTx));
 
         // Mock address conversion
         bytes memory convertCallData = abi.encodePacked(hex"00000003", user);
-        vm.mockCall(
-            address(0x999),
-            convertCallData,
-            bytes("mockDepositAddress")
-        );
+        vm.mockCall(address(0x999), convertCallData, bytes("mockDepositAddress"));
 
         // Mock broadcast (no return data needed)
         bytes memory broadcastCallData = abi.encodePacked(hex"00000001", signedTx);
-        vm.mockCall(
-            address(0x999),
-            broadcastCallData,
-            ""
-        );
+        vm.mockCall(address(0x999), broadcastCallData, "");
 
         // Test before deposit
         assertFalse(sova.isTransactionUsed(btcTx.txid), "Txid should not be used initially");
@@ -142,7 +126,7 @@ contract SovaBTCCoverageTest is Test {
         // The whenPaused modifier is only used by unpause()
         // First pause the contract
         sova.pause();
-        
+
         // Now test unpause which uses whenPaused modifier
         sova.unpause();
         assertFalse(sova.isPaused(), "Contract should be unpaused after calling unpause");
@@ -151,7 +135,7 @@ contract SovaBTCCoverageTest is Test {
     function test_unpauseWhenNotPausedReverts() public {
         // Contract starts unpaused, calling unpause should revert
         assertFalse(sova.isPaused(), "Contract should not be paused initially");
-        
+
         vm.expectRevert(SovaBTC.ContractNotPaused.selector);
         sova.unpause();
     }
@@ -159,7 +143,7 @@ contract SovaBTCCoverageTest is Test {
     function test_unpauseEmitsEvent() public {
         // First pause
         sova.pause();
-        
+
         // Test unpause emits event
         vm.expectEmit(true, false, false, false);
         emit SovaBTC.ContractUnpausedByOwner(address(this));
@@ -169,7 +153,7 @@ contract SovaBTCCoverageTest is Test {
     function test_nonOwnerCannotUnpause() public {
         // First pause
         sova.pause();
-        
+
         // Non-owner cannot unpause
         vm.prank(nonOwner);
         vm.expectRevert(); // Ownable revert
@@ -182,16 +166,12 @@ contract SovaBTCCoverageTest is Test {
 
     function test_depositBTC_TransactionAlreadyUsed() public {
         bytes memory signedTx = abi.encode(uint256(DEPOSIT_AMOUNT));
-        
+
         // Setup mock similar to previous test
         MockBTCPrecompile.BitcoinTx memory btcTx;
         btcTx.txid = keccak256("duplicate_txid");
         btcTx.outputs = new MockBTCPrecompile.Output[](1);
-        btcTx.outputs[0] = MockBTCPrecompile.Output({
-            addr: "mockDepositAddress",
-            value: DEPOSIT_AMOUNT,
-            script: ""
-        });
+        btcTx.outputs[0] = MockBTCPrecompile.Output({addr: "mockDepositAddress", value: DEPOSIT_AMOUNT, script: ""});
         btcTx.inputs = new MockBTCPrecompile.Input[](1);
         btcTx.inputs[0] = MockBTCPrecompile.Input({
             prevTxHash: bytes32(uint256(0x1)),
@@ -224,16 +204,12 @@ contract SovaBTCCoverageTest is Test {
     function test_depositBTC_PendingDepositExists() public {
         bytes memory signedTx1 = abi.encode(uint256(DEPOSIT_AMOUNT));
         bytes memory signedTx2 = abi.encode(uint256(DEPOSIT_AMOUNT + 1000));
-        
+
         // Setup first transaction
         MockBTCPrecompile.BitcoinTx memory btcTx1;
         btcTx1.txid = keccak256("txid_1");
         btcTx1.outputs = new MockBTCPrecompile.Output[](1);
-        btcTx1.outputs[0] = MockBTCPrecompile.Output({
-            addr: "mockDepositAddress",
-            value: DEPOSIT_AMOUNT,
-            script: ""
-        });
+        btcTx1.outputs[0] = MockBTCPrecompile.Output({addr: "mockDepositAddress", value: DEPOSIT_AMOUNT, script: ""});
         btcTx1.inputs = new MockBTCPrecompile.Input[](1);
         btcTx1.inputs[0] = MockBTCPrecompile.Input({
             prevTxHash: bytes32(uint256(0x1)),
@@ -247,11 +223,8 @@ contract SovaBTCCoverageTest is Test {
         MockBTCPrecompile.BitcoinTx memory btcTx2;
         btcTx2.txid = keccak256("txid_2");
         btcTx2.outputs = new MockBTCPrecompile.Output[](1);
-        btcTx2.outputs[0] = MockBTCPrecompile.Output({
-            addr: "mockDepositAddress",
-            value: DEPOSIT_AMOUNT + 1000,
-            script: ""
-        });
+        btcTx2.outputs[0] =
+            MockBTCPrecompile.Output({addr: "mockDepositAddress", value: DEPOSIT_AMOUNT + 1000, script: ""});
         btcTx2.inputs = new MockBTCPrecompile.Input[](1);
         btcTx2.inputs[0] = MockBTCPrecompile.Input({
             prevTxHash: bytes32(uint256(0x2)),
@@ -281,7 +254,7 @@ contract SovaBTCCoverageTest is Test {
         // First deposit creates pending deposit
         vm.prank(user);
         sova.depositBTC(DEPOSIT_AMOUNT, signedTx1);
-        
+
         // Verify pending deposit exists
         assertGt(sova.pendingDepositAmountOf(user), 0, "Should have pending deposit");
 
@@ -297,11 +270,11 @@ contract SovaBTCCoverageTest is Test {
 
     function test_setMinDepositAmount_InvalidBranch() public {
         uint64 currentMax = sova.maxDepositAmount();
-        
+
         // Test setting min equal to max (should revert)
         vm.expectRevert(SovaBTC.InvalidDepositLimits.selector);
         sova.setMinDepositAmount(currentMax);
-        
+
         // Test setting min greater than max (should revert)
         vm.expectRevert(SovaBTC.InvalidDepositLimits.selector);
         sova.setMinDepositAmount(currentMax + 1);
@@ -309,11 +282,11 @@ contract SovaBTCCoverageTest is Test {
 
     function test_setMaxDepositAmount_InvalidBranch() public {
         uint64 currentMin = sova.minDepositAmount();
-        
+
         // Test setting max equal to min (should revert)
         vm.expectRevert(SovaBTC.InvalidDepositLimits.selector);
         sova.setMaxDepositAmount(currentMin);
-        
+
         // Test setting max less than min (should revert)
         vm.expectRevert(SovaBTC.InvalidDepositLimits.selector);
         sova.setMaxDepositAmount(currentMin - 1);
@@ -332,42 +305,42 @@ contract SovaBTCCoverageTest is Test {
     function test_setMinDepositAmount_Success() public {
         uint64 oldAmount = sova.minDepositAmount();
         uint64 newAmount = oldAmount + 1000;
-        
+
         // Ensure new amount is less than max
         require(newAmount < sova.maxDepositAmount(), "Test setup error");
-        
+
         vm.expectEmit(true, true, false, false);
         emit SovaBTC.MinDepositAmountUpdated(oldAmount, newAmount);
-        
+
         sova.setMinDepositAmount(newAmount);
-        
+
         assertEq(sova.minDepositAmount(), newAmount, "Min deposit amount should be updated");
     }
 
     function test_setMaxDepositAmount_Success() public {
         uint64 oldAmount = sova.maxDepositAmount();
         uint64 newAmount = oldAmount + 1000;
-        
+
         // Ensure new amount is greater than min
         require(newAmount > sova.minDepositAmount(), "Test setup error");
-        
+
         vm.expectEmit(true, true, false, false);
         emit SovaBTC.MaxDepositAmountUpdated(oldAmount, newAmount);
-        
+
         sova.setMaxDepositAmount(newAmount);
-        
+
         assertEq(sova.maxDepositAmount(), newAmount, "Max deposit amount should be updated");
     }
 
     function test_setMaxGasLimitAmount_Success() public {
         uint64 oldAmount = sova.maxGasLimitAmount();
         uint64 newAmount = oldAmount + 1000;
-        
+
         vm.expectEmit(true, true, false, false);
         emit SovaBTC.MaxGasLimitAmountUpdated(oldAmount, newAmount);
-        
+
         sova.setMaxGasLimitAmount(newAmount);
-        
+
         assertEq(sova.maxGasLimitAmount(), newAmount, "Max gas limit amount should be updated");
     }
 
@@ -377,15 +350,11 @@ contract SovaBTCCoverageTest is Test {
 
     function test_depositBTC_CompleteSuccessFlow() public {
         bytes memory signedTx = abi.encode(uint256(DEPOSIT_AMOUNT));
-        
+
         MockBTCPrecompile.BitcoinTx memory btcTx;
         btcTx.txid = keccak256("success_txid");
         btcTx.outputs = new MockBTCPrecompile.Output[](1);
-        btcTx.outputs[0] = MockBTCPrecompile.Output({
-            addr: "mockDepositAddress",
-            value: DEPOSIT_AMOUNT,
-            script: ""
-        });
+        btcTx.outputs[0] = MockBTCPrecompile.Output({addr: "mockDepositAddress", value: DEPOSIT_AMOUNT, script: ""});
         btcTx.inputs = new MockBTCPrecompile.Input[](1);
         btcTx.inputs[0] = MockBTCPrecompile.Input({
             prevTxHash: bytes32(uint256(0x1)),
@@ -408,10 +377,10 @@ contract SovaBTCCoverageTest is Test {
         // Test successful deposit
         vm.expectEmit(true, true, false, false);
         emit SovaBTC.Deposit(btcTx.txid, DEPOSIT_AMOUNT);
-        
+
         vm.prank(user);
         sova.depositBTC(DEPOSIT_AMOUNT, signedTx);
-        
+
         // Verify state changes
         assertTrue(sova.isTransactionUsed(btcTx.txid), "Txid should be marked as used");
         assertEq(sova.pendingDepositAmountOf(user), DEPOSIT_AMOUNT, "Should have pending deposit");
@@ -423,19 +392,19 @@ contract SovaBTCCoverageTest is Test {
 
     function test_pauseUnpauseCycle() public {
         // Test multiple pause/unpause cycles
-        for (uint i = 0; i < 3; i++) {
+        for (uint256 i = 0; i < 3; i++) {
             // Pause
             sova.pause();
             assertTrue(sova.isPaused(), "Should be paused");
-            
+
             // Try to pause again (should revert)
             vm.expectRevert(SovaBTC.ContractPaused.selector);
             sova.pause();
-            
+
             // Unpause
             sova.unpause();
             assertFalse(sova.isPaused(), "Should be unpaused");
-            
+
             // Try to unpause again (should revert)
             vm.expectRevert(SovaBTC.ContractNotPaused.selector);
             sova.unpause();
@@ -445,25 +414,25 @@ contract SovaBTCCoverageTest is Test {
     function test_accessControlForAllFunctions() public {
         // Test that non-owner cannot call admin functions
         vm.startPrank(nonOwner);
-        
+
         vm.expectRevert(); // Ownable revert
         sova.setMinDepositAmount(20000);
-        
+
         vm.expectRevert(); // Ownable revert
         sova.setMaxDepositAmount(200000000000);
-        
+
         vm.expectRevert(); // Ownable revert
         sova.setMaxGasLimitAmount(60000000);
-        
+
         vm.expectRevert(); // Ownable revert
         sova.pause();
-        
+
         vm.expectRevert(); // Ownable revert
         sova.adminMint(user, 100000);
-        
+
         vm.expectRevert(); // Ownable revert
         sova.adminBurn(user, 100000);
-        
+
         vm.stopPrank();
     }
 
@@ -481,4 +450,4 @@ contract SovaBTCCoverageTest is Test {
     event MaxGasLimitAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event ContractPausedByOwner(address indexed account);
     event ContractUnpausedByOwner(address indexed account);
-} 
+}

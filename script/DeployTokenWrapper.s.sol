@@ -29,4 +29,3 @@ contract DeployTokenWrapper is Script {
         vm.stopBroadcast();
     }
 }
-

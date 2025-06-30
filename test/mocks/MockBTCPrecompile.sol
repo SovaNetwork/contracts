@@ -121,7 +121,8 @@ contract MockBTCPrecompile {
             // embedded by the test in the first 32 bytes of `signedTx`.
             // The library only checks: outputs length, value equality, inputs length, locktime.
             uint256 amount = 0;
-            if (data.length >= 36) { // 4 bytes selector + 32 bytes amount
+            if (data.length >= 36) {
+                // 4 bytes selector + 32 bytes amount
                 amount = abi.decode(data[4:36], (uint256));
             }
             return _encodeTx(mockValue > 0 ? mockValue : amount);
@@ -167,4 +168,4 @@ contract MockBTCPrecompile {
 
         return abi.encode(btcTx);
     }
-} 
+}

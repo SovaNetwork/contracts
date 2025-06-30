@@ -59,7 +59,7 @@ contract SovaBTCPerfectCoverageTest is Test {
 
         // Attempt withdrawal - this should trigger the precompile failure path
         vm.startPrank(user);
-        
+
         // The call should revert with PrecompileCallFailed
         vm.expectRevert(SovaBitcoin.PrecompileCallFailed.selector);
         sova.withdraw(WITHDRAW_AMOUNT, GAS_LIMIT, 850000, "bc1qtest12345");
@@ -82,7 +82,7 @@ contract SovaBTCPerfectCoverageTest is Test {
     function test_WithdrawSuccessAfterPrecompileFixed() public {
         // First, trigger the failure path (for coverage)
         MockBTCPrecompile(SovaBitcoin.BTC_PRECOMPILE).setPrecompileFails(true);
-        
+
         vm.startPrank(user);
         vm.expectRevert(SovaBitcoin.PrecompileCallFailed.selector);
         sova.withdraw(WITHDRAW_AMOUNT, GAS_LIMIT, 850000, "bc1qtest12345");
@@ -90,7 +90,7 @@ contract SovaBTCPerfectCoverageTest is Test {
 
         // Now fix the precompile and verify normal operation works
         MockBTCPrecompile(SovaBitcoin.BTC_PRECOMPILE).setPrecompileFails(false);
-        
+
         // The MockBTCPrecompile returns a hardcoded txid for UBTC_SIGN_TX_BYTES
         bytes32 expectedTxid = bytes32(uint256(0xabc123));
 
@@ -100,7 +100,7 @@ contract SovaBTCPerfectCoverageTest is Test {
         vm.startPrank(user);
         vm.expectEmit(true, true, true, true);
         emit Withdraw(expectedTxid, WITHDRAW_AMOUNT);
-        
+
         sova.withdraw(WITHDRAW_AMOUNT, GAS_LIMIT, 850000, "bc1qtest12345");
         vm.stopPrank();
 
@@ -123,7 +123,7 @@ contract SovaBTCPerfectCoverageTest is Test {
         MockBTCPrecompile(SovaBitcoin.BTC_PRECOMPILE).setPrecompileFails(true);
 
         vm.startPrank(user);
-        
+
         // Should fail with PrecompileCallFailed, not with other validation errors
         vm.expectRevert(SovaBitcoin.PrecompileCallFailed.selector);
         sova.withdraw(largeWithdrawAmount, maxGasLimit, 850000, "bc1qtest567890abcdef");
@@ -149,20 +149,20 @@ contract SovaBTCPerfectCoverageTest is Test {
         uint256 balanceBefore = sova.balanceOf(user);
 
         vm.startPrank(user);
-        
+
         // This call will:
         // 1. Pass all validation checks
-        // 2. Set pending withdrawal 
+        // 2. Set pending withdrawal
         // 3. Call the precompile (which will return success=false)
         // 4. Hit the exact line: if (!success) revert SovaBitcoin.PrecompileCallFailed();
         vm.expectRevert(SovaBitcoin.PrecompileCallFailed.selector);
         sova.withdraw(WITHDRAW_AMOUNT, GAS_LIMIT, 850000, "bc1qvalidaddress123");
-        
+
         vm.stopPrank();
 
         // Verify the exact behavior expected from this branch
         assertEq(sova.balanceOf(user), balanceBefore, "Balance should be unchanged after precompile failure");
-        
+
         uint256 amount = sova.pendingWithdrawalAmountOf(user);
         assertEq(amount, 0, "Pending withdrawal should be 0 after revert");
     }
@@ -173,15 +173,9 @@ contract SovaBTCPerfectCoverageTest is Test {
     function test_MockPrecompileConfiguration() public {
         // Test that our mock can be configured to fail
         MockBTCPrecompile(SovaBitcoin.BTC_PRECOMPILE).setPrecompileFails(true);
-        
-        bytes memory testData = abi.encode(
-            SovaBitcoin.UBTC_SIGN_TX_BYTES, 
-            user, 
-            WITHDRAW_AMOUNT, 
-            GAS_LIMIT, 
-            850000, 
-            "bc1qtest"
-        );
+
+        bytes memory testData =
+            abi.encode(SovaBitcoin.UBTC_SIGN_TX_BYTES, user, WITHDRAW_AMOUNT, GAS_LIMIT, 850000, "bc1qtest");
 
         (bool success,) = SovaBitcoin.BTC_PRECOMPILE.call(testData);
         assertFalse(success, "Precompile should fail when configured to fail");
@@ -189,8 +183,8 @@ contract SovaBTCPerfectCoverageTest is Test {
         // Test that it can be fixed
         MockBTCPrecompile(SovaBitcoin.BTC_PRECOMPILE).setPrecompileFails(false);
         MockBTCPrecompile(SovaBitcoin.BTC_PRECOMPILE).setMockValue(12345);
-        
+
         (success,) = SovaBitcoin.BTC_PRECOMPILE.call(testData);
         assertTrue(success, "Precompile should succeed when configured to succeed");
     }
-} 
+}

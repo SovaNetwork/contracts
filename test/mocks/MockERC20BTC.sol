@@ -63,4 +63,3 @@ contract MockERC20BTC is IERC20Metadata {
         emit Transfer(address(0), to, amount);
     }
 }
-

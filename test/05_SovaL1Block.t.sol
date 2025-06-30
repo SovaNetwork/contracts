@@ -132,4 +132,4 @@ contract SovaL1BlockTest is Test {
         uint256 storedBlock2 = uint256(vm.load(address(l1), bytes32(uint256(2))));
         assertEq(storedBlock2, 200, "Should track second update block");
     }
-} 
+}

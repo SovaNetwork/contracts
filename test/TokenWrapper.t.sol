@@ -109,21 +109,11 @@ contract TokenWrapperTest is Test {
     }
 
     function testNonOwnerCannotAddOrPause() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
-                user1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user1));
         vm.prank(user1);
         wrapper.addAllowedToken(address(0xDEAD));
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
-                user1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user1));
         vm.prank(user1);
         wrapper.pause();
     }
@@ -147,9 +137,7 @@ contract TokenWrapperTest is Test {
         fakeBTC.mint(user1, 1000);
         vm.startPrank(user1);
         fakeBTC.approve(address(wrapper), 1000);
-        vm.expectRevert(
-            abi.encodeWithSelector(TokenWrapper.TokenNotAllowed.selector, address(fakeBTC))
-        );
+        vm.expectRevert(abi.encodeWithSelector(TokenWrapper.TokenNotAllowed.selector, address(fakeBTC)));
         wrapper.deposit(address(fakeBTC), 1000);
         vm.stopPrank();
     }
@@ -161,9 +149,7 @@ contract TokenWrapperTest is Test {
         wbtc.mint(user1, 50);
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), 50);
-        vm.expectRevert(
-            abi.encodeWithSelector(TokenWrapper.DepositBelowMinimum.selector, 50, 100)
-        );
+        vm.expectRevert(abi.encodeWithSelector(TokenWrapper.DepositBelowMinimum.selector, 50, 100));
         wrapper.deposit(address(wbtc), 50);
         vm.stopPrank();
     }
@@ -173,14 +159,7 @@ contract TokenWrapperTest is Test {
         wrapper.deposit(address(wbtc), 1e8);
 
         vm.prank(user1);
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                TokenWrapper.InsufficientReserve.selector,
-                address(lbtc),
-                1e18,
-                0
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(TokenWrapper.InsufficientReserve.selector, address(lbtc), 1e18, 0));
         wrapper.redeem(address(lbtc), 1e8);
     }
 
@@ -216,25 +195,14 @@ contract TokenWrapperTest is Test {
     }
 
     function testOnlyOwnerCanSetMintFee() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
-                user1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user1));
         vm.prank(user1);
         wrapper.setMintFee(true, 10);
     }
 
     function testOnlyOwnerCanSetBurnFee() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                OwnableUpgradeable.OwnableUnauthorizedAccount.selector,
-                user1
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user1));
         vm.prank(user1);
         wrapper.setBurnFee(true, 10);
     }
 }
-

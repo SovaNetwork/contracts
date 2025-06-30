@@ -99,7 +99,7 @@ contract EventAndInvariantTest is Test {
 
         // Ensure tokenAmount meets minimum requirements
         vm.assume(tokenAmount > 0);
-        
+
         token.mint(alice, tokenAmount);
         vm.prank(alice);
         token.approve(address(wrapper), tokenAmount);
@@ -108,4 +108,4 @@ contract EventAndInvariantTest is Test {
 
         assertEq(sova.balanceOf(alice), sats);
     }
-} 
+}
