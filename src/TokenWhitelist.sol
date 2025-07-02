@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 contract TokenWhitelist is Ownable {
     /// @notice Mapping of allowed token addresses to their approval status
     mapping(address => bool) public allowedTokens;
-    
+
     /// @notice Mapping of token addresses to their decimal precision
     mapping(address => uint8) public tokenDecimals;
 
@@ -41,14 +41,14 @@ contract TokenWhitelist is Ownable {
     function addAllowedToken(address token) external onlyOwner {
         if (token == address(0)) revert ZeroAddress();
         if (allowedTokens[token]) revert AlreadyAllowed(token);
-        
+
         // Get decimals from the token contract
         uint8 decimals = IERC20Metadata(token).decimals();
-        
+
         // Update mappings
         allowedTokens[token] = true;
         tokenDecimals[token] = decimals;
-        
+
         emit TokenWhitelistUpdated(token, true, decimals);
     }
 
@@ -59,12 +59,12 @@ contract TokenWhitelist is Ownable {
      */
     function removeAllowedToken(address token) external onlyOwner {
         if (!allowedTokens[token]) revert NotInAllowlist(token);
-        
+
         uint8 decimals = tokenDecimals[token];
-        
+
         // Update mapping (keep decimals for existing redemptions)
         allowedTokens[token] = false;
-        
+
         emit TokenWhitelistUpdated(token, false, decimals);
     }
 
@@ -96,12 +96,12 @@ contract TokenWhitelist is Ownable {
             address token = tokens[i];
             if (token == address(0)) revert ZeroAddress();
             if (allowedTokens[token]) continue; // Skip already allowed tokens
-            
+
             uint8 decimals = IERC20Metadata(token).decimals();
             allowedTokens[token] = true;
             tokenDecimals[token] = decimals;
-            
+
             emit TokenWhitelistUpdated(token, true, decimals);
         }
     }
-} 
+}

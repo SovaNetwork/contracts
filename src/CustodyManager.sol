@@ -15,58 +15,47 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     using SafeERC20 for IERC20;
 
     /* ----------------------- ROLES ----------------------- */
-    
+
     /// @notice Role for custodians who can fulfill redemptions
     bytes32 public constant CUSTODIAN_ROLE = keccak256("CUSTODIAN_ROLE");
-    
+
     /// @notice Role for emergency operations
     bytes32 public constant EMERGENCY_ROLE = keccak256("EMERGENCY_ROLE");
-    
+
     /// @notice Role for custody address management
     bytes32 public constant CUSTODY_ADMIN_ROLE = keccak256("CUSTODY_ADMIN_ROLE");
 
     /* ----------------------- STATE VARIABLES ----------------------- */
-    
+
     /// @notice Mapping of token address to its designated custody address
     mapping(address => address) public custodyAddress;
-    
+
     /// @notice Mapping of token address to whether custody is enforced
     mapping(address => bool) public custodyEnforced;
-    
+
     /// @notice List of all tokens that have custody addresses set
     address[] public custodyTokens;
-    
+
     /// @notice Mapping to track if a token is in the custody tokens list
     mapping(address => bool) private _isInCustodyList;
 
     /* ----------------------- EVENTS ----------------------- */
-    
+
     event CustodyAddressSet(
-        address indexed token,
-        address indexed oldCustody,
-        address indexed newCustody,
-        address admin
+        address indexed token, address indexed oldCustody, address indexed newCustody, address admin
     );
-    
-    event CustodyEnforcementToggled(
-        address indexed token,
-        bool enforced,
-        address admin
-    );
-    
+
+    event CustodyEnforcementToggled(address indexed token, bool enforced, address admin);
+
     event EmergencySweep(
-        address indexed token,
-        address indexed from,
-        address indexed to,
-        uint256 amount,
-        address executor
+        address indexed token, address indexed from, address indexed to, uint256 amount, address executor
     );
-    
+
     event CustodianAdded(address indexed custodian, address indexed admin);
     event CustodianRemoved(address indexed custodian, address indexed admin);
 
     /* ----------------------- CUSTOM ERRORS ----------------------- */
-    
+
     error ZeroAddress();
     error InvalidCustodyAddress(address token, address attempted, address required);
     error CustodyNotSet(address token);
@@ -76,7 +65,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     error InvalidRole(bytes32 role);
 
     /* ----------------------- MODIFIERS ----------------------- */
-    
+
     /**
      * @notice Validates that destination is the custody address for the token (if enforced)
      * @param token The token address
@@ -88,25 +77,25 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     }
 
     /* ----------------------- CONSTRUCTOR ----------------------- */
-    
+
     /**
      * @notice Initialize the CustodyManager
      * @param admin The admin address who will have DEFAULT_ADMIN_ROLE
      */
     constructor(address admin) {
         if (admin == address(0)) revert ZeroAddress();
-        
+
         // Grant admin all roles
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(CUSTODY_ADMIN_ROLE, admin);
         _grantRole(EMERGENCY_ROLE, admin);
-        
+
         // Admin starts as a custodian too
         _grantRole(CUSTODIAN_ROLE, admin);
     }
 
     /* ----------------------- CUSTODY MANAGEMENT ----------------------- */
-    
+
     /**
      * @notice Set custody address for a token
      * @param token The token address
@@ -115,39 +104,39 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     function setCustodyAddress(address token, address custody) external onlyRole(CUSTODY_ADMIN_ROLE) {
         if (token == address(0)) revert ZeroAddress();
         if (custody == address(0)) revert ZeroAddress();
-        
+
         address oldCustody = custodyAddress[token];
         custodyAddress[token] = custody;
-        
+
         // Add to custody tokens list if not already present
         if (!_isInCustodyList[token]) {
             custodyTokens.push(token);
             _isInCustodyList[token] = true;
         }
-        
+
         emit CustodyAddressSet(token, oldCustody, custody, msg.sender);
     }
-    
+
     /**
      * @notice Remove custody address for a token
      * @param token The token address
      */
     function removeCustodyAddress(address token) external onlyRole(CUSTODY_ADMIN_ROLE) {
         if (custodyAddress[token] == address(0)) revert CustodyNotSet(token);
-        
+
         address oldCustody = custodyAddress[token];
         delete custodyAddress[token];
         delete custodyEnforced[token];
-        
+
         // Remove from custody tokens list
         if (_isInCustodyList[token]) {
             _removeFromCustodyList(token);
             _isInCustodyList[token] = false;
         }
-        
+
         emit CustodyAddressSet(token, oldCustody, address(0), msg.sender);
     }
-    
+
     /**
      * @notice Toggle custody enforcement for a token
      * @param token The token address
@@ -155,13 +144,13 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
      */
     function setCustodyEnforcement(address token, bool enforced) external onlyRole(CUSTODY_ADMIN_ROLE) {
         if (custodyAddress[token] == address(0)) revert CustodyNotSet(token);
-        
+
         custodyEnforced[token] = enforced;
         emit CustodyEnforcementToggled(token, enforced, msg.sender);
     }
 
     /* ----------------------- ACCESS VALIDATION ----------------------- */
-    
+
     /**
      * @notice Validate that a destination address is allowed for a token transfer
      * @param token The token address
@@ -170,7 +159,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     function validateDestination(address token, address destination) external view {
         _validateDestination(token, destination);
     }
-    
+
     /**
      * @notice Check if an address is authorized for redemption fulfillment
      * @param account The address to check
@@ -179,7 +168,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     function isAuthorizedCustodian(address account) external view returns (bool) {
         return hasRole(CUSTODIAN_ROLE, account);
     }
-    
+
     /**
      * @notice Check if custody is enforced for a token
      * @param token The token address
@@ -190,38 +179,34 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     }
 
     /* ----------------------- EMERGENCY FUNCTIONS ----------------------- */
-    
+
     /**
      * @notice Emergency sweep tokens from any address to custody (emergency role only)
      * @param token The token to sweep
      * @param from The address to sweep from
      * @param amount The amount to sweep
      */
-    function emergencySweep(
-        address token,
-        address from,
-        uint256 amount
-    ) external onlyRole(EMERGENCY_ROLE) {
+    function emergencySweep(address token, address from, uint256 amount) external onlyRole(EMERGENCY_ROLE) {
         if (token == address(0)) revert ZeroAddress();
         if (from == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAddress();
-        
+
         address custody = custodyAddress[token];
         if (custody == address(0)) revert CustodyNotSet(token);
-        
+
         // Transfer tokens to custody address
         IERC20(token).safeTransferFrom(from, custody, amount);
-        
+
         emit EmergencySweep(token, from, custody, amount, msg.sender);
     }
-    
+
     /**
      * @notice Emergency pause all operations
      */
     function emergencyPause() external onlyRole(EMERGENCY_ROLE) {
         _pause();
     }
-    
+
     /**
      * @notice Emergency unpause all operations
      */
@@ -230,29 +215,29 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     }
 
     /* ----------------------- ROLE MANAGEMENT ----------------------- */
-    
+
     /**
      * @notice Add a custodian (admin only)
      * @param custodian The address to grant custodian role
      */
     function addCustodian(address custodian) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (custodian == address(0)) revert ZeroAddress();
-        
+
         _grantRole(CUSTODIAN_ROLE, custodian);
         emit CustodianAdded(custodian, msg.sender);
     }
-    
+
     /**
      * @notice Remove a custodian (admin only)
      * @param custodian The address to revoke custodian role from
      */
     function removeCustodian(address custodian) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if (custodian == address(0)) revert ZeroAddress();
-        
+
         _revokeRole(CUSTODIAN_ROLE, custodian);
         emit CustodianRemoved(custodian, msg.sender);
     }
-    
+
     /**
      * @notice Batch add custodians
      * @param custodians Array of addresses to grant custodian role
@@ -267,7 +252,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     }
 
     /* ----------------------- VIEW FUNCTIONS ----------------------- */
-    
+
     /**
      * @notice Get all tokens that have custody addresses set
      * @return Array of token addresses
@@ -275,7 +260,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     function getAllCustodyTokens() external view returns (address[] memory) {
         return custodyTokens;
     }
-    
+
     /**
      * @notice Get custody configuration for a token
      * @param token The token address
@@ -285,7 +270,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     function getCustodyConfig(address token) external view returns (address custody, bool enforced) {
         return (custodyAddress[token], custodyEnforced[token]);
     }
-    
+
     /**
      * @notice Get count of custodians
      * @return The number of addresses with custodian role
@@ -293,7 +278,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     function getCustodianCount() external view returns (uint256) {
         return getRoleMemberCount(CUSTODIAN_ROLE);
     }
-    
+
     /**
      * @notice Get custodian address at index
      * @param index The index to query
@@ -304,7 +289,7 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
     }
 
     /* ----------------------- INTERNAL FUNCTIONS ----------------------- */
-    
+
     /**
      * @notice Internal function to validate destination address
      * @param token The token address
@@ -315,13 +300,13 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
         if (custodyAddress[token] == address(0) || !custodyEnforced[token]) {
             return;
         }
-        
+
         // If custody is enforced, destination must be the custody address
         if (destination != custodyAddress[token]) {
             revert InvalidCustodyAddress(token, destination, custodyAddress[token]);
         }
     }
-    
+
     /**
      * @notice Remove a token from the custody tokens list
      * @param token The token to remove
@@ -335,4 +320,4 @@ contract CustodyManager is AccessControlEnumerable, Pausable {
             }
         }
     }
-} 
+}

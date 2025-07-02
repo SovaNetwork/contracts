@@ -10,21 +10,16 @@ import "../src/SovaBTCOFT.sol";
  */
 contract SovaBTCOFTCoverageTest is Test {
     SovaBTCOFT public sovaBTCOFT;
-    
+
     address public owner = address(0x1);
     address public minter = address(0x2);
     address public endpoint = address(0x3);
     address public user1 = address(0x4);
     address public user2 = address(0x5);
-    
+
     function setUp() public {
         vm.startPrank(owner);
-        sovaBTCOFT = new SovaBTCOFT(
-            "SovaBTC OFT",
-            "SOVAOFT",
-            endpoint,
-            minter
-        );
+        sovaBTCOFT = new SovaBTCOFT("SovaBTC OFT", "SOVAOFT", endpoint, minter);
         vm.stopPrank();
     }
 
@@ -63,7 +58,7 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
+
         SovaBTCOFT.MessagingFee memory fee = sovaBTCOFT.quoteSend(sendParam, false);
         assertEq(fee.nativeFee, 0.001 ether);
         assertEq(fee.lzTokenFee, 0);
@@ -78,12 +73,12 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
+
         // This covers line 162: return fee statement
         SovaBTCOFT.MessagingFee memory fee = sovaBTCOFT.quoteSend(sendParam, true);
         assertEq(fee.nativeFee, 0.001 ether);
         assertEq(fee.lzTokenFee, 100e18);
-        
+
         // Force explicit usage of the return value to ensure line 162 coverage
         assertTrue(fee.nativeFee > 0);
         assertTrue(fee.lzTokenFee > 0);
@@ -100,12 +95,9 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.expectRevert(SovaBTCOFT.ZeroAmount.selector);
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
     }
@@ -119,12 +111,9 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.expectRevert(abi.encodeWithSelector(SovaBTCOFT.InvalidPeer.selector, 999));
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
     }
@@ -133,7 +122,7 @@ contract SovaBTCOFTCoverageTest is Test {
         // Set up peer first
         vm.prank(owner);
         sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-        
+
         SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
             dstEid: 1,
             to: bytes32(uint256(uint160(user1))),
@@ -142,12 +131,9 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.expectRevert("Insufficient fee");
         sovaBTCOFT.send{value: 0.0005 ether}(sendParam, fee, user1);
     }
@@ -156,7 +142,7 @@ contract SovaBTCOFTCoverageTest is Test {
         // Set up peer first
         vm.prank(owner);
         sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-        
+
         SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
             dstEid: 1,
             to: bytes32(uint256(uint160(user1))),
@@ -165,12 +151,9 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.expectRevert("Insufficient balance");
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
     }
@@ -179,11 +162,11 @@ contract SovaBTCOFTCoverageTest is Test {
         // Set up peer first
         vm.prank(owner);
         sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-        
+
         // Mint tokens to user1
         vm.prank(minter);
         sovaBTCOFT.adminMint(user1, 2000000);
-        
+
         SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
             dstEid: 1,
             to: bytes32(uint256(uint160(user2))),
@@ -192,28 +175,25 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         uint256 initialBalance = user1.balance;
         vm.deal(user1, 2 ether);
-        
+
         vm.prank(user1);
         // Send with excess fee to cover line 212: payable(_refundAddress).transfer(msg.value - _fee.nativeFee);
-        (SovaBTCOFT.MessagingReceipt memory msgReceipt, SovaBTCOFT.OFTReceipt memory oftReceipt) = 
+        (SovaBTCOFT.MessagingReceipt memory msgReceipt, SovaBTCOFT.OFTReceipt memory oftReceipt) =
             sovaBTCOFT.send{value: 0.002 ether}(sendParam, fee, user1);
-        
+
         // Check refund was processed
         assertEq(user1.balance, 2 ether - 0.001 ether);
-        
+
         // Check receipts
         assertEq(oftReceipt.amountSentLD, 1000000);
         assertEq(oftReceipt.amountReceivedLD, 1000000);
         assertTrue(msgReceipt.guid != bytes32(0));
-        
+
         // Check tokens were burned
         assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
     }
@@ -222,11 +202,11 @@ contract SovaBTCOFTCoverageTest is Test {
         // Set up peer first
         vm.prank(owner);
         sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-        
+
         // Mint tokens to user1
         vm.prank(minter);
         sovaBTCOFT.adminMint(user1, 2000000);
-        
+
         SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
             dstEid: 1,
             to: bytes32(uint256(uint160(user2))),
@@ -235,17 +215,14 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.deal(user1, 1 ether);
-        
+
         vm.prank(user1);
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-        
+
         // Check exact fee was used, no refund
         assertEq(user1.balance, 1 ether - 0.001 ether);
         assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
@@ -255,7 +232,7 @@ contract SovaBTCOFTCoverageTest is Test {
         // Pause contract
         vm.prank(owner);
         sovaBTCOFT.pause();
-        
+
         SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
             dstEid: 1,
             to: bytes32(uint256(uint160(user1))),
@@ -264,12 +241,9 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
     }
@@ -297,14 +271,14 @@ contract SovaBTCOFTCoverageTest is Test {
     function test_SimulateReceive_Success() public {
         vm.prank(endpoint);
         sovaBTCOFT.simulateReceive(1, user1, 1000000);
-        
+
         assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
     }
 
     function test_SimulateReceive_WhenPaused() public {
         vm.prank(owner);
         sovaBTCOFT.pause();
-        
+
         vm.prank(endpoint);
         vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
         sovaBTCOFT.simulateReceive(1, user1, 1000000);
@@ -314,10 +288,10 @@ contract SovaBTCOFTCoverageTest is Test {
 
     function test_SetPeer_Success() public {
         bytes32 peer = bytes32(uint256(uint160(address(0x123))));
-        
+
         vm.prank(owner);
         sovaBTCOFT.setPeer(1, peer);
-        
+
         assertEq(sovaBTCOFT.peers(1), peer);
     }
 
@@ -329,10 +303,10 @@ contract SovaBTCOFTCoverageTest is Test {
 
     function test_SetMinter_Success() public {
         address newMinter = address(0x999);
-        
+
         vm.prank(owner);
         sovaBTCOFT.setMinter(newMinter);
-        
+
         assertEq(sovaBTCOFT.minter(), newMinter);
     }
 
@@ -351,7 +325,7 @@ contract SovaBTCOFTCoverageTest is Test {
     function test_AdminMint_Success() public {
         vm.prank(minter);
         sovaBTCOFT.adminMint(user1, 1000000);
-        
+
         assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
     }
 
@@ -371,10 +345,10 @@ contract SovaBTCOFTCoverageTest is Test {
         // First mint some tokens
         vm.prank(minter);
         sovaBTCOFT.adminMint(user1, 1000000);
-        
+
         vm.prank(minter);
         sovaBTCOFT.adminBurn(user1, 500000);
-        
+
         assertEq(sovaBTCOFT.balanceOf(user1), 500000);
     }
 
@@ -393,14 +367,14 @@ contract SovaBTCOFTCoverageTest is Test {
     function test_Pause_Success() public {
         vm.prank(owner);
         sovaBTCOFT.pause();
-        
+
         assertTrue(sovaBTCOFT.isPaused());
     }
 
     function test_Pause_AlreadyPaused() public {
         vm.prank(owner);
         sovaBTCOFT.pause();
-        
+
         // This covers line 288: if (_paused) revert ContractPaused();
         vm.prank(owner);
         vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
@@ -418,7 +392,7 @@ contract SovaBTCOFTCoverageTest is Test {
         sovaBTCOFT.pause();
         sovaBTCOFT.unpause();
         vm.stopPrank();
-        
+
         assertFalse(sovaBTCOFT.isPaused());
     }
 
@@ -431,7 +405,7 @@ contract SovaBTCOFTCoverageTest is Test {
     function test_Unpause_OnlyOwner() public {
         vm.prank(owner);
         sovaBTCOFT.pause();
-        
+
         vm.prank(user1);
         vm.expectRevert();
         sovaBTCOFT.unpause();
@@ -441,10 +415,10 @@ contract SovaBTCOFTCoverageTest is Test {
 
     function test_IsPaused() public {
         assertFalse(sovaBTCOFT.isPaused());
-        
+
         vm.prank(owner);
         sovaBTCOFT.pause();
-        
+
         assertTrue(sovaBTCOFT.isPaused());
     }
 
@@ -452,7 +426,7 @@ contract SovaBTCOFTCoverageTest is Test {
         // This covers lines 308-309
         vm.prank(owner);
         sovaBTCOFT.setMinDepositAmount(50000);
-        
+
         assertEq(sovaBTCOFT.minDepositAmount(), 50000);
     }
 
@@ -466,7 +440,7 @@ contract SovaBTCOFTCoverageTest is Test {
         // This covers lines 312-313
         vm.prank(owner);
         sovaBTCOFT.setMaxDepositAmount(200_000_000_000);
-        
+
         assertEq(sovaBTCOFT.maxDepositAmount(), 200_000_000_000);
     }
 
@@ -480,7 +454,7 @@ contract SovaBTCOFTCoverageTest is Test {
         // This covers lines 316-317
         vm.prank(owner);
         sovaBTCOFT.setMaxGasLimitAmount(100_000_000);
-        
+
         assertEq(sovaBTCOFT.maxGasLimitAmount(), 100_000_000);
     }
 
@@ -517,34 +491,34 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
+
         // Call both branches to ensure the return statement is hit
         SovaBTCOFT.MessagingFee memory fee1 = sovaBTCOFT.quoteSend(sendParam, false);
         SovaBTCOFT.MessagingFee memory fee2 = sovaBTCOFT.quoteSend(sendParam, true);
-        
+
         // Verify both returns worked
         assertNotEq(fee1.lzTokenFee, fee2.lzTokenFee);
         assertEq(fee1.nativeFee, fee2.nativeFee);
-        
+
         // Multiple assertions to force usage of return values
         assertEq(fee1.lzTokenFee, 0);
         assertEq(fee2.lzTokenFee, 100e18);
         assertEq(fee1.nativeFee, 0.001 ether);
         assertEq(fee2.nativeFee, 0.001 ether);
-        
+
         // Try different parameters to hit different code paths
         sendParam.amountLD = 5000000;
         SovaBTCOFT.MessagingFee memory fee3 = sovaBTCOFT.quoteSend(sendParam, false);
         assertEq(fee3.lzTokenFee, 0);
-        
+
         // Test with empty options
         sendParam.extraOptions = "";
         sendParam.composeMsg = "";
         SovaBTCOFT.MessagingFee memory fee4 = sovaBTCOFT.quoteSend(sendParam, true);
         assertEq(fee4.lzTokenFee, 100e18);
-        
+
         // Force multiple return statement executions
-        for (uint i = 0; i < 3; i++) {
+        for (uint256 i = 0; i < 3; i++) {
             sendParam.amountLD = 1000000 + i;
             SovaBTCOFT.MessagingFee memory feeLoop = sovaBTCOFT.quoteSend(sendParam, i % 2 == 0);
             assertTrue(feeLoop.nativeFee > 0);
@@ -563,23 +537,23 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
+
         // Multiple sequential calls to force return statement execution
         SovaBTCOFT.MessagingFee memory result;
-        
+
         // Call 1
         result = sovaBTCOFT.quoteSend(sendParam, false);
         require(result.nativeFee > 0, "Fee should be positive");
-        
-        // Call 2  
+
+        // Call 2
         result = sovaBTCOFT.quoteSend(sendParam, true);
         require(result.lzTokenFee > 0, "LZ token fee should be positive");
-        
+
         // Call 3 with different params
         sendParam.dstEid = 2;
         result = sovaBTCOFT.quoteSend(sendParam, false);
         require(result.nativeFee > 0, "Fee should be positive for dst 2");
-        
+
         // Call 4 with different amount
         sendParam.amountLD = 2000000;
         result = sovaBTCOFT.quoteSend(sendParam, true);
@@ -592,11 +566,11 @@ contract SovaBTCOFTCoverageTest is Test {
         // Set up peer
         vm.prank(owner);
         sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-        
+
         // Mint initial tokens
         vm.prank(minter);
         sovaBTCOFT.adminMint(user1, 5000000);
-        
+
         // User1 sends cross-chain
         SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
             dstEid: 1,
@@ -606,23 +580,20 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.deal(user1, 1 ether);
         vm.prank(user1);
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-        
+
         // Check source chain burn
         assertEq(sovaBTCOFT.balanceOf(user1), 3000000);
-        
+
         // Simulate receive on destination
         vm.prank(endpoint);
         sovaBTCOFT.simulateReceive(1, user2, 2000000);
-        
+
         // Check destination chain mint
         assertEq(sovaBTCOFT.balanceOf(user2), 2000000);
     }
@@ -632,19 +603,19 @@ contract SovaBTCOFTCoverageTest is Test {
         address newMinter = address(0x777);
         vm.prank(owner);
         sovaBTCOFT.setMinter(newMinter);
-        
+
         // Test with new minter
         vm.prank(newMinter);
         sovaBTCOFT.adminMint(user1, 1000000);
         assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
-        
+
         // Test limit changes
         vm.startPrank(owner);
         sovaBTCOFT.setMinDepositAmount(20000);
         sovaBTCOFT.setMaxDepositAmount(500_000_000_000);
         sovaBTCOFT.setMaxGasLimitAmount(75_000_000);
         vm.stopPrank();
-        
+
         assertEq(sovaBTCOFT.minDepositAmount(), 20000);
         assertEq(sovaBTCOFT.maxDepositAmount(), 500_000_000_000);
         assertEq(sovaBTCOFT.maxGasLimitAmount(), 75_000_000);
@@ -654,15 +625,15 @@ contract SovaBTCOFTCoverageTest is Test {
         // Mint some tokens
         vm.prank(minter);
         sovaBTCOFT.adminMint(user1, 1000000);
-        
+
         // Set up peer
         vm.prank(owner);
         sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-        
+
         // Pause contract
         vm.prank(owner);
         sovaBTCOFT.pause();
-        
+
         // Test that operations are blocked
         SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
             dstEid: 1,
@@ -672,27 +643,24 @@ contract SovaBTCOFTCoverageTest is Test {
             extraOptions: "",
             composeMsg: ""
         });
-        
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({
-            nativeFee: 0.001 ether,
-            lzTokenFee: 0
-        });
-        
+
+        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
+
         vm.deal(user1, 1 ether);
         vm.prank(user1);
         vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-        
+
         vm.prank(endpoint);
         vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
         sovaBTCOFT.simulateReceive(1, user2, 500000);
-        
+
         // Unpause and test operations work again
         vm.prank(owner);
         sovaBTCOFT.unpause();
-        
+
         vm.prank(user1);
         sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
         assertEq(sovaBTCOFT.balanceOf(user1), 500000);
     }
-} 
+}

@@ -7,9 +7,8 @@ pragma solidity ^0.8.20;
  * @dev Defines standard staking mechanics for both SovaBTC and SOVA staking
  */
 interface IStaking {
-    
     /* ----------------------- STRUCTS ----------------------- */
-    
+
     /**
      * @notice User staking information
      * @param amount Amount of tokens staked
@@ -23,7 +22,7 @@ interface IStaking {
         uint256 lastStakeTime;
         uint256 lockEndTime;
     }
-    
+
     /**
      * @notice Pool configuration
      * @param stakingToken Address of the token being staked
@@ -47,7 +46,7 @@ interface IStaking {
     }
 
     /* ----------------------- EVENTS ----------------------- */
-    
+
     event Staked(address indexed user, uint256 indexed poolId, uint256 amount, uint256 lockEndTime);
     event Unstaked(address indexed user, uint256 indexed poolId, uint256 amount);
     event RewardsClaimed(address indexed user, uint256 indexed poolId, uint256 amount);
@@ -57,7 +56,7 @@ interface IStaking {
     event EmergencyWithdraw(address indexed user, uint256 indexed poolId, uint256 amount);
 
     /* ----------------------- CORE FUNCTIONS ----------------------- */
-    
+
     /**
      * @notice Stake tokens in a pool
      * @param poolId Pool identifier
@@ -65,20 +64,20 @@ interface IStaking {
      * @param lock Whether to lock for enhanced rewards
      */
     function stake(uint256 poolId, uint256 amount, bool lock) external;
-    
+
     /**
      * @notice Unstake tokens from a pool
      * @param poolId Pool identifier
      * @param amount Amount to unstake
      */
     function unstake(uint256 poolId, uint256 amount) external;
-    
+
     /**
      * @notice Claim pending rewards
      * @param poolId Pool identifier
      */
     function claimRewards(uint256 poolId) external;
-    
+
     /**
      * @notice Emergency unstake without rewards (in case of issues)
      * @param poolId Pool identifier
@@ -86,7 +85,7 @@ interface IStaking {
     function emergencyUnstake(uint256 poolId) external;
 
     /* ----------------------- VIEW FUNCTIONS ----------------------- */
-    
+
     /**
      * @notice Get pending rewards for a user
      * @param poolId Pool identifier
@@ -94,7 +93,7 @@ interface IStaking {
      * @return Pending reward amount
      */
     function pendingRewards(uint256 poolId, address user) external view returns (uint256);
-    
+
     /**
      * @notice Get user staking information
      * @param poolId Pool identifier
@@ -102,14 +101,14 @@ interface IStaking {
      * @return User staking details
      */
     function getUserInfo(uint256 poolId, address user) external view returns (UserInfo memory);
-    
+
     /**
      * @notice Get pool information
      * @param poolId Pool identifier
      * @return Pool details
      */
     function getPoolInfo(uint256 poolId) external view returns (PoolInfo memory);
-    
+
     /**
      * @notice Get total number of pools
      * @return Number of pools
@@ -117,7 +116,7 @@ interface IStaking {
     function poolLength() external view returns (uint256);
 
     /* ----------------------- ADMIN FUNCTIONS ----------------------- */
-    
+
     /**
      * @notice Add a new staking pool
      * @param stakingToken Token to be staked
@@ -133,7 +132,7 @@ interface IStaking {
         uint256 lockPeriod,
         uint256 multiplier
     ) external;
-    
+
     /**
      * @notice Update pool parameters
      * @param poolId Pool identifier
@@ -141,17 +140,12 @@ interface IStaking {
      * @param lockPeriod New lock period
      * @param multiplier New multiplier
      */
-    function updatePool(
-        uint256 poolId,
-        uint256 rewardPerSecond,
-        uint256 lockPeriod,
-        uint256 multiplier
-    ) external;
-    
+    function updatePool(uint256 poolId, uint256 rewardPerSecond, uint256 lockPeriod, uint256 multiplier) external;
+
     /**
      * @notice Fund reward pool with tokens
      * @param poolId Pool identifier
      * @param amount Amount to fund
      */
     function fundRewardPool(uint256 poolId, uint256 amount) external;
-} 
+}

@@ -23,30 +23,25 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
 
     /// @notice SovaBTC contract reference
     ISovaBTC public immutable sovaBTC;
-    
+
     /// @notice TokenWhitelist contract reference
     TokenWhitelist public immutable tokenWhitelist;
-    
+
     /// @notice RedemptionQueue contract reference
     RedemptionQueue public redemptionQueue;
-    
+
     /// @notice CustodyManager contract reference
     CustodyManager public immutable custodyManager;
-    
+
     /// @notice Minimum deposit amount in satoshis
     uint256 public minDepositSatoshi;
-    
+
     /// @notice Pause state
     bool private _paused;
 
     // ----------- Events -----------
-    event TokenWrapped(
-        address indexed user,
-        address indexed token,
-        uint256 tokenAmount,
-        uint256 sovaAmount
-    );
-    
+    event TokenWrapped(address indexed user, address indexed token, uint256 tokenAmount, uint256 sovaAmount);
+
     event RedemptionQueueUpdated(address indexed oldQueue, address indexed newQueue);
     event MinDepositUpdated(uint256 oldMin, uint256 newMin);
     event ContractPausedByOwner(address indexed account);
@@ -66,18 +61,13 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(
-        address _sovaBTC,
-        address _tokenWhitelist,
-        address _custodyManager,
-        uint256 _minDepositSatoshi
-    ) {
+    constructor(address _sovaBTC, address _tokenWhitelist, address _custodyManager, uint256 _minDepositSatoshi) {
         _initializeOwner(msg.sender);
-        
+
         if (_sovaBTC == address(0)) revert ZeroAddress();
         if (_tokenWhitelist == address(0)) revert ZeroAddress();
         if (_custodyManager == address(0)) revert ZeroAddress();
-        
+
         sovaBTC = ISovaBTC(_sovaBTC);
         tokenWhitelist = TokenWhitelist(_tokenWhitelist);
         custodyManager = CustodyManager(_custodyManager);
@@ -95,10 +85,10 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
     function deposit(address token, uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
         if (!tokenWhitelist.isTokenAllowed(token)) revert TokenNotAllowed(token);
-        
+
         // Get token decimals
         uint8 tokenDecimals = tokenWhitelist.tokenDecimals(token);
-        
+
         // Convert to satoshi amount (8 decimals)
         uint256 sovaAmount;
         if (tokenDecimals == 8) {
@@ -113,23 +103,23 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
             }
             sovaAmount = amount / divisor;
         }
-        
+
         // Validate minimum deposit
         if (sovaAmount < minDepositSatoshi) {
             revert InsufficientAmount(sovaAmount, minDepositSatoshi);
         }
-        
+
         // Transfer tokens from user to this contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // If redemption queue is set, transfer tokens there for reserves
         if (address(redemptionQueue) != address(0)) {
             IERC20(token).safeTransfer(address(redemptionQueue), amount);
         }
-        
+
         // Mint SovaBTC to user
         sovaBTC.adminMint(msg.sender, sovaAmount);
-        
+
         emit TokenWrapped(msg.sender, token, amount, sovaAmount);
     }
 
@@ -145,9 +135,9 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         if (!tokenWhitelist.isTokenAllowed(token)) {
             revert TokenNotAllowed(token);
         }
-        
+
         uint8 tokenDecimals = tokenWhitelist.tokenDecimals(token);
-        
+
         if (tokenDecimals == 8) {
             return amount; // 1:1 conversion
         } else if (tokenDecimals < 8) {
@@ -161,42 +151,42 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
             return amount / divisor;
         }
     }
-    
+
     /**
      * @notice Fulfill a redemption request (custodian function with custody validation)
      * @param user Address of the user whose redemption to fulfill
      */
     function fulfillRedemption(address user) external {
         if (address(redemptionQueue) == address(0)) revert ZeroAddress();
-        
+
         // Check if caller is authorized custodian
         if (!custodyManager.isAuthorizedCustodian(msg.sender)) {
             revert UnauthorizedCustodian(msg.sender);
         }
-        
+
         // Get redemption details to validate custody destination
         RedemptionQueue.RedemptionRequest memory request = redemptionQueue.getRedemptionRequest(user);
         if (request.user != address(0)) {
             // Validate that the redemption can be sent to user (exception for user redemptions)
             _validateRedemptionDestination(request.token, user);
         }
-        
+
         // Delegate to the redemption queue
         redemptionQueue.fulfillRedemption(user);
     }
-    
+
     /**
      * @notice Batch fulfill multiple redemption requests (custodian function)
      * @param users Array of user addresses whose redemptions to fulfill
      */
     function batchFulfillRedemptions(address[] calldata users) external {
         if (address(redemptionQueue) == address(0)) revert ZeroAddress();
-        
+
         // Check if caller is authorized custodian
         if (!custodyManager.isAuthorizedCustodian(msg.sender)) {
             revert UnauthorizedCustodian(msg.sender);
         }
-        
+
         // Validate custody destinations for all redemptions
         for (uint256 i = 0; i < users.length; i++) {
             RedemptionQueue.RedemptionRequest memory request = redemptionQueue.getRedemptionRequest(users[i]);
@@ -204,7 +194,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
                 _validateRedemptionDestination(request.token, users[i]);
             }
         }
-        
+
         // Delegate to the redemption queue
         redemptionQueue.batchFulfillRedemptions(users);
     }
@@ -222,7 +212,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         }
         return redemptionQueue.getRedemptionRequest(user);
     }
-    
+
     /**
      * @notice Check if a redemption is ready to be fulfilled
      * @param user Address of the user
@@ -232,7 +222,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         if (address(redemptionQueue) == address(0)) return false;
         return redemptionQueue.isRedemptionReady(user);
     }
-    
+
     /**
      * @notice Get the time when a redemption will be ready
      * @param user Address of the user
@@ -242,7 +232,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         if (address(redemptionQueue) == address(0)) return 0;
         return redemptionQueue.getRedemptionReadyTime(user);
     }
-    
+
     /**
      * @notice Get available reserve for a token
      * @param token Address of the token
@@ -311,13 +301,13 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         if (token == address(0)) revert ZeroAddress();
         if (to == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
-        
+
         // Validate destination against custody requirements
         custodyManager.validateDestination(token, to);
-        
+
         IERC20(token).safeTransfer(to, amount);
     }
-    
+
     /**
      * @notice Emergency sweep all tokens to custody addresses (only owner)
      * @param tokens Array of token addresses to sweep
@@ -326,7 +316,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
             uint256 balance = IERC20(token).balanceOf(address(this));
-            
+
             if (balance > 0) {
                 (address custody, bool enforced) = custodyManager.getCustodyConfig(token);
                 if (custody != address(0) && enforced) {
@@ -356,7 +346,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
     function getCustodyConfig(address token) external view returns (address custody, bool enforced) {
         return custodyManager.getCustodyConfig(token);
     }
-    
+
     /**
      * @notice Check if an address is authorized as a custodian
      * @param account The address to check
@@ -365,7 +355,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
     function isAuthorizedCustodian(address account) external view returns (bool) {
         return custodyManager.isAuthorizedCustodian(account);
     }
-    
+
     /**
      * @notice Get all tokens that have custody addresses configured
      * @return Array of token addresses with custody configuration
@@ -385,14 +375,14 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         // User redemptions are always allowed as an exception to custody restrictions
         // This allows direct-to-user transfers only in fulfillRedemption context
         (address custody, bool enforced) = custodyManager.getCustodyConfig(token);
-        
+
         // If custody is not enforced or not set, allow any destination
         if (!enforced || custody == address(0)) {
             return;
         }
-        
+
         // For redemptions, we allow transfers to users as an exception
         // This is the key requirement: "Exception for user redemption fulfillment"
         // The custody validation is bypassed for user redemptions
     }
-} 
+}
