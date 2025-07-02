@@ -1,0 +1,417 @@
+# SovaBTC Frontend Implementation Rules
+
+## Project Context
+You are building a modern, user-friendly frontend for the SovaBTC protocol on Base Sepolia testnet. This is a Web3 application that enables users to wrap BTC-pegged tokens, manage cross-chain transfers, handle redemption queues, and participate in staking.
+
+## Task Execution Rules
+
+### Sequential Implementation
+- ALWAYS complete tasks in order: Task 1 → Task 2 → Task 3 → Task 4 → Task 5 → Task 6 → Task 7 → Task 8
+- Do NOT proceed to next task until current task passes ALL acceptance criteria
+- Ask for explicit confirmation before moving between tasks
+- Focus on mobile-first, responsive design from the start
+
+### Current Task Tracking
+Always explicitly state which task you're working on:
+```
+🎯 CURRENT TASK: Task X - [Brief Description]
+📱 RESPONSIVE: [Mobile/Tablet/Desktop status]
+🧪 TESTING: [Test coverage status]
+```
+
+## Tech Stack Requirements
+
+### Core Framework
+- **Next.js 14** with App Router (not Pages Router)
+- **TypeScript** for all files
+- **Tailwind CSS** for styling
+- **Shadcn/UI** for component library
+
+### Web3 Stack
+- **Wagmi v2** for Web3 interactions
+- **Viem** for Ethereum interactions
+- **ConnectKit** or **RainbowKit** for wallet connections
+- **Zustand** for state management
+
+### Required Dependencies
+```json
+{
+  "@next/app": "^14.0.0",
+  "wagmi": "^2.0.0",
+  "viem": "^2.0.0",
+  "@tanstack/react-query": "^5.0.0",
+  "tailwindcss": "^3.4.0",
+  "shadcn-ui": "latest",
+  "zustand": "^4.4.0",
+  "react-hook-form": "^7.48.0",
+  "zod": "^3.22.0",
+  "recharts": "^2.8.0"
+}
+```
+
+## Code Standards
+
+### File Structure
+```
+src/
+├── app/                    # Next.js 14 App Router
+├── components/
+│   ├── ui/                 # Shadcn components
+│   ├── web3/              # Web3-specific components
+│   ├── [feature]/         # Feature-specific components
+│   └── layout/            # Layout components
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utility functions
+├── stores/                # Zustand stores
+├── types/                 # TypeScript types
+└── config/                # Configuration files
+```
+
+### Component Standards
+```tsx
+// Always use this component template
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { useContractRead } from 'wagmi';
+
+interface ComponentNameProps {
+  // Props with clear types
+}
+
+export function ComponentName({ ...props }: ComponentNameProps) {
+  // Hooks first
+  // State management
+  // Event handlers
+  // Render with accessibility
+
+  return (
+    <div className="p-4 md:p-6">
+      {/* Mobile-first responsive design */}
+    </div>
+  );
+}
+```
+
+### TypeScript Standards
+- Use strict TypeScript configuration
+- Define interfaces for all props and data structures
+- Use proper typing for Web3 interactions
+- Export types from dedicated files
+
+### Styling Standards
+- **Mobile-first responsive design**: Start with mobile, scale up
+- **Tailwind classes only**: No custom CSS unless absolutely necessary
+- **Consistent spacing**: Use Tailwind's spacing scale (4, 6, 8, 12, 16, 24)
+- **Dark mode support**: Implement from the start
+- **Accessibility**: Proper contrast ratios, keyboard navigation
+
+## Web3 Integration Rules
+
+### Wagmi Configuration
+```tsx
+// config/wagmi.ts
+import { createConfig, http } from 'wagmi';
+import { baseSepolia, sepolia } from 'wagmi/chains';
+import { coinbaseWallet, metaMask, walletConnect } from 'wagmi/connectors';
+
+export const config = createConfig({
+  chains: [baseSepolia, sepolia],
+  connectors: [
+    metaMask(),
+    walletConnect({ projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID! }),
+    coinbaseWallet({ appName: 'SovaBTC' }),
+  ],
+  transports: {
+    [baseSepolia.id]: http(),
+    [sepolia.id]: http(),
+  },
+});
+```
+
+### Contract Interaction Patterns
+```tsx
+// Always use this pattern for contract reads
+const { data, isLoading, error } = useReadContract({
+  address: CONTRACT_ADDRESS,
+  abi: CONTRACT_ABI,
+  functionName: 'functionName',
+  args: [arg1, arg2],
+});
+
+// For contract writes
+const { writeContract, isPending } = useWriteContract();
+
+// Always handle loading and error states
+if (isLoading) return <LoadingSpinner />;
+if (error) return <ErrorMessage error={error} />;
+```
+
+### Transaction Handling
+- Always show transaction status (pending, success, error)
+- Implement optimistic updates where appropriate
+- Handle transaction failures gracefully
+- Show gas estimates before transactions
+- Use transaction confirmations
+
+## Task-Specific Guidelines
+
+### Task 1: Project Setup
+- Use `create-next-app` with TypeScript template
+- Set up Shadcn/UI with `npx shadcn-ui@latest init`
+- Configure Tailwind with custom theme for SovaBTC branding
+- Set up Wagmi with Base Sepolia configuration
+- Create basic layout with responsive header/footer
+
+### Task 2: Token Deposit Interface
+- Create reusable `TokenSelector` component
+- Implement decimal conversion utility functions
+- Handle ERC-20 approvals before deposits
+- Show real-time balance updates
+- Validate minimum deposit amounts
+- Display conversion rates clearly
+
+### Task 3: Cross-Chain Bridge Interface
+- Integrate LayerZero OFT contracts
+- Implement chain switching functionality
+- Show bridge fees prominently
+- Track cross-chain transaction status
+- Handle failed bridge transactions
+- Store bridge history in localStorage
+
+### Task 4: Redemption Queue Dashboard
+- Create countdown timer components
+- Implement queue position tracking
+- Show redemption status clearly
+- Handle fulfillment transactions
+- Display reserve availability
+- Implement auto-refresh for status updates
+
+### Task 5: BTC Withdrawal Interface
+- Only show on Sova chain
+- Validate Bitcoin addresses
+- Handle different address formats (Legacy, SegWit, Bech32)
+- Show fee calculations clearly
+- Track Bitcoin transaction status
+- Implement proper error handling
+
+### Task 6: Staking Dashboard
+- Display multiple staking pools
+- Calculate and show APY/APR
+- Handle reward claiming
+- Show staking history
+- Implement auto-compound features
+- Display pool statistics
+
+### Task 7: Portfolio Dashboard
+- Aggregate data from multiple chains
+- Use Recharts for data visualization
+- Implement data caching with React Query
+- Show performance metrics
+- Export transaction data
+- Handle loading states for large datasets
+
+### Task 8: Admin Panel
+- Implement role-based access control
+- Add confirmation dialogs for critical actions
+- Show current protocol state
+- Implement batch transactions
+- Provide audit logging
+
+## Responsive Design Requirements
+
+### Breakpoints (Mobile-First)
+```css
+/* Default: Mobile (320px-639px) */
+sm: '640px',   /* Small tablets */
+md: '768px',   /* Tablets */
+lg: '1024px',  /* Small desktops */
+xl: '1280px',  /* Large desktops */
+2xl: '1536px'  /* Extra large screens */
+```
+
+### Component Responsive Patterns
+```tsx
+// Always start with mobile layout
+<div className="
+  p-4 md:p-6 lg:p-8
+  grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3
+  gap-4 md:gap-6
+  text-sm md:text-base
+">
+```
+
+### Touch-Friendly Requirements
+- Minimum 44px touch targets
+- Adequate spacing between interactive elements
+- Swipe gestures for mobile navigation
+- Pull-to-refresh where appropriate
+
+## State Management
+
+### Zustand Store Pattern
+```tsx
+// stores/use-app-store.ts
+import { create } from 'zustand';
+
+interface AppState {
+  // State definition
+  // Actions
+}
+
+export const useAppStore = create<AppState>((set, get) => ({
+  // Implementation
+}));
+```
+
+### Web3 State Management
+- Use Wagmi's built-in state management for Web3 data
+- Cache contract reads with React Query
+- Implement optimistic updates for better UX
+- Handle connection state changes gracefully
+
+## Error Handling
+
+### Error Boundaries
+```tsx
+// components/error-boundary.tsx
+'use client';
+
+export function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  // Implement error boundary with user-friendly messages
+}
+```
+
+### Transaction Error Handling
+- Show clear error messages for failed transactions
+- Provide retry mechanisms
+- Handle insufficient gas/funds errors
+- Show network-specific error guidance
+
+## Testing Requirements
+
+### Unit Testing (Vitest)
+```tsx
+// Every hook and utility function must have tests
+import { describe, it, expect } from 'vitest';
+import { renderHook } from '@testing-library/react';
+
+describe('useTokenBalance', () => {
+  it('should return token balance', () => {
+    // Test implementation
+  });
+});
+```
+
+### Component Testing
+```tsx
+// Every component must have basic render tests
+import { render, screen } from '@testing-library/react';
+import { ComponentName } from './component-name';
+
+describe('ComponentName', () => {
+  it('renders correctly', () => {
+    render(<ComponentName />);
+    expect(screen.getByText('Expected Text')).toBeInTheDocument();
+  });
+});
+```
+
+### E2E Testing (Playwright)
+- Test complete user flows
+- Test wallet connection scenarios
+- Test transaction flows
+- Test error scenarios
+
+## Performance Requirements
+
+### Core Web Vitals Targets
+- **First Contentful Paint**: < 1.5s
+- **Largest Contentful Paint**: < 2.5s
+- **Cumulative Layout Shift**: < 0.1
+- **First Input Delay**: < 100ms
+
+### Optimization Strategies
+- Use Next.js Image component for all images
+- Implement proper code splitting
+- Use React.memo for expensive components
+- Implement virtual scrolling for large lists
+- Optimize bundle size with dynamic imports
+
+## Security Guidelines
+
+### Input Validation
+```tsx
+// Always validate user inputs
+import { z } from 'zod';
+
+const addressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
+const amountSchema = z.string().min(1).refine((val) => !isNaN(Number(val)));
+```
+
+### Web3 Security
+- Always validate contract addresses
+- Implement transaction simulation where possible
+- Show clear transaction details before signing
+- Validate token amounts and conversions
+- Implement slippage protection
+
+## Documentation Standards
+
+### Component Documentation
+```tsx
+/**
+ * TokenSelector - Dropdown component for selecting BTC-pegged tokens
+ * 
+ * @param onTokenSelect - Callback when token is selected
+ * @param allowedTokens - Array of whitelisted token addresses
+ * @param disabled - Whether the selector is disabled
+ * 
+ * @example
+ * <TokenSelector
+ *   onTokenSelect={(token) => setSelectedToken(token)}
+ *   allowedTokens={['0x...', '0x...']}
+ * />
+ */
+```
+
+### README Updates
+- Update README.md after each task completion
+- Include setup instructions
+- Document environment variables
+- Add deployment instructions
+- Include troubleshooting guide
+
+## Environment Configuration
+
+### Required Environment Variables
+```bash
+# Base Sepolia Configuration
+NEXT_PUBLIC_CHAIN_ID=84532
+NEXT_PUBLIC_DEFAULT_CHAIN=84532
+
+# Contract Addresses
+NEXT_PUBLIC_SOVABTC_ADDRESS=0x...
+NEXT_PUBLIC_WRAPPER_ADDRESS=0x...
+NEXT_PUBLIC_STAKING_ADDRESS=0x...
+
+# API Keys
+NEXT_PUBLIC_WC_PROJECT_ID=your_walletconnect_id
+NEXT_PUBLIC_ALCHEMY_KEY=your_alchemy_key
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_STAKING=true
+NEXT_PUBLIC_ENABLE_ADMIN=false
+NEXT_PUBLIC_ENABLE_ANALYTICS=true
+```
+
+## Quality Checklist
+
+### Before Task Completion
+- [ ] Component renders correctly on mobile, tablet, desktop
+- [ ] All loading states implemented
+- [ ] All error states handled
+- [ ] Accessibility requirements met
+- [ ] TypeScript types are correct
+- [
