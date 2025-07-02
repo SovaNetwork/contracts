@@ -54,8 +54,8 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     error PendingDepositExists();
     error PendingWithdrawalExists();
 
-    event Deposit(bytes32 txid, uint256 amount);
-    event Withdraw(bytes32 txid, uint256 amount);
+    event Deposit(address caller, bytes32 txid, uint256 amount);
+    event Withdraw(address caller, bytes32 txid, uint256 amount);
     event MinDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxGasLimitAmountUpdated(uint64 oldAmount, uint64 newAmount);
@@ -147,9 +147,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         // Broadcast the BTC tx
         SovaBitcoin.broadcastBitcoinTx(signedTx);
 
-        // TODO(powvt): check locks here
-
-        emit Deposit(btcTx.txid, amount);
+        emit Deposit(msg.sender, btcTx.txid, amount);
     }
 
     /**
@@ -203,9 +201,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
 
         bytes32 btcTxid = bytes32(returndata);
 
-        // TODO(powvt): check locks here
-
-        emit Withdraw(btcTxid, amount);
+        emit Withdraw(msg.sender, btcTxid, amount);
     }
 
     /**

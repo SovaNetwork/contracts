@@ -76,8 +76,6 @@ abstract contract UBTC20 is ERC20 {
             delete _pendingDeposits[user];
 
             _mint(user, amount);
-
-            // TODO(powvt): check locks here
         }
 
         // Finalize withdrawal if slot is unlocked
@@ -86,8 +84,6 @@ abstract contract UBTC20 is ERC20 {
             delete _pendingWithdrawals[user];
 
             _burn(user, amount);
-
-            // TODO(powvt): check locks here
         }
     }
 
