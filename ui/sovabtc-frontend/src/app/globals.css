@@ -1,2817 +1,463 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
+/* Modern CSS Custom Properties with Enhanced Color System */
 :root {
-  /* Light Mode - Clean and Professional */
-  --background: 0 0% 100%; /* Pure white */
-  --foreground: 25 7% 10%; /* Sova black-500 equivalent */
-  --card: 0 0% 100%; /* Pure white */
+  /* Base Colors - Light Mode */
+  --background: 0 0% 100%;
+  --foreground: 25 7% 10%;
+  --card: 0 0% 100%;
   --card-foreground: 25 7% 10%;
   --popover: 0 0% 100%;
   --popover-foreground: 25 7% 10%;
-  --primary: 128 65% 70%; /* Sova mint-500 */
-  --primary-foreground: 25 7% 10%; /* Sova black-500 for contrast */
-  --secondary: 128 25% 95%; /* Very light mint */
+  
+  /* Primary Colors - Customizable Sova Mint */
+  --primary: 128 65% 70%;
+  --primary-foreground: 25 7% 10%;
+  --primary-light: 128 55% 80%;
+  --primary-dark: 128 75% 60%;
+  
+  /* Secondary Colors */
+  --secondary: 128 25% 95%;
   --secondary-foreground: 25 7% 10%;
-  --muted: 25 5% 96%; /* Very light gray */
-  --muted-foreground: 25 7% 45%; /* Readable gray */
-  --accent: 128 35% 92%; /* Light mint accent */
+  
+  /* UI State Colors */
+  --muted: 25 5% 96%;
+  --muted-foreground: 25 7% 45%;
+  --accent: 128 35% 92%;
   --accent-foreground: 25 7% 10%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  --border: 25 7% 88%; /* Light border */
-  --input: 25 7% 92%; /* Light input background */
-  --ring: 128 65% 70%; /* Sova mint-500 for focus rings */
+  --success: 120 60% 50%;
+  --success-foreground: 0 0% 98%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 98%;
+  --info: 200 98% 39%;
+  --info-foreground: 0 0% 98%;
+  
+  /* Border and Input Colors */
+  --border: 25 7% 88%;
+  --input: 25 7% 92%;
+  --ring: 128 65% 70%;
+  
+  /* Chart Colors */
   --chart-1: 128 65% 70%;
   --chart-2: 128 50% 60%;
   --chart-3: 128 40% 50%;
   --chart-4: 128 30% 40%;
   --chart-5: 128 20% 30%;
-  --radius: 0.5rem;
+  
+  /* Radius and Spacing */
+  --radius: 0.75rem;
+  --container-padding: 1rem;
+  
+  /* Shadows */
+  --shadow-color: 128deg 65% 70%;
+  --shadow-elevation-low: 0 1px 2px hsl(var(--shadow-color) / 0.1);
+  --shadow-elevation-medium: 0 4px 8px hsl(var(--shadow-color) / 0.12), 0 2px 4px hsl(var(--shadow-color) / 0.08);
+  --shadow-elevation-high: 0 8px 16px hsl(var(--shadow-color) / 0.15), 0 4px 8px hsl(var(--shadow-color) / 0.1);
+  
+  /* Animation Durations */
+  --duration-fast: 150ms;
+  --duration-medium: 300ms;
+  --duration-slow: 500ms;
 }
 
 .dark {
-  /* Dark Mode - Sova Black with Mint Accents */
-  --background: 25 7% 8%; /* Sova black-700 for main background */
-  --foreground: 0 0% 98%; /* Pure white text */
-  --card: 25 7% 12%; /* Sova black-600 for cards */
-  --card-foreground: 0 0% 98%; /* Pure white text on cards */
-  --popover: 25 7% 10%; /* Slightly darker for popovers */
+  /* Base Colors - Dark Mode */
+  --background: 25 7% 8%;
+  --foreground: 0 0% 98%;
+  --card: 25 7% 12%;
+  --card-foreground: 0 0% 98%;
+  --popover: 25 7% 10%;
   --popover-foreground: 0 0% 98%;
-  --primary: 128 65% 70%; /* Sova mint-500 - bright and vibrant */
-  --primary-foreground: 25 7% 8%; /* Dark text on mint buttons */
-  --secondary: 25 7% 18%; /* Darker secondary */
+  
+  /* Primary Colors - Enhanced for Dark Mode */
+  --primary: 128 65% 70%;
+  --primary-foreground: 25 7% 8%;
+  --primary-light: 128 55% 80%;
+  --primary-dark: 128 75% 60%;
+  
+  /* Secondary Colors */
+  --secondary: 25 7% 18%;
   --secondary-foreground: 0 0% 98%;
-  --muted: 25 7% 15%; /* Muted areas */
-  --muted-foreground: 0 0% 70%; /* Lighter muted text */
-  --accent: 25 7% 16%; /* Subtle accent areas */
+  
+  /* UI State Colors */
+  --muted: 25 7% 15%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 25 7% 16%;
   --accent-foreground: 0 0% 98%;
   --destructive: 0 84% 65%;
   --destructive-foreground: 0 0% 98%;
-  --border: 25 7% 20%; /* Visible but subtle borders */
-  --input: 25 7% 16%; /* Input backgrounds */
-  --ring: 128 65% 70%; /* Sova mint-500 for focus rings */
+  --success: 120 50% 60%;
+  --success-foreground: 0 0% 98%;
+  --warning: 38 80% 60%;
+  --warning-foreground: 0 0% 98%;
+  --info: 200 80% 60%;
+  --info-foreground: 0 0% 98%;
+  
+  /* Border and Input Colors */
+  --border: 25 7% 20%;
+  --input: 25 7% 16%;
+  --ring: 128 65% 70%;
+  
+  /* Chart Colors - Enhanced for Dark Mode */
   --chart-1: 128 65% 75%;
   --chart-2: 128 50% 65%;
   --chart-3: 128 40% 55%;
   --chart-4: 128 30% 45%;
   --chart-5: 128 20% 35%;
+  
+  /* Shadows - Enhanced for Dark Mode */
+  --shadow-elevation-low: 0 1px 2px hsl(var(--shadow-color) / 0.3);
+  --shadow-elevation-medium: 0 4px 8px hsl(var(--shadow-color) / 0.25), 0 2px 4px hsl(var(--shadow-color) / 0.2);
+  --shadow-elevation-high: 0 8px 16px hsl(var(--shadow-color) / 0.3), 0 4px 8px hsl(var(--shadow-color) / 0.25);
 }
 
+/* Theme Customization Classes */
+.theme-blue {
+  --primary: 210 100% 60%;
+  --primary-foreground: 0 0% 100%;
+  --shadow-color: 210deg 100% 60%;
+}
+
+.theme-purple {
+  --primary: 270 95% 65%;
+  --primary-foreground: 0 0% 100%;
+  --shadow-color: 270deg 95% 65%;
+}
+
+.theme-orange {
+  --primary: 25 95% 60%;
+  --primary-foreground: 0 0% 100%;
+  --shadow-color: 25deg 95% 60%;
+}
+
+.theme-rose {
+  --primary: 330 85% 65%;
+  --primary-foreground: 0 0% 100%;
+  --shadow-color: 330deg 85% 65%;
+}
+
+.theme-emerald {
+  --primary: 160 85% 45%;
+  --primary-foreground: 0 0% 100%;
+  --shadow-color: 160deg 85% 45%;
+}
+
+/* Base Styling */
 @layer base {
   * {
     @apply border-border;
   }
+  
   body {
-    @apply bg-background text-foreground font-sans transition-colors duration-300;
+    @apply bg-background text-foreground font-sans antialiased;
+    transition: background-color var(--duration-medium), color var(--duration-medium);
   }
   
-  /* Ensure container is properly centered */
+  /* Enhanced Container */
   .container {
     @apply mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: min(1400px, calc(100vw - 2rem));
   }
-}
-
-/* Scrollbar styling with Sova theme */
-@layer base {
-  /* Webkit scrollbar */
+  
+  /* Modern Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-muted/30;
+    @apply bg-muted/30 rounded-full;
   }
   
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #84F29B, #78DC8D);
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
     border-radius: 999px;
+    transition: background var(--duration-fast);
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #9DF5AF, #84F29B);
+    background: linear-gradient(135deg, hsl(var(--primary-light)), hsl(var(--primary)));
   }
   
-  /* Firefox scrollbar */
+  /* Firefox Scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #84F29B transparent;
+    scrollbar-color: hsl(var(--primary)) transparent;
   }
-}
-
-/* Enhanced focus states with Sova theme */
-@layer base {
+  
+  /* Enhanced Focus States */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px #84F29B;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
+    transition: box-shadow var(--duration-fast);
+  }
+  
+  /* Selection Styling */
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+    color: hsl(var(--foreground));
   }
 }
 
-/* Component-specific Sova styling */
+/* Modern Component Classes */
 @layer utilities {
-  .input-sova {
-    @apply border border-border bg-input px-3 py-2 rounded-lg
-           transition-colors duration-200 text-foreground;
+  /* Button Variants */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground border-0 font-medium;
+    @apply hover:bg-primary/90 active:bg-primary/95;
+    @apply transition-all duration-200 ease-out;
+    @apply shadow-lg hover:shadow-xl;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
   }
   
-  .input-sova:focus {
-    border-color: #84F29B;
-    box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
+  .btn-primary:hover {
+    background: linear-gradient(135deg, hsl(var(--primary-light)), hsl(var(--primary)));
+    transform: translateY(-1px);
   }
   
-  .card-sova {
-    @apply bg-card border border-border rounded-lg shadow-lg;
-    box-shadow: 0 4px 20px -2px rgba(132, 242, 155, 0.1);
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground border border-border;
+    @apply hover:bg-secondary/80 active:bg-secondary/70;
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-foreground border border-transparent;
+    @apply hover:bg-accent hover:text-accent-foreground;
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  /* Input Styling */
+  .input-modern {
+    @apply border border-border bg-input px-4 py-3 rounded-lg text-foreground;
+    @apply placeholder:text-muted-foreground;
+    @apply transition-all duration-200 ease-out;
+    @apply focus:border-primary focus:ring-2 focus:ring-primary/20;
+    @apply hover:border-border/80;
+  }
+  
+  /* Card Styling */
+  .card-modern {
+    @apply bg-card border border-border rounded-xl shadow-sm;
+    @apply transition-all duration-300 ease-out;
+    box-shadow: var(--shadow-elevation-low);
+  }
+  
+  .card-modern:hover {
+    box-shadow: var(--shadow-elevation-medium);
+    transform: translateY(-2px);
+  }
+  
+  .card-featured {
+    @apply card-modern relative overflow-hidden;
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--primary) / 0.02) 100%);
+    border: 1px solid hsl(var(--primary) / 0.1);
+  }
+  
+  .card-featured::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+  }
+  
+  /* Status Indicators */
+  .status-success {
+    @apply bg-success/10 text-success border border-success/20 rounded-full px-3 py-1 text-sm font-medium;
+  }
+  
+  .status-warning {
+    @apply bg-warning/10 text-warning border border-warning/20 rounded-full px-3 py-1 text-sm font-medium;
+  }
+  
+  .status-error {
+    @apply bg-destructive/10 text-destructive border border-destructive/20 rounded-full px-3 py-1 text-sm font-medium;
+  }
+  
+  .status-info {
+    @apply bg-info/10 text-info border border-info/20 rounded-full px-3 py-1 text-sm font-medium;
+  }
+  
+  /* Gradient Utilities */
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+  }
+  
+  .gradient-subtle {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0.05) 100%);
+  }
+  
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Animation Classes */
+  .animate-fade-in {
+    animation: fadeIn var(--duration-medium) ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp var(--duration-medium) ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn var(--duration-medium) ease-out;
+  }
+  
+  .animate-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .animate-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.1) 50%,
+      transparent 100%
+    );
+    animation: shimmer 2s ease-in-out infinite;
+  }
+  
+  /* Loading States */
+  .loading-skeleton {
+    @apply bg-muted/50 rounded animate-pulse;
+  }
+  
+  .loading-spinner {
+    border: 2px solid hsl(var(--muted));
+    border-top: 2px solid hsl(var(--primary));
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
   }
 }
 
-/* Dark mode specific enhancements */
-.dark .shadow-sova {
-  box-shadow: 0 4px 20px -2px rgba(132, 242, 155, 0.3) !important;
-}
-
-/* Enhanced card styling for dark mode */
-.dark .card-sova {
-  background: linear-gradient(135deg, hsl(var(--card)) 0%, rgba(132, 242, 155, 0.02) 100%);
-  border: 1px solid rgba(132, 242, 155, 0.1);
-}
-
-/* Badge and status indicator improvements for dark mode */
-.dark .bg-green-100 {
-  @apply bg-green-900/30;
-}
-
-.dark .text-green-800 {
-  @apply text-green-300;
-}
-
-.dark .bg-red-100 {
-  @apply bg-red-900/30;
-}
-
-.dark .text-red-800 {
-  @apply text-red-300;
-}
-
-.dark .bg-blue-100 {
-  @apply bg-blue-900/30;
-}
-
-.dark .text-blue-800 {
-  @apply text-blue-300;
-}
-
-.dark .bg-yellow-100 {
-  @apply bg-yellow-900/30;
-}
-
-.dark .text-yellow-800 {
-  @apply text-yellow-300;
-}
-
-.dark .bg-purple-100 {
-  @apply bg-purple-900/30;
-}
-
-.dark .text-purple-800 {
-  @apply text-purple-300;
-}
-
-/* Enhanced animations */
-@keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
+/* Dark Mode Enhancements */
+.dark {
+  /* Enhanced card styling for dark mode */
+  .card-modern {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--primary) / 0.02) 100%);
+    border: 1px solid hsl(var(--border));
   }
-  50% {
-    background-position: 100% 50%;
+  
+  /* Enhanced shadows for dark mode */
+  .shadow-primary {
+    box-shadow: 0 4px 20px -2px hsl(var(--primary) / 0.3);
+  }
+  
+  /* Status colors for dark mode */
+  .status-success { @apply bg-success/20 text-success-foreground; }
+  .status-warning { @apply bg-warning/20 text-warning-foreground; }
+  .status-error { @apply bg-destructive/20 text-destructive-foreground; }
+  .status-info { @apply bg-info/20 text-info-foreground; }
+}
+
+/* Modern Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @keyframes shimmer {
-  from {
-    background-position: -200px 0;
-  }
-  to {
-    background-position: calc(200px + 100%) 0;
-  }
+  from { left: -100%; }
+  to { left: 100%; }
 }
 
-@keyframes pulse-sova {
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
   0%, 100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(132, 242, 155, 0.7);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
   }
   50% {
     opacity: 0.8;
-    box-shadow: 0 0 0 10px rgba(132, 242, 155, 0);
+    box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
   }
 }
 
-@layer utilities {
-  .animate-shimmer {
-    animation: shimmer 2s ease-in-out infinite;
-    background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 0%,
-      rgba(132, 242, 155, 0.1) 20%,
-      rgba(132, 242, 155, 0.1) 60%,
-      hsl(var(--muted)) 100%
-    );
-    background-size: 200px 100%;
+/* Responsive Design Enhancements */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   
-  .animate-pulse-sova {
-    animation: pulse-sova 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  .card-modern {
+    @apply rounded-lg;
   }
 }
 
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    @apply text-black bg-white;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  :root {
+    --border: 0 0% 50%;
+  }
+  
+  .dark {
+    --border: 0 0% 70%;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
-.input-sova:focus {
-  border-color: #84F29B;
-  box-shadow: 0 0 0 2px rgba(132, 242, 155, 0.2);
-}
-
-/* Button focus states */
-.btn-sova:focus-visible {
-  box-shadow: 0 0 0 2px #84F29B;
-}
-
-/* Input focus states */
