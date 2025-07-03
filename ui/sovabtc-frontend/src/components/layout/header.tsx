@@ -63,26 +63,31 @@ export function Header() {
   const allNavigationItems = isOwner ? [...navigationItems, adminNavItem] : navigationItems
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-sova-mint-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-lg">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex h-20 items-center justify-between">
-        {/* Logo */}
+    <header className="sticky top-0 z-50 w-full glass border-b border-border/40 supports-[backdrop-filter]:bg-background/80 shadow-elevation-2 dark:shadow-sova-md transition-all duration-300">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex h-16 lg:h-20 items-center justify-between">
+        {/* Logo with enhanced styling */}
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-12 h-12 bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 rounded-xl flex items-center justify-center shadow-2xl shadow-sova-mint-500/25">
-              <Bitcoin className="w-7 h-7 text-white" />
+          <Link href="/" className="flex items-center gap-3 group transition-all duration-300 hover:scale-105">
+            <div className="relative w-10 h-10 lg:w-12 lg:h-12 bg-gradient-sova rounded-xl flex items-center justify-center shadow-sova transition-all duration-300 group-hover:shadow-sova-md group-hover:animate-glow">
+              <Bitcoin className="w-5 h-5 lg:w-7 lg:h-7 text-primary-foreground transition-transform duration-300 group-hover:rotate-12" />
+              <div className="absolute inset-0 bg-gradient-sova rounded-xl opacity-0 group-hover:opacity-20 animate-pulse-sova"></div>
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-xl leading-none text-sova-black-500">SovaBTC</span>
-              <span className="text-sm text-sova-black-400 leading-none font-medium">Protocol</span>
+              <span className="font-bold text-lg lg:text-xl leading-none text-foreground transition-colors duration-300 group-hover:text-primary">
+                SovaBTC
+              </span>
+              <span className="text-xs lg:text-sm text-muted-foreground leading-none font-medium group-hover:text-primary/80 transition-colors duration-300">
+                Protocol
+              </span>
             </div>
           </Link>
-          <Badge className="hidden sm:flex bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 text-white border-none font-medium shadow-lg">
+          <Badge className="hidden sm:flex bg-gradient-sova text-primary-foreground border-none font-medium shadow-sova animate-pulse-sova">
             Testnet
           </Badge>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-2">
+        {/* Desktop Navigation with enhanced styling */}
+        <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
           {allNavigationItems.map((item) => {
             const isActive = pathname === item.href
             const isAdminItem = item.href.includes('/admin-')
@@ -92,60 +97,74 @@ export function Header() {
                   variant={isActive ? "default" : "ghost"}
                   size="sm"
                   className={cn(
-                    "flex items-center gap-2 font-medium transition-all duration-200",
-                    isActive && "bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 text-white shadow-lg",
-                    !isActive && "hover:bg-sova-mint-50 hover:text-sova-black-500",
-                    isAdminItem && "bg-gradient-to-r from-red-500 to-red-600 text-white border border-red-600 shadow-lg hover:from-red-600 hover:to-red-700"
+                    "relative flex items-center gap-2 font-medium transition-all duration-300 group overflow-hidden",
+                    isActive && "bg-gradient-sova text-primary-foreground shadow-sova",
+                                         !isActive && "hover:bg-primary/10 hover:text-primary hover:shadow-elevation-2 hover:scale-105 active:scale-95",
+                                         isAdminItem && "bg-gradient-to-r from-error-500 to-error-600 text-white border border-error-600 shadow-lg hover:from-error-600 hover:to-error-700 hover:shadow-xl"
                   )}
                 >
-                  <item.icon className="w-4 h-4" />
+                  <item.icon className={cn(
+                    "w-4 h-4 transition-transform duration-300",
+                    !isActive && "group-hover:scale-110"
+                  )} />
                   {item.name}
+                  {isActive && (
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary-foreground rounded-full" />
+                  )}
                 </Button>
               </Link>
             )
           })}
         </nav>
 
-        {/* Right side - Network Info + Theme Toggle + Wallet Connect */}
-        <div className="flex items-center gap-4">
+        {/* Right side with enhanced styling */}
+        <div className="flex items-center gap-2 lg:gap-4">
           {/* Network Info (Desktop) */}
           <div className="hidden sm:block">
             <NetworkInfo />
           </div>
 
-          {/* Theme Toggle - More Prominent */}
-          <div className="p-1 bg-gradient-to-r from-sova-mint-100 to-sova-mint-200 rounded-lg">
+          {/* Theme Toggle with modern styling */}
+          <div className="relative p-1 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20 shadow-inner-sova">
             <ThemeToggle />
           </div>
 
           {/* Wallet Connection */}
           <ConnectWallet />
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button with enhanced animation */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="sm" className="p-2 hover:bg-sova-mint-50">
-                <Menu className="w-6 h-6 text-sova-black-500" />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="relative p-2 hover:bg-primary/10 hover:scale-110 transition-all duration-300 group"
+              >
+                <Menu className={cn(
+                  "w-5 h-5 text-foreground transition-all duration-300",
+                  mobileMenuOpen && "rotate-90"
+                )} />
                 <span className="sr-only">Toggle menu</span>
+                <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-20 bg-gradient-sova transition-opacity duration-300" />
               </Button>
             </SheetTrigger>
 
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-              <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <Bitcoin className="w-5 h-5" />
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] glass border-l border-border/40">
+              <SheetHeader className="space-y-4">
+                <SheetTitle className="flex items-center gap-2 text-lg">
+                  <Bitcoin className="w-5 h-5 text-primary" />
                   SovaBTC Protocol
                 </SheetTitle>
               </SheetHeader>
 
-              <div className="mt-6 space-y-4">
-                {/* Network Info (Mobile) */}
-                <div className="p-3 border rounded-lg">
-                  <div className="text-sm font-medium mb-2">Network</div>
+              <div className="mt-6 space-y-6">
+                {/* Network Info (Mobile) with card styling */}
+                <div className="card-modern p-4 border border-border/40">
+                  <div className="text-sm font-medium mb-3 text-foreground">Network</div>
                   <NetworkInfo />
                 </div>
 
-                {/* Navigation Items */}
+                {/* Navigation Items with enhanced mobile styling */}
                 <nav className="space-y-2">
                   {allNavigationItems.map((item) => {
                     const isActive = pathname === item.href
@@ -156,51 +175,68 @@ export function Header() {
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
                         className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg transition-colors hover:bg-accent",
-                          isActive && "bg-accent",
-                          isAdminItem && "bg-red-50 border border-red-200 dark:bg-red-900/30 dark:border-red-800"
+                          "flex items-center gap-3 p-4 rounded-xl transition-all duration-300 group relative overflow-hidden",
+                          isActive && "bg-gradient-sova text-primary-foreground shadow-sova",
+                          !isActive && "hover:bg-primary/10 hover:shadow-elevation-2 hover:scale-105",
+                          isAdminItem && "bg-error-50 border border-error-200 dark:bg-error-900/30 dark:border-error-800"
                         )}
                       >
-                        <item.icon className={cn("w-5 h-5", isAdminItem && "text-red-600 dark:text-red-400")} />
-                        <div>
-                          <div className={cn("font-medium", isAdminItem && "text-red-700 dark:text-red-300")}>
+                        <div className={cn(
+                          "p-2 rounded-lg transition-all duration-300",
+                          isActive && "bg-primary-foreground/20",
+                          !isActive && "bg-primary/10 group-hover:bg-primary/20",
+                          isAdminItem && "bg-error-100 dark:bg-error-900/50"
+                        )}>
+                          <item.icon className={cn(
+                            "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
+                            isAdminItem && "text-error-600 dark:text-error-400"
+                          )} />
+                        </div>
+                        <div className="flex-1">
+                          <div className={cn(
+                            "font-medium transition-colors duration-300",
+                            isAdminItem && "text-error-700 dark:text-error-300"
+                          )}>
                             {item.name}
                             {isAdminItem && (
-                              <Badge variant="outline" className="ml-2 text-xs bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800">
+                              <Badge variant="outline" className="ml-2 text-xs bg-error-100 text-error-700 border-error-300 dark:bg-error-900/30 dark:text-error-300 dark:border-error-800">
                                 Admin
                               </Badge>
                             )}
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-sm text-muted-foreground mt-1 transition-colors duration-300 group-hover:text-foreground/80">
                             {item.description}
                           </div>
                         </div>
+                        {!isActive && (
+                          <div className="absolute inset-0 bg-gradient-sova opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+                        )}
                       </Link>
                     )
                   })}
                 </nav>
 
-                {/* External Links */}
-                <div className="pt-4 border-t">
-                  <div className="text-sm font-medium mb-2">External Links</div>
+                {/* External Links with modern card styling */}
+                <div className="pt-4 border-t border-border/40">
+                  <div className="text-sm font-medium mb-3 text-foreground">External Links</div>
                   <div className="space-y-2">
                     <a
                       href={EXTERNAL_LINKS.DOCS}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 transition-all duration-300 hover:scale-105 group"
                     >
-                      <ExternalLink className="w-4 h-4" />
-                      <span className="text-sm">Documentation</span>
+                      <ExternalLink className="w-4 h-4 text-primary transition-transform duration-300 group-hover:scale-110" />
+                      <span className="text-sm font-medium">Documentation</span>
                     </a>
                     <a
                       href={EXTERNAL_LINKS.GITHUB}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-accent transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/10 transition-all duration-300 hover:scale-105 group"
                     >
-                      <ExternalLink className="w-4 w-4" />
-                      <span className="text-sm">GitHub</span>
+                      <ExternalLink className="w-4 h-4 text-primary transition-transform duration-300 group-hover:scale-110" />
+                      <span className="text-sm font-medium">GitHub</span>
                     </a>
                   </div>
                 </div>
@@ -213,7 +249,7 @@ export function Header() {
   )
 }
 
-// Breadcrumb component for page navigation
+// Enhanced Breadcrumb component for page navigation
 export function PageHeader({ 
   title, 
   description, 
@@ -224,17 +260,25 @@ export function PageHeader({
   children?: React.ReactNode 
 }) {
   return (
-    <div className="border-b border-sova-mint-200 bg-gradient-to-r from-white to-sova-mint-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-sova-black-500">{title}</h1>
+    <div className="relative border-b border-border/40 bg-gradient-to-r from-background via-primary/5 to-background overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 bg-gradient-sova-glow opacity-30" />
+      <div className="absolute inset-0 bg-noise opacity-[0.02] mix-blend-overlay" />
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-8 lg:py-12 relative">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-2xl lg:text-3xl xl:text-4xl font-bold tracking-tight text-foreground animate-fade-in">
+              {title}
+            </h1>
             {description && (
-              <p className="text-sova-black-600 mt-2 text-lg">{description}</p>
+              <p className="text-muted-foreground text-base lg:text-lg max-w-2xl animate-fade-in animation-delay-200">
+                {description}
+              </p>
             )}
           </div>
           {children && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 animate-fade-in animation-delay-400">
               {children}
             </div>
           )}
