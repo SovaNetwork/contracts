@@ -102,7 +102,7 @@ library SovaBitcoin {
      *
      * @param signedTx          The raw signed Bitcoin transaction
      * @param amount            The minimum expected amount in satoshis
-     * @param voutIndex         The output index of the BTC tx that contains the deposit amount
+     * @param voutIndex         The output index of the BTC tx that contains the deposit UTXO
      *
      * @return btcTx            The decoded Bitcoin transaction
      */

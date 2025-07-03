@@ -119,7 +119,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
      *
      * @param amount            The amount of satoshis to deposit
      * @param signedTx          Signed Bitcoin transaction
-     * @param voutIndex         The output index of the BTC tx that contains the deposit amount
+     * @param voutIndex         The output index of the BTC tx that contains the deposit UTXO
      */
     function depositBTC(uint64 amount, bytes calldata signedTx, uint8 voutIndex) external nonReentrant whenNotPaused {
         // Enforce deposit amount limits
