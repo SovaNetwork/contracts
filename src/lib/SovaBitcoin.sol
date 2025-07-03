@@ -98,21 +98,25 @@ library SovaBitcoin {
      *      2. Confirms the first output value meets the minimum amount
      *      3. Ensures the transaction has at least one input
      *      4. Validates the locktime is not in the future
-     *      5. Checks that the first output address matches the network's receive address
+     *      5. Checks that the specific output address matches the network's receive address
      *
      * @param signedTx          The raw signed Bitcoin transaction
      * @param amount            The minimum expected amount in satoshis
+     * @param voutIndex         The output index of the BTC tx that contains the deposit UTXO
      *
      * @return btcTx            The decoded Bitcoin transaction
      */
-    function isValidDeposit(bytes memory signedTx, uint256 amount) internal returns (BitcoinTx memory) {
+    function isValidDeposit(bytes memory signedTx, uint256 amount, uint8 voutIndex)
+        internal
+        returns (BitcoinTx memory)
+    {
         BitcoinTx memory btcTx = decodeBitcoinTx(signedTx);
 
         if (btcTx.outputs.length < 1 || btcTx.outputs.length > 3) {
             revert InvalidDeposit();
         }
 
-        if (btcTx.outputs[0].value != amount) {
+        if (btcTx.outputs[voutIndex].value != amount) {
             revert InvalidAmount();
         }
 
@@ -127,8 +131,8 @@ library SovaBitcoin {
         // Recover the callers unique bitcoin deposit address
         bytes memory convertedBtcAddress = SovaBitcoin.convertToBtcAddress(msg.sender);
 
-        if (keccak256(convertedBtcAddress) != keccak256(bytes(btcTx.outputs[0].addr))) {
-            revert InvalidOutput(btcTx.outputs[0].addr, string(convertedBtcAddress));
+        if (keccak256(convertedBtcAddress) != keccak256(bytes(btcTx.outputs[voutIndex].addr))) {
+            revert InvalidOutput(btcTx.outputs[voutIndex].addr, string(convertedBtcAddress));
         }
 
         return btcTx;
