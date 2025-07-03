@@ -60,8 +60,8 @@ export default function RootLayout({
             <main className="flex-1">
               {children}
             </main>
-            <footer className="border-t bg-muted/30">
-              <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-8">
+            <footer className="border-t bg-muted/30 backdrop-blur-sm">
+              <div className="container py-8">
                 <div className="grid md:grid-cols-3 gap-8">
                   {/* Theme Demo */}
                   <div className="space-y-4">

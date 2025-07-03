@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import { ConnectWallet } from '@/components/web3/connect-wallet'
 import { NetworkInfo } from '@/components/web3/network-switcher'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { Badge } from '@/components/ui/badge'
-import { Menu, Bitcoin, ArrowLeftRight, Coins, TrendingUp, Settings, ExternalLink, Shield } from 'lucide-react'
+import { Menu, Bitcoin, ArrowLeftRight, Coins, TrendingUp, Settings, ExternalLink, Shield, Palette } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EXTERNAL_LINKS } from '@/lib/constants'
 import { useIsOwner } from '@/hooks/use-admin'
@@ -49,8 +49,43 @@ const navigationItems = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [colorMenuOpen, setColorMenuOpen] = useState(false)
   const pathname = usePathname()
   const { isOwner } = useIsOwner()
+
+  // Color theme presets
+  const colorThemes = [
+    { name: 'Sova Mint', class: '', color: '#84F29B' },
+    { name: 'Ocean Blue', class: 'theme-blue', color: '#3B82F6' },
+    { name: 'Royal Purple', class: 'theme-purple', color: '#8B5CF6' },
+    { name: 'Sunset Orange', class: 'theme-orange', color: '#F97316' },
+    { name: 'Rose Pink', class: 'theme-rose', color: '#EC4899' },
+    { name: 'Forest Green', class: 'theme-emerald', color: '#10B981' },
+  ]
+
+  const applyColorTheme = (themeClass: string) => {
+    const root = document.documentElement
+    // Remove all theme classes
+    colorThemes.forEach(theme => {
+      if (theme.class) root.classList.remove(theme.class)
+    })
+    // Apply new theme
+    if (themeClass) root.classList.add(themeClass)
+    setColorMenuOpen(false)
+  }
+
+  // Close color menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (colorMenuOpen && !target.closest('.color-menu-container')) {
+        setColorMenuOpen(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [colorMenuOpen])
 
   // Admin navigation item - only shown for owners, points to secret path
   const adminNavItem = {
@@ -113,7 +148,48 @@ export function Header() {
             <NetworkInfo />
           </div>
 
-          {/* Theme Toggle - More Prominent */}
+          {/* Color Theme Selector */}
+          <div className="relative color-menu-container">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setColorMenuOpen(!colorMenuOpen)}
+              className="gap-2 bg-gradient-to-r from-sova-mint-100 to-sova-mint-200 hover:from-sova-mint-200 hover:to-sova-mint-300 text-sova-black-600"
+            >
+              <Palette className="w-4 h-4" />
+              <span className="hidden sm:inline">Colors</span>
+            </Button>
+            
+            {colorMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-card border border-border rounded-lg shadow-xl z-50 p-4">
+                <div className="text-sm font-medium mb-3">Choose Color Theme</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {colorThemes.map((theme) => (
+                    <Button
+                      key={theme.name}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => applyColorTheme(theme.class)}
+                      className="flex items-center gap-2 justify-start h-10"
+                    >
+                      <div 
+                        className="w-4 h-4 rounded-full border"
+                        style={{ backgroundColor: theme.color }}
+                      />
+                      <span className="text-xs">{theme.name}</span>
+                    </Button>
+                  ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-border">
+                  <div className="text-xs text-muted-foreground">
+                    Changes apply instantly across all pages
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Theme Toggle */}
           <div className="p-1 bg-gradient-to-r from-sova-mint-100 to-sova-mint-200 rounded-lg">
             <ThemeToggle />
           </div>

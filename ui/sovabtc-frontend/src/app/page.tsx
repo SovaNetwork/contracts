@@ -126,7 +126,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <RequireWallet>
                 <Link href="/wrap">
-                  <Button size="lg" className="btn-sova-primary flex items-center gap-2 shadow-sova-lg">
+                  <Button size="lg" className="btn-primary flex items-center gap-2">
                     <Bitcoin className="w-5 h-5" />
                     Start Wrapping
                     <ArrowRight className="w-4 h-4" />
@@ -135,7 +135,7 @@ export default function HomePage() {
               </RequireWallet>
               
               <Link href="/portfolio">
-                <Button variant="outline" size="lg" className="flex items-center gap-2 border-sova-mint-500 text-sova-mint-600 hover:bg-sova-mint-50">
+                <Button variant="outline" size="lg" className="btn-secondary flex items-center gap-2">
                   <TrendingUp className="w-5 h-5" />
                   View Portfolio
                 </Button>
@@ -173,7 +173,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="relative overflow-hidden group hover:shadow-lg transition-shadow">
+              <Card key={index} className="card-modern group">
                 <CardHeader>
                   <div className={`w-12 h-12 rounded-lg bg-background border flex items-center justify-center mb-4 ${feature.color}`}>
                     <feature.icon className="w-6 h-6" />
