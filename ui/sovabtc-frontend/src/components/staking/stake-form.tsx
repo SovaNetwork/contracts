@@ -14,6 +14,8 @@ import { useStake } from '../../hooks/use-stake';
 import { useUnstake } from '../../hooks/use-unstake';
 import { useStakingPools } from '../../hooks/use-staking-pools';
 import { CONTRACT_ADDRESSES } from '../../contracts/addresses';
+import { componentStyles, designSystem } from '../../lib/design-system';
+import { TrendingUp, Wallet, ArrowUpDown, DollarSign, ExternalLink } from 'lucide-react';
 
 type ActionType = 'stake' | 'unstake';
 
@@ -133,10 +135,16 @@ export function StakeForm() {
 
   if (!isConnected) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">Stake SovaBTC</h2>
-        <div className="text-center p-8">
-          <p className="text-gray-600">Please connect your wallet to stake tokens</p>
+      <div className={`${componentStyles.card.elevated} p-6`}>
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 text-white" />
+          </div>
+          <h2 className={`${designSystem.typography.h3} text-slate-900`}>Stake SovaBTC</h2>
+        </div>
+        <div className="text-center py-8">
+          <ExternalLink className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <p className="text-slate-600">Please connect your wallet to stake tokens</p>
         </div>
       </div>
     );
@@ -144,47 +152,70 @@ export function StakeForm() {
 
   if (chainId !== baseSepolia.id) {
     return (
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">Stake SovaBTC</h2>
-        <div className="text-center p-8">
-          <p className="text-gray-600">Please switch to Base Sepolia network</p>
+      <div className={`${componentStyles.card.elevated} p-6`}>
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 text-white" />
+          </div>
+          <h2 className={`${designSystem.typography.h3} text-slate-900`}>Stake SovaBTC</h2>
+        </div>
+        <div className="text-center py-8">
+          <Wallet className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <p className="text-slate-600">Please switch to Base Sepolia network</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold mb-6">Stake SovaBTC</h2>
+    <div className={`${componentStyles.card.elevated} p-6`}>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+            <TrendingUp className="h-5 w-5 text-white" />
+          </div>
+          <h2 className={`${designSystem.typography.h3} text-slate-900`}>Stake SovaBTC</h2>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-slate-500">Step 3 of 3</p>
+          <p className="text-sm font-medium text-slate-700">Earn Rewards</p>
+        </div>
+      </div>
       
       <div className="space-y-6">
         {/* Action Toggle */}
-        <div className="flex bg-gray-100 rounded-lg p-1">
+        <div className="flex bg-slate-100 rounded-xl p-1">
           <button
             onClick={() => {
               setActionType('stake');
               setAmount('');
             }}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
               actionType === 'stake'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white text-green-700 shadow-md'
+                : 'text-slate-600 hover:text-slate-800'
             }`}
           >
-            Stake
+            <div className="flex items-center justify-center space-x-2">
+              <TrendingUp className="h-4 w-4" />
+              <span>Stake</span>
+            </div>
           </button>
           <button
             onClick={() => {
               setActionType('unstake');
               setAmount('');
             }}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
               actionType === 'unstake'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-gray-600 hover:text-gray-800'
+                ? 'bg-white text-green-700 shadow-md'
+                : 'text-slate-600 hover:text-slate-800'
             }`}
           >
-            Unstake
+            <div className="flex items-center justify-center space-x-2">
+              <ArrowUpDown className="h-4 w-4" />
+              <span>Unstake</span>
+            </div>
           </button>
         </div>
 
