@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useState, useEffect } from 'react'
+import { useAccount, useChainId } from 'wagmi'
+import { formatUnits, parseUnits, Address } from 'viem'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,15 +11,28 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Bitcoin, ArrowRight, CheckCircle, Clock, AlertTriangle, TrendingUp, Zap, Wallet, Shield, DollarSign } from 'lucide-react'
+import { Bitcoin, ArrowRight, CheckCircle, Clock, AlertTriangle, TrendingUp, Zap, Wallet, Shield, DollarSign, Loader2 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/header'
 import { cn } from '@/lib/utils'
+import { useWrapper, useSovaBTC, useERC20, useContractAddresses } from '@/hooks/use-contracts'
+import { toast } from 'sonner'
 
-// Mock data for supported tokens
+// Mock supported tokens for now - will be replaced by contract data
 const SUPPORTED_TOKENS = [
-  { symbol: 'WBTC', name: 'Wrapped Bitcoin', balance: '0.0245', rate: '1:1', icon: '₿' },
-  { symbol: 'tBTC', name: 'Threshold Bitcoin', balance: '0.0000', rate: '1:1', icon: '₿' },
-  { symbol: 'cbBTC', name: 'Coinbase Bitcoin', balance: '0.0120', rate: '1:1', icon: '₿' },
+  { 
+    address: '0x29f2D40B0605204364af54EC677bD022dA425d03' as Address, // Mock WBTC Base Sepolia
+    symbol: 'WBTC', 
+    name: 'Wrapped Bitcoin', 
+    decimals: 8,
+    icon: '₿' 
+  },
+  { 
+    address: '0x0000000000000000000000000000000000000001' as Address, // Mock tBTC
+    symbol: 'tBTC', 
+    name: 'Threshold Bitcoin', 
+    decimals: 18,
+    icon: '₿' 
+  },
 ]
 
 const RECENT_TRANSACTIONS = [
@@ -29,21 +43,103 @@ const RECENT_TRANSACTIONS = [
 
 export default function WrapPage() {
   const { address, isConnected } = useAccount()
+  const chainId = useChainId()
+  const addresses = useContractAddresses()
+  
+  // Contract hooks
+  const { balance: sovaBTCBalance, balanceLoading: sovaBTCLoading } = useSovaBTC()
+  const { whitelistedTokens, tokensLoading, isDepositing, depositTokens } = useWrapper()
+  
+  // Component state
   const [selectedToken, setSelectedToken] = useState(SUPPORTED_TOKENS[0])
   const [amount, setAmount] = useState('')
-  const [isWrapping, setIsWrapping] = useState(false)
+  const [isApproving, setIsApproving] = useState(false)
+  
+  // Token-specific hooks
+  const { 
+    balance: tokenBalance, 
+    decimals: tokenDecimals,
+    balanceLoading: tokenBalanceLoading,
+    approveSpender,
+    isApproving: tokenApproving,
+    useAllowance
+  } = useERC20(selectedToken.address)
+  
+  // Check allowance for wrapper contract
+  const { data: allowance, refetch: refetchAllowance } = useAllowance(addresses.wrapper)
+  
+  // Format balances for display
+  const formattedTokenBalance = tokenBalance && tokenDecimals 
+    ? formatUnits(tokenBalance, tokenDecimals)
+    : '0.0000'
+  
+  const formattedSovaBTCBalance = sovaBTCBalance 
+    ? formatUnits(sovaBTCBalance, 8) // SovaBTC has 8 decimals
+    : '0.00000000'
 
-  const handleWrap = async () => {
-    if (!amount || !selectedToken) return
-    
-    setIsWrapping(true)
-    // Simulate transaction
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    setIsWrapping(false)
-    setAmount('')
+  // Check if amount needs approval
+  const needsApproval = () => {
+    if (!amount || !allowance || !tokenDecimals) return false
+    const amountWei = parseUnits(amount, tokenDecimals)
+    return amountWei > allowance
   }
 
-  const isAmountValid = amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(selectedToken.balance)
+  // Validate amount
+  const isAmountValid = () => {
+    if (!amount || !tokenBalance || !tokenDecimals) return false
+    const amountWei = parseUnits(amount, tokenDecimals)
+    return amountWei > 0n && amountWei <= tokenBalance
+  }
+
+  // Handle token approval
+  const handleApprove = async () => {
+    if (!amount || !tokenDecimals) return
+    
+    try {
+      setIsApproving(true)
+      const amountWei = parseUnits(amount, tokenDecimals)
+      await approveSpender(addresses.wrapper, amountWei)
+      toast.success('Approval transaction submitted')
+      await refetchAllowance()
+    } catch (error) {
+      console.error('Approval failed:', error)
+      toast.error('Approval failed')
+    } finally {
+      setIsApproving(false)
+    }
+  }
+
+  // Handle token deposit
+  const handleWrap = async () => {
+    if (!amount || !tokenDecimals || !isAmountValid()) return
+    
+    try {
+      const amountWei = parseUnits(amount, tokenDecimals)
+      await depositTokens(selectedToken.address, amountWei)
+      toast.success('Wrap transaction submitted')
+      setAmount('')
+    } catch (error) {
+      console.error('Wrap failed:', error)
+      toast.error('Wrap transaction failed')
+    }
+  }
+
+  // Get conversion amount to SovaBTC (8 decimals)
+  const getConversionAmount = () => {
+    if (!amount || !tokenDecimals) return '0.00000000'
+    
+    // Convert to 8 decimal SovaBTC
+    if (tokenDecimals === 8) {
+      return amount
+    } else if (tokenDecimals === 18) {
+      // For 18 decimal tokens, divide by 10^10 to get 8 decimals
+      return (parseFloat(amount) / Math.pow(10, 10)).toFixed(8)
+    } else if (tokenDecimals === 6) {
+      // For 6 decimal tokens, multiply by 100 to get 8 decimals  
+      return (parseFloat(amount) * 100).toFixed(8)
+    }
+    return amount
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,8 +179,14 @@ export default function WrapPage() {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-3xl font-bold text-sova-black-500">2,847</div>
-                      <div className="text-sova-black-600 font-medium">SovaBTC Minted</div>
+                      <div className="text-3xl font-bold text-sova-black-500">
+                        {sovaBTCLoading ? (
+                          <Loader2 className="w-8 h-8 animate-spin" />
+                        ) : (
+                          formattedSovaBTCBalance
+                        )}
+                      </div>
+                      <div className="text-sova-black-600 font-medium">Your SovaBTC Balance</div>
                     </div>
                     <div className="w-14 h-14 bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 rounded-xl flex items-center justify-center">
                       <Bitcoin className="w-8 h-8 text-white" />
@@ -143,8 +245,14 @@ export default function WrapPage() {
                         </SelectContent>
                       </Select>
                       <div className="flex justify-between text-sm font-medium">
-                        <span className="text-sova-black-500">Balance: {selectedToken.balance} {selectedToken.symbol}</span>
-                        <span className="text-sova-mint-600">Rate: {selectedToken.rate}</span>
+                        <span className="text-sova-black-500">
+                          Balance: {tokenBalanceLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin inline ml-2" />
+                          ) : (
+                            `${formattedTokenBalance} ${selectedToken.symbol}`
+                          )}
+                        </span>
+                        <span className="text-sova-mint-600">Rate: 1:1</span>
                       </div>
                     </div>
 
@@ -163,7 +271,8 @@ export default function WrapPage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-3 top-1/2 -translate-y-1/2 h-10 px-4 bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 hover:from-sova-mint-600 hover:to-sova-mint-700 text-white font-semibold"
-                          onClick={() => setAmount(selectedToken.balance)}
+                          onClick={() => setAmount(formattedTokenBalance)}
+                          disabled={tokenBalanceLoading}
                         >
                           MAX
                         </Button>
@@ -185,35 +294,69 @@ export default function WrapPage() {
                             <div className="w-8 h-8 bg-sova-black-500 rounded-full flex items-center justify-center text-sova-mint-500 font-bold">
                               S
                             </div>
-                            <span className="text-lg font-bold bg-gradient-to-r from-sova-mint-600 to-sova-mint-800 bg-clip-text text-transparent">{amount} SovaBTC</span>
+                            <span className="text-lg font-bold bg-gradient-to-r from-sova-mint-600 to-sova-mint-800 bg-clip-text text-transparent">
+                              {getConversionAmount()} SovaBTC
+                            </span>
                           </div>
                         </div>
                         <div className="mt-3 text-center text-sm text-sova-black-600 font-medium">
-                          Exchange rate: 1 {selectedToken.symbol} = 1 SovaBTC
+                          Exchange rate: 1 {selectedToken.symbol} = 1 SovaBTC (adjusted for decimals)
                         </div>
                       </div>
                     )}
 
                     <Separator className="bg-sova-mint-200" />
 
-                    {/* Wrap Button */}
-                    <Button
-                      onClick={handleWrap}
-                      disabled={!isAmountValid || isWrapping}
-                      className="w-full h-16 text-lg font-bold bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 hover:from-sova-mint-600 hover:to-sova-mint-700 text-white shadow-2xl hover:shadow-sova transition-all duration-300"
-                    >
-                      {isWrapping ? (
-                        <>
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3" />
-                          Wrapping...
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="w-6 h-6 mr-3" />
-                          Wrap {selectedToken.symbol}
-                        </>
+                    {/* Approval and Wrap Buttons */}
+                    <div className="space-y-4">
+                      {needsApproval() && (
+                        <Button
+                          onClick={handleApprove}
+                          disabled={!isAmountValid() || isApproving || tokenApproving}
+                          className="w-full h-16 text-lg font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white shadow-2xl transition-all duration-300"
+                        >
+                          {isApproving || tokenApproving ? (
+                            <>
+                              <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                              Approving...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-6 h-6 mr-3" />
+                              Approve {selectedToken.symbol}
+                            </>
+                          )}
+                        </Button>
                       )}
-                    </Button>
+                      
+                      <Button
+                        onClick={handleWrap}
+                        disabled={!isAmountValid() || needsApproval() || isDepositing}
+                        className="w-full h-16 text-lg font-bold bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 hover:from-sova-mint-600 hover:to-sova-mint-700 text-white shadow-2xl hover:shadow-sova transition-all duration-300"
+                      >
+                        {isDepositing ? (
+                          <>
+                            <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                            Wrapping...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-6 h-6 mr-3" />
+                            Wrap {selectedToken.symbol}
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Validation Messages */}
+                    {amount && !isAmountValid() && (
+                      <Alert className="border-red-300 bg-red-50">
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                        <AlertDescription className="text-red-800">
+                          Insufficient balance or invalid amount
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </>
                 )}
               </CardContent>
@@ -272,7 +415,7 @@ export default function WrapPage() {
                       </div>
                     </div>
                     <Badge variant="outline" className="border-sova-mint-400 text-sova-mint-700 bg-sova-mint-50">
-                      {token.rate}
+                      1:1
                     </Badge>
                   </div>
                 ))}

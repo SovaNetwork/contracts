@@ -14,6 +14,7 @@ export interface TokenInfo {
   decimals: number
   icon?: string
   isWhitelisted?: boolean
+  logoURI?: string
 }
 
 // Balance information
@@ -231,4 +232,46 @@ export interface AppConfig {
     transactions: number
     prices: number
   }
-} 
+}
+
+export interface ContractAddresses {
+  sovaBTC: Address
+  wrapper: Address
+  staking: Address
+  layerZeroEndpoint: Address
+}
+
+export interface RedemptionRequest {
+  user: Address
+  token: Address
+  amount: bigint
+  timestamp: number
+  fulfilled: boolean
+}
+
+export interface StakingPool {
+  token: Address
+  totalStaked: bigint
+  rewardRate: bigint
+  lastUpdateTime: number
+}
+
+export interface BridgeMessage {
+  srcChainId: number
+  dstChainId: number
+  amount: bigint
+  recipient: Address
+  nonce: bigint
+  status: 'pending' | 'confirmed' | 'failed'
+}
+
+export interface Transaction {
+  hash: Address
+  timestamp: number
+  type: 'wrap' | 'bridge' | 'redeem' | 'stake' | 'unstake'
+  amount: bigint
+  token: TokenInfo
+  status: 'pending' | 'confirmed' | 'failed'
+}
+
+export type ChainId = 84532 | 11155111 // Base Sepolia, Ethereum Sepolia 

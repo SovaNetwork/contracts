@@ -6,152 +6,50 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TokenIcon } from './token-icon'
 import { cn } from '@/lib/utils'
-import { Wallet, RefreshCw, Eye, EyeOff } from 'lucide-react'
+import { Wallet, RefreshCw, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { formatUnits } from 'viem'
 
 interface BalanceDisplayProps {
-  balance?: string
-  symbol?: string
-  tokenIcon?: string
-  usdValue?: number
+  balance?: bigint
+  symbol: string
+  decimals?: number
   isLoading?: boolean
   className?: string
-  showUSD?: boolean
-  showRefresh?: boolean
-  onRefresh?: () => void
-  onClick?: () => void
-  size?: 'sm' | 'md' | 'lg'
-}
-
-const sizeConfig = {
-  sm: {
-    container: 'p-2',
-    text: 'text-sm',
-    subtext: 'text-xs',
-    icon: 'sm' as const,
-  },
-  md: {
-    container: 'p-3',
-    text: 'text-base',
-    subtext: 'text-sm',
-    icon: 'md' as const,
-  },
-  lg: {
-    container: 'p-4',
-    text: 'text-lg',
-    subtext: 'text-base',
-    icon: 'lg' as const,
-  },
+  showSymbol?: boolean
 }
 
 export function BalanceDisplay({
   balance,
   symbol,
-  tokenIcon,
-  usdValue,
+  decimals = 18,
   isLoading = false,
   className,
-  showUSD = true,
-  showRefresh = false,
-  onRefresh,
-  onClick,
-  size = 'md',
+  showSymbol = true
 }: BalanceDisplayProps) {
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const config = sizeConfig[size]
-
-  const handleRefresh = async () => {
-    if (!onRefresh || isRefreshing) return
-    
-    setIsRefreshing(true)
-    try {
-      await onRefresh()
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 500)
-    }
-  }
-
   if (isLoading) {
     return (
-      <div className={cn(
-        'flex items-center gap-3 rounded-lg border bg-card',
-        config.container,
-        className
-      )}>
-        <Skeleton className="w-8 h-8 rounded-full" />
-        <div className="flex-1 space-y-1">
-          <Skeleton className="h-4 w-24" />
-          {showUSD && <Skeleton className="h-3 w-16" />}
-        </div>
+      <div className={cn('flex items-center gap-1', className)}>
+        <Loader2 className="w-3 h-3 animate-spin" />
+        <span className="text-muted-foreground">Loading...</span>
       </div>
     )
   }
 
+  if (!balance) {
+    return (
+      <span className={cn('text-muted-foreground', className)}>
+        0.0000 {showSymbol && symbol}
+      </span>
+    )
+  }
+
+  const formatted = formatUnits(balance, decimals)
+  const truncated = parseFloat(formatted).toFixed(4)
+
   return (
-    <div
-      className={cn(
-        'flex items-center gap-3 rounded-lg border bg-card transition-colors',
-        config.container,
-        onClick && 'cursor-pointer hover:bg-accent/50',
-        className
-      )}
-      onClick={onClick}
-    >
-      {/* Token Icon */}
-      <div className="flex-shrink-0">
-        {symbol ? (
-          <TokenIcon
-            symbol={symbol}
-            src={tokenIcon}
-            size={config.icon}
-          />
-        ) : (
-          <div className={cn(
-            'rounded-full bg-muted flex items-center justify-center',
-            config.icon === 'sm' && 'w-4 h-4',
-            config.icon === 'md' && 'w-6 h-6',
-            config.icon === 'lg' && 'w-8 h-8'
-          )}>
-            <Wallet className="w-3 h-3 text-muted-foreground" />
-          </div>
-        )}
-      </div>
-
-      {/* Balance Info */}
-      <div className="flex-1 min-w-0">
-        <div className={cn('font-medium truncate', config.text)}>
-          {balance || '0'} {symbol && <span className="text-muted-foreground">{symbol}</span>}
-        </div>
-        {showUSD && usdValue !== undefined && (
-          <div className={cn('text-muted-foreground', config.subtext)}>
-            ${usdValue.toLocaleString('en-US', { 
-              minimumFractionDigits: 2, 
-              maximumFractionDigits: 2 
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1">
-        {showRefresh && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleRefresh()
-            }}
-            disabled={isRefreshing}
-            className="p-1 h-auto"
-          >
-            <RefreshCw className={cn(
-              'w-3 h-3',
-              isRefreshing && 'animate-spin'
-            )} />
-          </Button>
-        )}
-      </div>
-    </div>
+    <span className={className}>
+      {truncated} {showSymbol && symbol}
+    </span>
   )
 }
 
@@ -159,21 +57,39 @@ export function BalanceDisplay({
 export function CompactBalance({
   balance,
   symbol,
-  isLoading,
-  className,
+  isLoading = false,
+  className
 }: {
   balance?: string
-  symbol?: string
+  symbol: string
   isLoading?: boolean
   className?: string
 }) {
   if (isLoading) {
-    return <Skeleton className={cn('h-5 w-20', className)} />
+    return <Loader2 className="w-3 h-3 animate-spin inline" />
+  }
+
+  if (!balance || balance === '0' || balance === '0.0' || balance === '0.0000') {
+    return <span className={cn('text-muted-foreground', className)}>0 {symbol}</span>
+  }
+
+  // Format for compact display
+  const num = parseFloat(balance)
+  let formatted: string
+
+  if (num >= 1000000) {
+    formatted = (num / 1000000).toFixed(2) + 'M'
+  } else if (num >= 1000) {
+    formatted = (num / 1000).toFixed(2) + 'K'
+  } else if (num >= 1) {
+    formatted = num.toFixed(4)
+  } else {
+    formatted = num.toFixed(6)
   }
 
   return (
-    <span className={cn('font-medium', className)}>
-      {balance || '0'} {symbol}
+    <span className={className}>
+      {formatted} {symbol}
     </span>
   )
 }

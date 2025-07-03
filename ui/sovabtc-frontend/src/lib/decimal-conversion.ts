@@ -53,15 +53,12 @@ export function convertFromSovaBTC(
 export function formatTokenAmount(
   amount: bigint,
   decimals: number,
-  maxDecimals?: number
+  displayDecimals?: number
 ): string {
   const formatted = formatUnits(amount, decimals)
   
-  if (maxDecimals !== undefined) {
-    const parts = formatted.split('.')
-    if (parts[1] && parts[1].length > maxDecimals) {
-      return `${parts[0]}.${parts[1].slice(0, maxDecimals)}`
-    }
+  if (displayDecimals !== undefined) {
+    return parseFloat(formatted).toFixed(displayDecimals)
   }
   
   return formatted
@@ -120,10 +117,13 @@ export function validateTokenPrecision(
   input: string,
   decimals: number
 ): boolean {
-  const parts = input.split('.')
-  if (parts.length === 1) return true // No decimal part
+  if (!input) return true
   
-  return parts[1].length <= decimals
+  const decimalIndex = input.indexOf('.')
+  if (decimalIndex === -1) return true // No decimal places
+  
+  const decimalPlaces = input.length - decimalIndex - 1
+  return decimalPlaces <= decimals
 }
 
 /**
@@ -206,4 +206,72 @@ export function getMinimumAmountDisplay(
   const minAmount = getMinimumAmount(minSatoshis, tokenDecimals)
   const formatted = formatTokenAmount(minAmount, tokenDecimals)
   return `${formatted} ${tokenSymbol}`
+}
+
+/**
+ * Convert between token decimals (e.g., 18 decimal WBTC to 8 decimal SovaBTC)
+ */
+export function convertTokenDecimals(
+  amount: bigint,
+  fromDecimals: number,
+  toDecimals: number
+): bigint {
+  if (fromDecimals === toDecimals) return amount
+  
+  if (fromDecimals > toDecimals) {
+    // Need to divide down
+    const divisor = BigInt(10) ** BigInt(fromDecimals - toDecimals)
+    return amount / divisor
+  } else {
+    // Need to multiply up
+    const multiplier = BigInt(10) ** BigInt(toDecimals - fromDecimals)
+    return amount * multiplier
+  }
+}
+
+/**
+ * Calculate SovaBTC amount from input token amount
+ * SovaBTC always has 8 decimals
+ */
+export function calculateSovaBTCAmount(
+  inputAmount: string,
+  inputDecimals: number
+): string {
+  if (!inputAmount || inputAmount === '0') return '0.00000000'
+  
+  const amountWei = parseTokenAmount(inputAmount, inputDecimals)
+  const sovaBTCWei = convertTokenDecimals(amountWei, inputDecimals, 8)
+  
+  return formatTokenAmount(sovaBTCWei, 8, 8)
+}
+
+/**
+ * Get minimum deposit amount in display units
+ */
+export function getMinimumDepositAmount(tokenDecimals: number): string {
+  // Minimum is 1 satoshi worth in the token
+  const minSatoshi = BigInt(1) // 1 satoshi = 1e-8 BTC
+  const minTokenAmount = convertTokenDecimals(minSatoshi, 8, tokenDecimals)
+  
+  return formatTokenAmount(minTokenAmount, tokenDecimals)
+}
+
+/**
+ * Check if an amount meets minimum deposit requirements
+ */
+export function meetsMinimumDeposit(
+  amount: string,
+  tokenDecimals: number,
+  minDepositSatoshi: bigint = BigInt(100000) // 0.001 BTC default
+): boolean {
+  if (!amount || amount === '0') return false
+  
+  try {
+    const amountWei = parseTokenAmount(amount, tokenDecimals)
+    const sovaBTCAmount = convertTokenDecimals(amountWei, tokenDecimals, 8)
+    
+    return sovaBTCAmount >= minDepositSatoshi
+  } catch {
+    return false
+  }
 } 

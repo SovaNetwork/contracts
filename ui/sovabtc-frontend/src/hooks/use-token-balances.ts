@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAccount, useBlockNumber } from 'wagmi'
-import { Address } from 'viem'
+import { Address, formatUnits } from 'viem'
 import { useERC20 } from './use-contracts'
 import { useSovaBTC } from './use-contracts'
 import { TokenInfo, Balance } from '@/types/contracts'
@@ -180,30 +180,23 @@ export function useTokenBalances(tokens: TokenInfo[]): UseTokenBalancesReturn {
 /**
  * Hook for a single token balance with real-time updates
  */
-export function useTokenBalance(tokenAddress?: Address): {
-  balance: bigint | undefined
-  formatted: string
-  isLoading: boolean
-  error: Error | null
-  refetch: () => void
-} {
-  const {
-    balance,
-    decimals,
-    balanceLoading,
-    refetchBalance,
-  } = useERC20(tokenAddress)
+export function useTokenBalance(tokenAddress?: Address) {
+  const { address } = useAccount()
+  const { balance, decimals, symbol, balanceLoading } = useERC20(tokenAddress)
 
-  const formatted = balance && decimals !== undefined 
-    ? formatTokenAmount(balance, decimals, 6)
-    : '0'
+  const formatted = balance && decimals 
+    ? formatUnits(balance, decimals)
+    : '0.0000'
 
   return {
     balance,
+    decimals,
+    symbol,
     formatted,
     isLoading: balanceLoading,
-    error: null, // useERC20 doesn't expose errors yet
-    refetch: refetchBalance,
+    refetch: () => {
+      // The useERC20 hook handles refetching internally
+    }
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { Bitcoin } from 'lucide-react'
 
 interface TokenIconProps {
   symbol: string
@@ -13,9 +14,9 @@ interface TokenIconProps {
 }
 
 const sizeClasses = {
-  sm: 'w-4 h-4',
-  md: 'w-6 h-6', 
-  lg: 'w-8 h-8',
+  sm: 'w-6 h-6',
+  md: 'w-8 h-8', 
+  lg: 'w-12 h-12',
   xl: 'w-12 h-12',
 }
 
@@ -47,19 +48,40 @@ export function TokenIcon({
     return fallback || defaultFallback
   }
 
-  return (
-    <img
-      src={imageUrl}
-      alt={displayName}
-      className={cn(
-        'rounded-full object-cover border border-border/20',
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={symbol}
+        className={cn(sizeClasses[size], 'rounded-full', className)}
+        onError={(e) => {
+          // Fallback to default icon on error
+          e.currentTarget.style.display = 'none'
+        }}
+      />
+    )
+  }
+
+  // Default fallback icons based on symbol
+  const getDefaultIcon = () => {
+    if (symbol.toLowerCase().includes('btc')) {
+      return <Bitcoin className={cn(sizeClasses[size], 'text-orange-500')} />
+    }
+    
+    // Generic token icon
+    return (
+      <div className={cn(
         sizeClasses[size],
+        'rounded-full bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 flex items-center justify-center text-white font-bold',
+        size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-lg',
         className
-      )}
-      onError={() => setHasError(true)}
-      onLoad={() => setHasError(false)}
-    />
-  )
+      )}>
+        {symbol.charAt(0)}
+      </div>
+    )
+  }
+
+  return getDefaultIcon()
 }
 
 // Specialized SovaBTC icon

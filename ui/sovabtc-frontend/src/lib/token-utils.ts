@@ -109,12 +109,12 @@ export function getTokenDisplayName(token: TokenInfo): string {
  * Sort tokens by priority (whitelisted first, then by symbol)
  */
 export function sortTokens(tokens: TokenInfo[]): TokenInfo[] {
-  return tokens.sort((a, b) => {
+  return [...tokens].sort((a, b) => {
     // Whitelisted tokens first
     if (a.isWhitelisted && !b.isWhitelisted) return -1
     if (!a.isWhitelisted && b.isWhitelisted) return 1
     
-    // Then by symbol alphabetically
+    // Then sort by symbol alphabetically
     return a.symbol.localeCompare(b.symbol)
   })
 }
@@ -237,4 +237,28 @@ export function calculateTokenValue(
 export function isDustAmount(amount: bigint, decimals: number): boolean {
   const minThreshold = BigInt(10) ** BigInt(Math.max(0, decimals - 6)) // ~1 millionth of a token
   return amount < minThreshold && amount > BigInt(0)
+}
+
+export function getTokenByAddress(tokens: TokenInfo[], address: string): TokenInfo | undefined {
+  return tokens.find(token => token.address.toLowerCase() === address.toLowerCase())
+}
+
+export function getTokenBySymbol(tokens: TokenInfo[], symbol: string): TokenInfo | undefined {
+  return tokens.find(token => token.symbol.toLowerCase() === symbol.toLowerCase())
+}
+
+export function isValidTokenAmount(amount: string, decimals: number): boolean {
+  if (!amount || amount === '0') return false
+  
+  // Check if valid number format
+  if (!/^\d*\.?\d*$/.test(amount)) return false
+  
+  // Check decimal places
+  const decimalIndex = amount.indexOf('.')
+  if (decimalIndex !== -1) {
+    const decimalPlaces = amount.length - decimalIndex - 1
+    if (decimalPlaces > decimals) return false
+  }
+  
+  return parseFloat(amount) > 0
 } 
