@@ -1,248 +1,214 @@
-import { useCallback, useState, useEffect } from 'react'
-import { useAccount, useWaitForTransactionReceipt } from 'wagmi'
-import { Address } from 'viem'
-import { useERC20, useContractAddresses } from './use-contracts'
-import { formatTokenAmount } from '@/lib/decimal-conversion'
+import { useReadContract, useAccount, useChainId } from 'wagmi';
+import { 
+  ERC20_ABI, 
+  CONTRACT_CONFIG, 
+  CONTRACT_ADDRESSES, 
+  isSupportedChain
+} from '@/config/contracts';
+import type { SupportedChainId } from '@/contracts/addresses';
 
-interface AllowanceState {
-  allowance: bigint
-  formatted: string
-  isApproved: boolean
-  isApproving: boolean
-  isLoading: boolean
-  error: Error | null
-}
-
-interface UseAllowanceReturn extends AllowanceState {
-  approve: (amount: bigint) => Promise<void>
-  approveMax: () => Promise<void>
-  revoke: () => Promise<void>
-  checkApproval: (amount: bigint) => boolean
-  refetch: () => void
-}
-
-/**
- * Hook for managing token allowances with the wrapper contract
- */
-export function useAllowance(tokenAddress?: Address, decimals?: number): UseAllowanceReturn {
-  const { address } = useAccount()
-  const contractAddresses = useContractAddresses()
-  const [approvalTxHash, setApprovalTxHash] = useState<string | undefined>()
-  const [isApproving, setIsApproving] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-
-  // Get ERC20 token hook
-  const { approveSpender, isApproving: contractApproving, useAllowance: getAllowance } = useERC20(tokenAddress)
-  
-  // Get allowance for wrapper contract
-  const {
-    data: allowanceRaw,
-    isLoading: allowanceLoading,
-    refetch: refetchAllowance,
-  } = getAllowance(contractAddresses.wrapper)
-
-  // Wait for approval transaction
-  const { isLoading: txLoading, isSuccess: txSuccess } = useWaitForTransactionReceipt({
-    hash: approvalTxHash as `0x${string}`,
-  })
-
-  const allowance = allowanceRaw || BigInt(0)
-  const formatted = decimals ? formatTokenAmount(allowance, decimals, 6) : '0'
-
-  // Check if approved for specific amount
-  const checkApproval = useCallback((amount: bigint): boolean => {
-    return allowance >= amount
-  }, [allowance])
-
-  // Check if any approval exists
-  const isApproved = allowance > BigInt(0)
-
-  // Approve specific amount
-  const approve = useCallback(async (amount: bigint) => {
-    if (!tokenAddress || !address) {
-      throw new Error('Token address or user address not available')
-    }
-
-    setIsApproving(true)
-    setError(null)
-
-    try {
-      approveSpender(contractAddresses.wrapper, amount)
-      // Note: In a real implementation, you'd get the transaction hash from the result
-      // and set it to watch for confirmation
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Approval failed')
-      setError(error)
-      throw error
-    } finally {
-      setIsApproving(false)
-    }
-  }, [tokenAddress, address, approveSpender, contractAddresses.wrapper])
-
-  // Approve maximum amount
-  const approveMax = useCallback(async () => {
-    const maxAmount = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
-    await approve(maxAmount)
-  }, [approve])
-
-  // Revoke approval (set to 0)
-  const revoke = useCallback(async () => {
-    await approve(BigInt(0))
-  }, [approve])
-
-  // Refetch allowance
-  const refetch = useCallback(() => {
-    refetchAllowance()
-  }, [refetchAllowance])
-
-  // Reset approval state when transaction succeeds
-  useEffect(() => {
-    if (txSuccess) {
-      setIsApproving(false)
-      setApprovalTxHash(undefined)
-      refetchAllowance()
-    }
-  }, [txSuccess, refetchAllowance])
-
-  return {
-    allowance,
-    formatted,
-    isApproved,
-    isApproving: isApproving || contractApproving || txLoading,
-    isLoading: allowanceLoading,
-    error,
-    approve,
-    approveMax,
-    revoke,
-    checkApproval,
-    refetch,
-  }
-}
-
-/**
- * Hook for managing multiple token allowances
- */
-export function useMultipleAllowances(tokenAddresses: Address[]) {
-  // This would ideally create multiple allowance hooks
-  // For now, we'll create a simplified version
-  
-  const getAllowances = useCallback(() => {
-    return tokenAddresses.reduce((acc, address) => {
-      // This is a placeholder - in real implementation you'd use the hook for each token
-      acc[address] = {
-        allowance: BigInt(0),
-        formatted: '0',
-        isApproved: false,
-        isApproving: false,
-        isLoading: false,
-        error: null,
-        approve: async () => {},
-        approveMax: async () => {},
-        revoke: async () => {},
-        checkApproval: () => false,
-        refetch: () => {},
-      }
-      return acc
-    }, {} as Record<Address, UseAllowanceReturn>)
-  }, [tokenAddresses])
-
-  return {
-    allowances: getAllowances(),
-    refetchAll: () => {
-      // Refetch all allowances
-    },
-  }
-}
-
-/**
- * Hook for automatic approval management
- */
-export function useAutoApproval(
-  tokenAddress?: Address,
-  decimals?: number,
-  requiredAmount?: bigint
+// Hook for reading ERC20 token allowance
+export function useTokenAllowance(
+  tokenAddress: `0x${string}` | undefined,
+  spenderAddress: `0x${string}` | undefined
 ) {
-  const allowanceHook = useAllowance(tokenAddress, decimals)
-  const [needsApproval, setNeedsApproval] = useState(false)
+  const { address } = useAccount();
+  const chainId = useChainId();
 
-  useEffect(() => {
-    if (requiredAmount && allowanceHook.allowance < requiredAmount) {
-      setNeedsApproval(true)
-    } else {
-      setNeedsApproval(false)
-    }
-  }, [requiredAmount, allowanceHook.allowance])
+  const { data: allowance, isLoading, error, refetch } = useReadContract({
+    address: tokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'allowance',
+    args: [address!, spenderAddress!],
+    query: {
+      enabled: !!address && !!tokenAddress && !!spenderAddress && isSupportedChain(chainId),
+      refetchInterval: CONTRACT_CONFIG.ALLOWANCE_REFRESH_INTERVAL,
+    },
+  });
 
-  const approveRequired = useCallback(async () => {
-    if (requiredAmount && needsApproval) {
-      // Approve 20% more than required to avoid frequent re-approvals
-      const approvalAmount = (requiredAmount * BigInt(120)) / BigInt(100)
-      await allowanceHook.approve(approvalAmount)
-    }
-  }, [requiredAmount, needsApproval, allowanceHook])
+  const hasAllowance = (allowance || BigInt(0)) > BigInt(0);
+  const hasInfiniteAllowance = (allowance || BigInt(0)) >= CONTRACT_CONFIG.MAX_UINT256 / BigInt(2);
 
   return {
-    ...allowanceHook,
-    needsApproval,
-    approveRequired,
-  }
+    allowance: allowance || BigInt(0),
+    hasAllowance,
+    hasInfiniteAllowance,
+    isLoading,
+    error,
+    refetch,
+  };
 }
 
-/**
- * Utility hook for checking if approval is needed before deposit
- */
-export function useDepositApproval(tokenAddress?: Address, amount?: bigint, decimals?: number) {
-  const { checkApproval, approve, isApproving, isApproved } = useAllowance(tokenAddress, decimals)
+// Hook for wrapper contract allowances specifically
+export function useWrapperAllowance(tokenAddress: `0x${string}` | undefined) {
+  const chainId = useChainId();
   
-  const needsApproval = amount ? !checkApproval(amount) : false
+  if (!isSupportedChain(chainId)) {
+    return {
+      allowance: BigInt(0),
+      hasAllowance: false,
+      hasInfiniteAllowance: false,
+      isLoading: false,
+      error: new Error('Unsupported chain'),
+      refetch: () => {},
+    };
+  }
+
+  const wrapperAddress = CONTRACT_ADDRESSES[chainId].WRAPPER;
   
-  const approveForDeposit = useCallback(async () => {
-    if (amount && needsApproval) {
-      await approve(amount)
-    }
-  }, [amount, needsApproval, approve])
+  return useTokenAllowance(tokenAddress, wrapperAddress);
+}
+
+// Hook for staking contract allowances (SovaBTC -> Staking)
+export function useStakingAllowance() {
+  const chainId = useChainId();
+  
+  if (!isSupportedChain(chainId)) {
+    return {
+      allowance: BigInt(0),
+      hasAllowance: false,
+      hasInfiniteAllowance: false,
+      isLoading: false,
+      error: new Error('Unsupported chain'),
+      refetch: () => {},
+    };
+  }
+
+  const addresses = CONTRACT_ADDRESSES[chainId];
+  
+  return useTokenAllowance(addresses.SOVABTC, addresses.STAKING);
+}
+
+// Hook to check if approval is needed for a specific amount
+export function useApprovalCheck(
+  tokenAddress: `0x${string}` | undefined,
+  spenderAddress: `0x${string}` | undefined,
+  requiredAmount: bigint
+) {
+  const { allowance, isLoading, refetch } = useTokenAllowance(tokenAddress, spenderAddress);
+  
+  const needsApproval = allowance < requiredAmount;
+  const shortfall = needsApproval ? requiredAmount - allowance : BigInt(0);
 
   return {
     needsApproval,
-    approveForDeposit,
-    isApproving,
-    isApproved,
-    checkApproval,
-  }
+    shortfall,
+    currentAllowance: allowance,
+    isLoading,
+    refetch,
+  };
 }
 
-/**
- * Hook for approval status display
- */
-export function useApprovalStatus(tokenAddress?: Address, amount?: bigint, decimals?: number) {
-  const { allowance, isApproving, checkApproval } = useAllowance(tokenAddress, decimals)
+// Hook for multiple allowance checks for test tokens
+export function useTestTokenAllowances() {
+  const chainId = useChainId();
   
-  const getApprovalStatus = useCallback(() => {
-    if (isApproving) return 'approving'
-    if (!amount) return 'none'
-    if (checkApproval(amount)) return 'approved'
-    return 'needed'
-  }, [isApproving, amount, checkApproval])
+  if (!isSupportedChain(chainId)) {
+    return {
+      wbtcAllowance: { allowance: BigInt(0), hasAllowance: false, isLoading: false, error: null },
+      lbtcAllowance: { allowance: BigInt(0), hasAllowance: false, isLoading: false, error: null },
+      usdcAllowance: { allowance: BigInt(0), hasAllowance: false, isLoading: false, error: null },
+    };
+  }
 
-  const getApprovalMessage = useCallback(() => {
-    const status = getApprovalStatus()
-    
-    switch (status) {
-      case 'approving':
-        return 'Approving token spend...'
-      case 'approved':
-        return 'Token spend approved'
-      case 'needed':
-        return 'Token spend approval required'
-      default:
-        return ''
-    }
-  }, [getApprovalStatus])
+  const addresses = CONTRACT_ADDRESSES[chainId];
+  
+  const wbtcAllowance = useWrapperAllowance(addresses.WBTC_TEST);
+  const lbtcAllowance = useWrapperAllowance(addresses.LBTC_TEST);
+  const usdcAllowance = useWrapperAllowance(addresses.USDC_TEST);
 
   return {
-    status: getApprovalStatus(),
-    message: getApprovalMessage(),
-    allowance,
-    isApproving,
+    wbtcAllowance: {
+      ...wbtcAllowance,
+      symbol: 'WBTC',
+      name: 'Mock Wrapped Bitcoin',
+    },
+    lbtcAllowance: {
+      ...lbtcAllowance,
+      symbol: 'LBTC',
+      name: 'Mock Liquid Bitcoin',
+    },
+    usdcAllowance: {
+      ...usdcAllowance,
+      symbol: 'USDC',
+      name: 'Mock USD Coin',
+    },
+  };
+}
+
+// Hook for deposit approval workflow
+export function useDepositApprovalCheck(
+  tokenAddress: `0x${string}` | undefined,
+  depositAmount: bigint
+) {
+  const chainId = useChainId();
+  
+  if (!isSupportedChain(chainId)) {
+    return {
+      needsApproval: false,
+      shortfall: BigInt(0),
+      currentAllowance: BigInt(0),
+      isLoading: false,
+      error: new Error('Unsupported chain'),
+      refetch: () => {},
+    };
   }
+
+  const wrapperAddress = CONTRACT_ADDRESSES[chainId].WRAPPER;
+  
+  return useApprovalCheck(tokenAddress, wrapperAddress, depositAmount);
+}
+
+// Hook for staking approval workflow
+export function useStakingApprovalCheck(stakeAmount: bigint) {
+  const chainId = useChainId();
+  
+  if (!isSupportedChain(chainId)) {
+    return {
+      needsApproval: false,
+      shortfall: BigInt(0),
+      currentAllowance: BigInt(0),
+      isLoading: false,
+      error: new Error('Unsupported chain'),
+      refetch: () => {},
+    };
+  }
+
+  const addresses = CONTRACT_ADDRESSES[chainId];
+  
+  return useApprovalCheck(addresses.SOVABTC, addresses.STAKING, stakeAmount);
+}
+
+// Utility function to check if amount needs approval
+export function needsApproval(currentAllowance: bigint, requiredAmount: bigint): boolean {
+  return currentAllowance < requiredAmount;
+}
+
+// Utility function to calculate recommended approval amount
+export function getRecommendedApprovalAmount(requiredAmount: bigint): bigint {
+  // Approve 20% more than required to avoid frequent re-approvals
+  return (requiredAmount * BigInt(120)) / BigInt(100);
+}
+
+// Hook for comprehensive allowance management
+export function useAllowanceManager(
+  tokenAddress: `0x${string}` | undefined,
+  spenderAddress: `0x${string}` | undefined
+) {
+  const allowanceData = useTokenAllowance(tokenAddress, spenderAddress);
+  
+  const checkAmount = (amount: bigint) => {
+    return {
+      needsApproval: needsApproval(allowanceData.allowance, amount),
+      recommendedAmount: getRecommendedApprovalAmount(amount),
+      shortfall: amount > allowanceData.allowance ? amount - allowanceData.allowance : BigInt(0),
+    };
+  };
+
+  return {
+    ...allowanceData,
+    checkAmount,
+    needsApproval: (amount: bigint) => needsApproval(allowanceData.allowance, amount),
+    getRecommendedAmount: getRecommendedApprovalAmount,
+  };
 } 

@@ -173,7 +173,7 @@ function TokenItem({
   onSelect: () => void
   showBalance: boolean
 }) {
-  const { formatted, isLoading } = useTokenBalance(token.address)
+  const { formattedBalance, isLoading } = useTokenBalance(token.address)
 
   return (
     <CommandItem
@@ -200,7 +200,7 @@ function TokenItem({
         </div>
         {showBalance && (
           <div className="text-xs text-muted-foreground">
-            Balance: {isLoading ? '...' : formatted}
+            Balance: {isLoading ? '...' : formattedBalance}
           </div>
         )}
       </div>
@@ -311,7 +311,7 @@ function TokenListItem({
   token: TokenInfo
   onClick?: () => void
 }) {
-  const { formatted, isLoading } = useTokenBalance(token.address)
+  const { formattedBalance, isLoading } = useTokenBalance(token.address)
 
   return (
     <div
@@ -343,7 +343,7 @@ function TokenListItem({
 
       <div className="text-right">
         <div className="font-medium">
-          {isLoading ? '...' : formatted}
+          {isLoading ? '...' : formattedBalance}
         </div>
         <div className="text-xs text-muted-foreground">
           {token.decimals} decimals

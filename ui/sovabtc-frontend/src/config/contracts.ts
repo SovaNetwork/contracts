@@ -1,183 +1,193 @@
-import { Address } from 'viem'
-import { base, ethereum, sova } from './chains'
+import { getContract } from 'viem';
+import { usePublicClient, useWalletClient, useChainId } from 'wagmi';
+import { baseSepolia } from 'viem/chains';
 
-// Contract addresses per chain
-export const contractAddresses = {
-  [base.id]: {
-    sovaBTC: process.env.NEXT_PUBLIC_SOVABTC_BASE_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    wrapper: process.env.NEXT_PUBLIC_WRAPPER_BASE_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    staking: process.env.NEXT_PUBLIC_STAKING_BASE_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    layerZeroEndpoint: '0x6EDCE65403992e310A62460808c4b910D972f10f', // Base Sepolia LZ endpoint
-  },
-  [ethereum.id]: {
-    sovaBTC: process.env.NEXT_PUBLIC_SOVABTC_ETH_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    wrapper: process.env.NEXT_PUBLIC_WRAPPER_ETH_ADDRESS as Address || '0x0000000000000000000000000000000000000000', 
-    staking: process.env.NEXT_PUBLIC_STAKING_ETH_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    layerZeroEndpoint: '0x6EDCE65403992e310A62460808c4b910D972f10f', // Ethereum Sepolia LZ endpoint
-  },
-  [sova.id]: {
-    sovaBTC: process.env.NEXT_PUBLIC_SOVABTC_SOVA_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    wrapper: process.env.NEXT_PUBLIC_WRAPPER_SOVA_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    staking: process.env.NEXT_PUBLIC_STAKING_SOVA_ADDRESS as Address || '0x0000000000000000000000000000000000000000',
-    layerZeroEndpoint: '0x0000000000000000000000000000000000000000', // Replace with Sova LZ endpoint if available
-  },
-} as const
+// Import actual ABIs
+import {
+  SOVABTC_ABI,
+  SOVA_TOKEN_ABI,
+  SOVABTC_WRAPPER_ABI,
+  TOKEN_WHITELIST_ABI,
+  CUSTODY_MANAGER_ABI,
+  REDEMPTION_QUEUE_ABI,
+  SOVABTC_STAKING_ABI,
+} from '@/contracts/abis';
 
-// Common BTC-pegged tokens
-export const btcTokens = {
-  [base.id]: {
-    WBTC: '0x0000000000000000000000000000000000000000', // Replace with actual WBTC address on Base Sepolia
-    // Add other BTC tokens as needed
-  },
-  [ethereum.id]: {
-    WBTC: '0x0000000000000000000000000000000000000000', // Replace with actual WBTC address on Ethereum Sepolia
-    // Add other BTC tokens as needed
-  },
-  [sova.id]: {
-    // Add Sova-specific BTC tokens
-  },
-} as const
+// Import addresses and utilities
+import { CONTRACT_ADDRESSES, type SupportedChainId, isSupportedChain, getContractAddress } from '@/contracts/addresses';
 
-// Simplified contract ABIs (will be replaced with actual ABIs)
-export const contractABIs = {
-  sovaBTC: [
-    {
-      name: 'balanceOf',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [{ name: 'account', type: 'address' }],
-      outputs: [{ name: '', type: 'uint256' }],
-    },
-    {
-      name: 'transfer',
-      type: 'function',
-      stateMutability: 'nonpayable',
-      inputs: [
-        { name: 'to', type: 'address' },
-        { name: 'amount', type: 'uint256' },
-      ],
-      outputs: [{ name: '', type: 'bool' }],
-    },
-    {
-      name: 'approve',
-      type: 'function',
-      stateMutability: 'nonpayable',
-      inputs: [
-        { name: 'spender', type: 'address' },
-        { name: 'amount', type: 'uint256' },
-      ],
-      outputs: [{ name: '', type: 'bool' }],
-    },
-    {
-      name: 'allowance',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [
-        { name: 'owner', type: 'address' },
-        { name: 'spender', type: 'address' },
-      ],
-      outputs: [{ name: '', type: 'uint256' }],
-    },
-  ],
-  wrapper: [
-    {
-      name: 'deposit',
-      type: 'function',
-      stateMutability: 'nonpayable',
-      inputs: [
-        { name: 'token', type: 'address' },
-        { name: 'amount', type: 'uint256' },
-      ],
-      outputs: [],
-    },
-    {
-      name: 'getWhitelistedTokens',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [],
-      outputs: [{ name: '', type: 'address[]' }],
-    },
-    {
-      name: 'isTokenWhitelisted',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [{ name: 'token', type: 'address' }],
-      outputs: [{ name: '', type: 'bool' }],
-    },
-  ],
-  staking: [
-    {
-      name: 'stake',
-      type: 'function',
-      stateMutability: 'nonpayable',
-      inputs: [{ name: 'amount', type: 'uint256' }],
-      outputs: [],
-    },
-    {
-      name: 'unstake',
-      type: 'function', 
-      stateMutability: 'nonpayable',
-      inputs: [{ name: 'amount', type: 'uint256' }],
-      outputs: [],
-    },
-    {
-      name: 'getRewards',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [{ name: 'user', type: 'address' }],
-      outputs: [{ name: '', type: 'uint256' }],
-    },
-  ],
-  erc20: [
-    {
-      name: 'balanceOf',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [{ name: 'account', type: 'address' }],
-      outputs: [{ name: '', type: 'uint256' }],
-    },
-    {
-      name: 'decimals',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [],
-      outputs: [{ name: '', type: 'uint8' }],
-    },
-    {
-      name: 'symbol',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [],
-      outputs: [{ name: '', type: 'string' }],
-    },
-    {
-      name: 'name', 
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [],
-      outputs: [{ name: '', type: 'string' }],
-    },
-    {
-      name: 'approve',
-      type: 'function',
-      stateMutability: 'nonpayable',
-      inputs: [
-        { name: 'spender', type: 'address' },
-        { name: 'amount', type: 'uint256' },
-      ],
-      outputs: [{ name: '', type: 'bool' }],
-    },
-    {
-      name: 'allowance',
-      type: 'function',
-      stateMutability: 'view',
-      inputs: [
-        { name: 'owner', type: 'address' },
-        { name: 'spender', type: 'address' },
-      ],
-      outputs: [{ name: '', type: 'uint256' }],
-    },
-  ],
-} as const
+// Export contract ABIs for direct use with wagmi hooks
+export {
+  SOVABTC_ABI,
+  SOVA_TOKEN_ABI,
+  SOVABTC_WRAPPER_ABI,
+  TOKEN_WHITELIST_ABI,
+  CUSTODY_MANAGER_ABI,
+  REDEMPTION_QUEUE_ABI,
+  SOVABTC_STAKING_ABI,
+};
 
-export type ContractName = keyof typeof contractABIs 
+// Export address utilities
+export { CONTRACT_ADDRESSES, getContractAddress, isSupportedChain };
+
+// Standard ERC20 ABI for token interactions
+export const ERC20_ABI = [
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'decimals',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint8' }],
+  },
+  {
+    type: 'function',
+    name: 'symbol',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'string' }],
+  },
+  {
+    type: 'function',
+    name: 'name',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'string' }],
+  },
+  {
+    type: 'function',
+    name: 'approve',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+  {
+    type: 'function',
+    name: 'allowance',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+    ],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'transfer',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+] as const;
+
+// Contract configuration constants
+export const CONTRACT_CONFIG = {
+  // SovaBTC token decimals
+  SOVABTC_DECIMALS: 8,
+  
+  // SOVA token decimals
+  SOVA_TOKEN_DECIMALS: 18,
+  
+  // Common refresh intervals (in milliseconds)
+  BALANCE_REFRESH_INTERVAL: 10000, // 10 seconds
+  ALLOWANCE_REFRESH_INTERVAL: 30000, // 30 seconds
+  STATIC_DATA_STALE_TIME: 300000, // 5 minutes
+  
+  // Transaction settings
+  DEFAULT_SLIPPAGE: 0.5, // 0.5%
+  MAX_UINT256: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'),
+} as const;
+
+// Helper function to get token info for a given chain
+export function getTokenInfo(chainId: SupportedChainId) {
+  const addresses = CONTRACT_ADDRESSES[chainId];
+  
+  return {
+    sovabtc: {
+      address: addresses.SOVABTC,
+      symbol: 'SovaBTC',
+      name: 'Sova Bitcoin',
+      decimals: CONTRACT_CONFIG.SOVABTC_DECIMALS,
+    },
+    sovaToken: {
+      address: addresses.SOVA_TOKEN,
+      symbol: 'SOVA',
+      name: 'Sova Token',
+      decimals: CONTRACT_CONFIG.SOVA_TOKEN_DECIMALS,
+    },
+    testTokens: [
+      {
+        address: addresses.WBTC_TEST,
+        symbol: 'WBTC',
+        name: 'Mock Wrapped Bitcoin',
+        decimals: 8,
+      },
+      {
+        address: addresses.LBTC_TEST,
+        symbol: 'LBTC',
+        name: 'Mock Liquid Bitcoin',
+        decimals: 8,
+      },
+      {
+        address: addresses.USDC_TEST,
+        symbol: 'USDC',
+        name: 'Mock USD Coin',
+        decimals: 6,
+      },
+    ],
+  };
+}
+
+// Helper to get contract address for current chain
+export function useContractAddress(contractKey: keyof (typeof CONTRACT_ADDRESSES)[SupportedChainId]) {
+  return (chainId: SupportedChainId) => {
+    if (!isSupportedChain(chainId)) {
+      throw new Error(`Unsupported chain: ${chainId}`);
+    }
+    return CONTRACT_ADDRESSES[chainId][contractKey];
+  };
+}
+
+// Contract metadata for easier integration
+export const CONTRACTS_METADATA = {
+  SOVABTC: {
+    abi: SOVABTC_ABI,
+    getAddress: (chainId: SupportedChainId) => CONTRACT_ADDRESSES[chainId].SOVABTC,
+  },
+  SOVA_TOKEN: {
+    abi: SOVA_TOKEN_ABI,
+    getAddress: (chainId: SupportedChainId) => CONTRACT_ADDRESSES[chainId].SOVA_TOKEN,
+  },
+  WRAPPER: {
+    abi: SOVABTC_WRAPPER_ABI,
+    getAddress: (chainId: SupportedChainId) => CONTRACT_ADDRESSES[chainId].WRAPPER,
+  },
+  TOKEN_WHITELIST: {
+    abi: TOKEN_WHITELIST_ABI,
+    getAddress: (chainId: SupportedChainId) => CONTRACT_ADDRESSES[chainId].TOKEN_WHITELIST,
+  },
+  CUSTODY_MANAGER: {
+    abi: CUSTODY_MANAGER_ABI,
+    getAddress: (chainId: SupportedChainId) => CONTRACT_ADDRESSES[chainId].CUSTODY_MANAGER,
+  },
+  REDEMPTION_QUEUE: {
+    abi: REDEMPTION_QUEUE_ABI,
+    getAddress: (chainId: SupportedChainId) => CONTRACT_ADDRESSES[chainId].REDEMPTION_QUEUE,
+  },
+  STAKING: {
+    abi: SOVABTC_STAKING_ABI,
+    getAddress: (chainId: SupportedChainId) => CONTRACT_ADDRESSES[chainId].STAKING,
+  },
+} as const; 

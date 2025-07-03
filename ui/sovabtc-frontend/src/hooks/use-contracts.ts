@@ -1,13 +1,24 @@
 import { useAccount, useChainId, useReadContract, useWriteContract } from 'wagmi'
 import { Address } from 'viem'
-import { contractAddresses, contractABIs } from '@/config/contracts'
+import { 
+  CONTRACT_ADDRESSES, 
+  ERC20_ABI,
+  SOVABTC_ABI,
+  SOVABTC_WRAPPER_ABI,
+  SOVABTC_STAKING_ABI,
+  isSupportedChain
+} from '@/config/contracts'
 import { useCallback, useMemo } from 'react'
 
 // Hook to get contract addresses for current chain
 export function useContractAddresses() {
   const chainId = useChainId()
   return useMemo(() => {
-    return contractAddresses[chainId as keyof typeof contractAddresses] || contractAddresses[84532] // fallback to Base Sepolia
+    if (!isSupportedChain(chainId)) {
+      // Fallback to Base Sepolia
+      return CONTRACT_ADDRESSES[84532]
+    }
+    return CONTRACT_ADDRESSES[chainId]
   }, [chainId])
 }
 
@@ -18,8 +29,8 @@ export function useSovaBTC() {
   
   // Read balance
   const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useReadContract({
-    address: addresses.sovaBTC,
-    abi: contractABIs.sovaBTC,
+    address: addresses.SOVABTC,
+    abi: SOVABTC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
@@ -29,10 +40,10 @@ export function useSovaBTC() {
   
   // Read allowance for wrapper contract
   const { data: allowance, isLoading: allowanceLoading, refetch: refetchAllowance } = useReadContract({
-    address: addresses.sovaBTC,
-    abi: contractABIs.sovaBTC,
+    address: addresses.SOVABTC,
+    abi: SOVABTC_ABI,
     functionName: 'allowance',
-    args: address ? [address, addresses.wrapper] : undefined,
+    args: address ? [address, addresses.WRAPPER] : undefined,
     query: {
       enabled: !!address,
     },
@@ -44,18 +55,18 @@ export function useSovaBTC() {
   // Approve wrapper contract
   const approveWrapper = useCallback((amount: bigint) => {
     approve({
-      address: addresses.sovaBTC,
-      abi: contractABIs.sovaBTC,
+      address: addresses.SOVABTC,
+      abi: SOVABTC_ABI,
       functionName: 'approve',
-      args: [addresses.wrapper, amount],
+      args: [addresses.WRAPPER, amount],
     })
   }, [approve, addresses])
   
   // Transfer tokens
   const transferTokens = useCallback((to: Address, amount: bigint) => {
     transfer({
-      address: addresses.sovaBTC,
-      abi: contractABIs.sovaBTC,
+      address: addresses.SOVABTC,
+      abi: SOVABTC_ABI,
       functionName: 'transfer',
       args: [to, amount],
     })
@@ -81,16 +92,16 @@ export function useWrapper() {
   
   // Read whitelisted tokens
   const { data: whitelistedTokens, isLoading: tokensLoading, refetch: refetchTokens } = useReadContract({
-    address: addresses.wrapper,
-    abi: contractABIs.wrapper,
+    address: addresses.WRAPPER,
+    abi: SOVABTC_WRAPPER_ABI,
     functionName: 'getWhitelistedTokens',
   })
   
   // Check if token is whitelisted
   const useIsTokenWhitelisted = (tokenAddress?: Address) => {
     return useReadContract({
-      address: addresses.wrapper,
-      abi: contractABIs.wrapper,
+      address: addresses.WRAPPER,
+      abi: SOVABTC_WRAPPER_ABI,
       functionName: 'isTokenWhitelisted',
       args: tokenAddress ? [tokenAddress] : undefined,
       query: {
@@ -104,8 +115,8 @@ export function useWrapper() {
   // Deposit tokens
   const depositTokens = useCallback((token: Address, amount: bigint) => {
     deposit({
-      address: addresses.wrapper,
-      abi: contractABIs.wrapper,
+      address: addresses.WRAPPER,
+      abi: SOVABTC_WRAPPER_ABI,
       functionName: 'deposit',
       args: [token, amount],
     })
@@ -128,9 +139,9 @@ export function useStaking() {
   
   // Read user rewards
   const { data: rewards, isLoading: rewardsLoading, refetch: refetchRewards } = useReadContract({
-    address: addresses.staking,
-    abi: contractABIs.staking,
-    functionName: 'getRewards',
+    address: addresses.STAKING,
+    abi: SOVABTC_STAKING_ABI,
+    functionName: 'earned',
     args: address ? [address] : undefined,
     query: {
       enabled: !!address,
@@ -143,8 +154,8 @@ export function useStaking() {
   // Stake tokens
   const stakeTokens = useCallback((amount: bigint) => {
     stake({
-      address: addresses.staking,
-      abi: contractABIs.staking,
+      address: addresses.STAKING,
+      abi: SOVABTC_STAKING_ABI,
       functionName: 'stake',
       args: [amount],
     })
@@ -153,8 +164,8 @@ export function useStaking() {
   // Unstake tokens
   const unstakeTokens = useCallback((amount: bigint) => {
     unstake({
-      address: addresses.staking,
-      abi: contractABIs.staking,
+      address: addresses.STAKING,
+      abi: SOVABTC_STAKING_ABI,
       functionName: 'unstake',
       args: [amount],
     })
@@ -174,11 +185,12 @@ export function useStaking() {
 // Hook for ERC20 token interactions
 export function useERC20(tokenAddress?: Address) {
   const { address } = useAccount()
+  const addresses = useContractAddresses()
   
   // Read token balance
   const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useReadContract({
     address: tokenAddress,
-    abi: contractABIs.erc20,
+    abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
@@ -189,7 +201,7 @@ export function useERC20(tokenAddress?: Address) {
   // Read token decimals
   const { data: decimals } = useReadContract({
     address: tokenAddress,
-    abi: contractABIs.erc20,
+    abi: ERC20_ABI,
     functionName: 'decimals',
     query: {
       enabled: !!tokenAddress,
@@ -199,7 +211,7 @@ export function useERC20(tokenAddress?: Address) {
   // Read token symbol
   const { data: symbol } = useReadContract({
     address: tokenAddress,
-    abi: contractABIs.erc20,
+    abi: ERC20_ABI,
     functionName: 'symbol',
     query: {
       enabled: !!tokenAddress,
@@ -209,7 +221,7 @@ export function useERC20(tokenAddress?: Address) {
   // Read token name
   const { data: name } = useReadContract({
     address: tokenAddress,
-    abi: contractABIs.erc20,
+    abi: ERC20_ABI,
     functionName: 'name',
     query: {
       enabled: !!tokenAddress,
@@ -220,7 +232,7 @@ export function useERC20(tokenAddress?: Address) {
   const useAllowance = (spender?: Address) => {
     return useReadContract({
       address: tokenAddress,
-      abi: contractABIs.erc20,
+      abi: ERC20_ABI,
       functionName: 'allowance',
       args: address && spender ? [address, spender] : undefined,
       query: {
@@ -237,7 +249,7 @@ export function useERC20(tokenAddress?: Address) {
     
     approve({
       address: tokenAddress,
-      abi: contractABIs.erc20,
+      abi: ERC20_ABI,
       functionName: 'approve',
       args: [spender, amount],
     })
@@ -262,14 +274,14 @@ export function useContractStatus() {
   const addresses = useContractAddresses()
   
   const isConfigured = useMemo(() => {
-    return addresses.sovaBTC !== '0x0000000000000000000000000000000000000000' &&
-           addresses.wrapper !== '0x0000000000000000000000000000000000000000'
+    return addresses.SOVABTC !== '0x0000000000000000000000000000000000000000' &&
+           addresses.WRAPPER !== '0x0000000000000000000000000000000000000000'
   }, [addresses])
   
   return {
     addresses,
     chainId,
     isConfigured,
-    supportedChain: chainId in contractAddresses,
+    supportedChain: isSupportedChain(chainId),
   }
 } 

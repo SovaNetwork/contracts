@@ -1,16 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt, useChainId, useReadContract } from 'wagmi'
-import { useToast } from '@/hooks/use-toast'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Settings, Clock, Users, AlertCircle } from 'lucide-react'
-import { contractAddresses } from '@/config/contracts'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Clock, Settings, AlertTriangle } from 'lucide-react'
+import { toast } from 'sonner'
+import { CONTRACT_ADDRESSES, isSupportedChain } from '@/config/contracts'
 
 const QUEUE_ABI = [
   {

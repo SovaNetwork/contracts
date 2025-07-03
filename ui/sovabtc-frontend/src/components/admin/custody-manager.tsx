@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Switch } from '@/components/ui/switch'
 import { Plus, Trash2, Settings, Users, Shield, ExternalLink } from 'lucide-react'
 import { Address, isAddress } from 'viem'
-import { contractAddresses } from '@/config/contracts'
+import { CONTRACT_ADDRESSES, isSupportedChain } from '@/config/contracts'
 
 const CUSTODY_MANAGER_ABI = [
   {

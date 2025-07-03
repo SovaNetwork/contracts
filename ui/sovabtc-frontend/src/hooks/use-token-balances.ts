@@ -1,11 +1,19 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useAccount, useBlockNumber } from 'wagmi'
+import { useAccount, useBlockNumber, useReadContract, useChainId } from 'wagmi'
 import { Address } from 'viem'
 import { useERC20 } from './use-contracts'
 import { useSovaBTC } from './use-contracts'
 import { TokenInfo, Balance } from '@/types/contracts'
-import { formatTokenAmount } from '@/lib/decimal-conversion'
+import { formatTokenAmount, formatUnits } from '@/lib/decimal-conversion'
 import { REFRESH_INTERVALS } from '@/lib/constants'
+import { 
+  ERC20_ABI, 
+  CONTRACT_CONFIG, 
+  CONTRACT_ADDRESSES, 
+  isSupportedChain,
+  type SupportedChainId 
+} from '@/config/contracts'
+import type { SupportedChainId as ContractAddressesSupportedChainId } from '@/contracts/addresses'
 
 interface TokenBalance {
   token: TokenInfo
@@ -180,52 +188,81 @@ export function useTokenBalances(tokens: TokenInfo[]): UseTokenBalancesReturn {
 /**
  * Hook for a single token balance with real-time updates
  */
-export function useTokenBalance(tokenAddress?: Address): {
-  balance: bigint | undefined
-  formatted: string
-  isLoading: boolean
-  error: Error | null
-  refetch: () => void
-} {
-  const {
-    balance,
-    decimals,
-    balanceLoading,
-    refetchBalance,
-  } = useERC20(tokenAddress)
+export function useTokenBalance(tokenAddress: `0x${string}` | undefined) {
+  const { address } = useAccount();
+  const chainId = useChainId();
 
-  const formatted = balance && decimals !== undefined 
-    ? formatTokenAmount(balance, decimals, 6)
-    : '0'
+  const { data: balance, isLoading, error, refetch } = useReadContract({
+    address: tokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: [address!],
+    query: {
+      enabled: !!address && !!tokenAddress && isSupportedChain(chainId),
+      refetchInterval: CONTRACT_CONFIG.BALANCE_REFRESH_INTERVAL,
+    },
+  });
+
+  const { data: decimals } = useReadContract({
+    address: tokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+    query: {
+      enabled: !!tokenAddress && isSupportedChain(chainId),
+      staleTime: CONTRACT_CONFIG.STATIC_DATA_STALE_TIME,
+    },
+  });
+
+  const { data: symbol } = useReadContract({
+    address: tokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'symbol',
+    query: {
+      enabled: !!tokenAddress && isSupportedChain(chainId),
+      staleTime: CONTRACT_CONFIG.STATIC_DATA_STALE_TIME,
+    },
+  });
+
+  const { data: name } = useReadContract({
+    address: tokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'name',
+    query: {
+      enabled: !!tokenAddress && isSupportedChain(chainId),
+      staleTime: CONTRACT_CONFIG.STATIC_DATA_STALE_TIME,
+    },
+  });
+
+  const formattedBalance = balance && decimals 
+    ? formatUnits(balance, decimals)
+    : '0';
 
   return {
-    balance,
-    formatted,
-    isLoading: balanceLoading,
-    error: null, // useERC20 doesn't expose errors yet
-    refetch: refetchBalance,
-  }
+    balance: balance || BigInt(0),
+    formattedBalance,
+    decimals: decimals || 18,
+    symbol: symbol || 'TOKEN',
+    name: name || 'Unknown Token',
+    isLoading,
+    error,
+    refetch,
+  };
 }
 
 /**
  * Hook for checking if user has sufficient balance for an amount
  */
-export function useBalanceCheck(tokenAddress?: Address, requiredAmount?: bigint) {
-  const { balance } = useTokenBalance(tokenAddress)
+export function useBalanceCheck(tokenAddress: `0x${string}` | undefined, requiredAmount: bigint) {
+  const { balance } = useTokenBalance(tokenAddress);
   
-  const hasSufficientBalance = balance !== undefined && requiredAmount !== undefined
-    ? balance >= requiredAmount
-    : false
-
-  const shortage = balance !== undefined && requiredAmount !== undefined && balance < requiredAmount
-    ? requiredAmount - balance
-    : BigInt(0)
+  const hasSufficientBalance = balance >= requiredAmount;
+  const shortage = balance < requiredAmount ? requiredAmount - balance : BigInt(0);
 
   return {
     hasSufficientBalance,
     shortage,
-    balance,
-  }
+    currentBalance: balance,
+  };
 }
 
 /**
@@ -246,4 +283,179 @@ export function useBalanceWatcher(
   }, [balance, previousBalance, onBalanceChange])
 
   return { balance, previousBalance }
+}
+
+// Hook specifically for SovaBTC balance
+export function useSovaBTCBalance() {
+  const chainId = useChainId();
+  
+  if (!isSupportedChain(chainId)) {
+    return {
+      balance: BigInt(0),
+      formattedBalance: '0',
+      decimals: CONTRACT_CONFIG.SOVABTC_DECIMALS,
+      symbol: 'SovaBTC',
+      name: 'Sova Bitcoin',
+      isLoading: false,
+      error: new Error('Unsupported chain'),
+      refetch: () => {},
+    };
+  }
+
+  const sovaBTCAddress = CONTRACT_ADDRESSES[chainId].SOVABTC;
+  
+  return {
+    ...useTokenBalance(sovaBTCAddress),
+    decimals: CONTRACT_CONFIG.SOVABTC_DECIMALS,
+    symbol: 'SovaBTC',
+    name: 'Sova Bitcoin',
+  };
+}
+
+// Hook specifically for SOVA token balance
+export function useSOVATokenBalance() {
+  const chainId = useChainId();
+  
+  if (!isSupportedChain(chainId)) {
+    return {
+      balance: BigInt(0),
+      formattedBalance: '0',
+      decimals: CONTRACT_CONFIG.SOVA_TOKEN_DECIMALS,
+      symbol: 'SOVA',
+      name: 'Sova Token',
+      isLoading: false,
+      error: new Error('Unsupported chain'),
+      refetch: () => {},
+    };
+  }
+
+  const sovaTokenAddress = CONTRACT_ADDRESSES[chainId].SOVA_TOKEN;
+  
+  return {
+    ...useTokenBalance(sovaTokenAddress),
+    decimals: CONTRACT_CONFIG.SOVA_TOKEN_DECIMALS,
+    symbol: 'SOVA',
+    name: 'Sova Token',
+  };
+}
+
+// Hook for multiple token balances
+export function useMultipleTokenBalances(tokenAddresses: `0x${string}`[]) {
+  const { address } = useAccount();
+  const chainId = useChainId();
+
+  const balanceQueries = tokenAddresses.map(tokenAddress => ({
+    address: tokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf' as const,
+    args: [address!],
+    query: {
+      enabled: !!address && !!tokenAddress && isSupportedChain(chainId),
+      refetchInterval: CONTRACT_CONFIG.BALANCE_REFRESH_INTERVAL,
+    },
+  }));
+
+  // Note: This would need a batch read contract hook for optimal performance
+  // For now, returning individual calls pattern
+  return tokenAddresses.map(tokenAddress => useTokenBalance(tokenAddress));
+}
+
+// Hook for test token balances (WBTC, LBTC, USDC)
+export function useTestTokenBalances() {
+  const chainId = useChainId();
+  
+  if (!isSupportedChain(chainId)) {
+    return {
+      wbtcBalance: { 
+        balance: BigInt(0), 
+        formattedBalance: '0', 
+        decimals: 8, 
+        symbol: 'WBTC', 
+        isLoading: false, 
+        error: null, 
+        refetch: () => {} 
+      },
+      lbtcBalance: { 
+        balance: BigInt(0), 
+        formattedBalance: '0', 
+        decimals: 8, 
+        symbol: 'LBTC', 
+        isLoading: false, 
+        error: null, 
+        refetch: () => {} 
+      },
+      usdcBalance: { 
+        balance: BigInt(0), 
+        formattedBalance: '0', 
+        decimals: 6, 
+        symbol: 'USDC', 
+        isLoading: false, 
+        error: null, 
+        refetch: () => {} 
+      },
+    };
+  }
+
+  const addresses = CONTRACT_ADDRESSES[chainId];
+  
+  const wbtcBalance = useTokenBalance(addresses.WBTC_TEST);
+  const lbtcBalance = useTokenBalance(addresses.LBTC_TEST);
+  const usdcBalance = useTokenBalance(addresses.USDC_TEST);
+
+  return {
+    wbtcBalance: {
+      ...wbtcBalance,
+      decimals: 8,
+      symbol: 'WBTC',
+      name: 'Mock Wrapped Bitcoin',
+    },
+    lbtcBalance: {
+      ...lbtcBalance,
+      decimals: 8,
+      symbol: 'LBTC',
+      name: 'Mock Liquid Bitcoin',
+    },
+    usdcBalance: {
+      ...usdcBalance,
+      decimals: 6,
+      symbol: 'USDC',
+      name: 'Mock USD Coin',
+    },
+  };
+}
+
+// Hook for aggregated portfolio balances
+export function usePortfolioBalances() {
+  const sovaBTCBalance = useSovaBTCBalance();
+  const sovaTokenBalance = useSOVATokenBalance();
+  const testTokenBalances = useTestTokenBalances();
+
+  const isLoading = sovaBTCBalance.isLoading || 
+                   sovaTokenBalance.isLoading || 
+                   testTokenBalances.wbtcBalance.isLoading ||
+                   testTokenBalances.lbtcBalance.isLoading ||
+                   testTokenBalances.usdcBalance.isLoading;
+
+  const hasError = sovaBTCBalance.error || 
+                  sovaTokenBalance.error || 
+                  testTokenBalances.wbtcBalance.error ||
+                  testTokenBalances.lbtcBalance.error ||
+                  testTokenBalances.usdcBalance.error;
+
+  const refetchAll = () => {
+    sovaBTCBalance.refetch();
+    sovaTokenBalance.refetch();
+    testTokenBalances.wbtcBalance.refetch();
+    testTokenBalances.lbtcBalance.refetch();
+    testTokenBalances.usdcBalance.refetch();
+  };
+
+  return {
+    sovaBTC: sovaBTCBalance,
+    sovaToken: sovaTokenBalance,
+    testTokens: testTokenBalances,
+    isLoading,
+    hasError,
+    refetchAll,
+  };
 } 

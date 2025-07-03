@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -12,104 +12,75 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Plus, Trash2, ExternalLink, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Address, isAddress } from 'viem'
-import { useChainId } from 'wagmi'
-import { contractAddresses } from '@/config/contracts'
+import { CONTRACT_ADDRESSES, isSupportedChain, ERC20_ABI } from '@/config/contracts'
 
-const WRAPPER_ABI = [
+const WHITELIST_ABI = [
   {
-    name: 'getWhitelistedTokens',
     type: 'function',
+    name: 'isTokenWhitelisted',
+    stateMutability: 'view',
+    inputs: [{ name: 'token', type: 'address' }],
+    outputs: [{ name: '', type: 'bool' }],
+  },
+  {
+    type: 'function',
+    name: 'getWhitelistedTokens',
     stateMutability: 'view',
     inputs: [],
     outputs: [{ name: '', type: 'address[]' }],
   },
   {
-    name: 'addAllowedToken',
     type: 'function',
+    name: 'addToken',
     stateMutability: 'nonpayable',
     inputs: [{ name: 'token', type: 'address' }],
     outputs: [],
   },
   {
-    name: 'removeAllowedToken',
     type: 'function',
+    name: 'removeToken',
     stateMutability: 'nonpayable',
     inputs: [{ name: 'token', type: 'address' }],
     outputs: [],
-  },
-  {
-    name: 'isTokenWhitelisted',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [{ name: 'token', type: 'address' }],
-    outputs: [{ name: '', type: 'bool' }],
-  },
-] as const
-
-const ERC20_ABI = [
-  {
-    name: 'name',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'string' }],
-  },
-  {
-    name: 'symbol',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'string' }],
-  },
-  {
-    name: 'decimals',
-    type: 'function',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint8' }],
   },
 ] as const
 
 interface TokenInfo {
-  address: Address
-  name: string
+  address: string
   symbol: string
+  name: string
   decimals: number
+  isWhitelisted: boolean
 }
 
 export function WhitelistManager() {
   const { toast } = useToast()
   const chainId = useChainId()
   const [newTokenAddress, setNewTokenAddress] = useState('')
-  const [tokenToRemove, setTokenToRemove] = useState<Address | null>(null)
+  const [tokenToRemove, setTokenToRemove] = useState<string | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false)
   const [tokenInfos, setTokenInfos] = useState<TokenInfo[]>([])
 
-  const wrapperAddress = contractAddresses[chainId as keyof typeof contractAddresses]?.wrapper
+  const addresses = isSupportedChain(chainId) 
+    ? CONTRACT_ADDRESSES[chainId]
+    : CONTRACT_ADDRESSES[84532] // Fallback to Base Sepolia
 
-  // Read whitelisted tokens
-  const { data: whitelistedTokens, refetch: refetchTokens } = useReadContract({
-    address: wrapperAddress,
-    abi: WRAPPER_ABI,
+  const whitelistAddress = addresses.TOKEN_WHITELIST
+
+  // Get whitelisted tokens
+  const { data: whitelistedTokens, isLoading: tokensLoading, refetch: refetchTokens } = useReadContract({
+    address: whitelistAddress,
+    abi: WHITELIST_ABI,
     functionName: 'getWhitelistedTokens',
   })
 
-  // Write contract hooks
-  const { writeContract: addToken, data: addTokenHash } = useWriteContract()
-  const { writeContract: removeToken, data: removeTokenHash } = useWriteContract()
-
-  // Transaction status
-  const { isLoading: isAddingToken } = useWaitForTransactionReceipt({
-    hash: addTokenHash,
-  })
-  const { isLoading: isRemovingToken } = useWaitForTransactionReceipt({
-    hash: removeTokenHash,
-  })
+  const { writeContract: addToken, isPending: isAdding } = useWriteContract()
+  const { writeContract: removeToken, isPending: isRemoving } = useWriteContract()
 
   // Fetch token information for each whitelisted token
   useEffect(() => {
-    if (!whitelistedTokens || !wrapperAddress) return
+    if (!whitelistedTokens || !whitelistAddress) return
 
     const fetchTokenInfos = async () => {
       const infos: TokenInfo[] = []
@@ -123,6 +94,7 @@ export function WhitelistManager() {
             name: 'Token Name', // Would fetch from contract
             symbol: 'TKN', // Would fetch from contract
             decimals: 18, // Would fetch from contract
+            isWhitelisted: true,
           })
         } catch (error) {
           console.error(`Failed to fetch info for token ${tokenAddress}:`, error)
@@ -133,7 +105,7 @@ export function WhitelistManager() {
     }
 
     fetchTokenInfos()
-  }, [whitelistedTokens, wrapperAddress])
+  }, [whitelistedTokens, whitelistAddress])
 
   const handleAddToken = async () => {
     if (!isAddress(newTokenAddress)) {
@@ -147,10 +119,10 @@ export function WhitelistManager() {
 
     try {
       addToken({
-        address: wrapperAddress,
-        abi: WRAPPER_ABI,
-        functionName: 'addAllowedToken',
-        args: [newTokenAddress as Address],
+        address: whitelistAddress,
+        abi: WHITELIST_ABI,
+        functionName: 'addToken',
+        args: [newTokenAddress as `0x${string}`],
       })
 
       toast({
@@ -160,6 +132,7 @@ export function WhitelistManager() {
 
       setIsAddDialogOpen(false)
       setNewTokenAddress('')
+      refetchTokens()
     } catch (error) {
       toast({
         title: 'Transaction Failed',
@@ -169,15 +142,13 @@ export function WhitelistManager() {
     }
   }
 
-  const handleRemoveToken = async () => {
-    if (!tokenToRemove) return
-
+  const handleRemoveToken = async (tokenAddress: string) => {
     try {
       removeToken({
-        address: wrapperAddress,
-        abi: WRAPPER_ABI,
-        functionName: 'removeAllowedToken',
-        args: [tokenToRemove],
+        address: whitelistAddress,
+        abi: WHITELIST_ABI,
+        functionName: 'removeToken',
+        args: [tokenAddress as `0x${string}`],
       })
 
       toast({
@@ -187,6 +158,7 @@ export function WhitelistManager() {
 
       setIsRemoveDialogOpen(false)
       setTokenToRemove(null)
+      refetchTokens()
     } catch (error) {
       toast({
         title: 'Transaction Failed',
@@ -262,8 +234,8 @@ export function WhitelistManager() {
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleAddToken} disabled={isAddingToken}>
-                    {isAddingToken ? 'Adding...' : 'Add Token'}
+                  <Button onClick={handleAddToken} disabled={isAdding || !newTokenAddress}>
+                    {isAdding ? 'Adding...' : 'Add Token'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -271,14 +243,8 @@ export function WhitelistManager() {
           </div>
         </CardHeader>
         <CardContent>
-          {tokenInfos.length === 0 ? (
-            <div className="text-center py-8">
-              <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Tokens Whitelisted</h3>
-              <p className="text-muted-foreground mb-4">
-                Add your first BTC-pegged token to enable deposits.
-              </p>
-            </div>
+          {tokensLoading ? (
+            <div className="text-center py-8">Loading tokens...</div>
           ) : (
             <Table>
               <TableHeader>
@@ -372,10 +338,10 @@ export function WhitelistManager() {
             </Button>
             <Button
               variant="destructive"
-              onClick={handleRemoveToken}
-              disabled={isRemovingToken}
+              onClick={() => tokenToRemove && handleRemoveToken(tokenToRemove)}
+              disabled={isRemoving}
             >
-              {isRemovingToken ? 'Removing...' : 'Remove Token'}
+              {isRemoving ? 'Removing...' : 'Remove Token'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -8,4 +8,12 @@ libs = ["lib"]
 remappings = [
   '@solady/=lib/solady/src/',
   '@solady-v0.0.245/=lib/solady-v0.0.245/src/',
+  "@openzeppelin/=lib/openzeppelin-contracts/",
+  "@layerzerolabs/=lib/LayerZero-v2/"
 ]
+
+[rpc_endpoints]
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+
+[etherscan]
+base_sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }

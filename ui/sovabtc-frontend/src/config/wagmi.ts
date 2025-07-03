@@ -1,14 +1,43 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { supportedChains } from './chains'
+import { createConfig, http } from 'wagmi'
+import { baseSepolia, sepolia } from 'wagmi/chains'
+import { metaMask, coinbaseWallet, injected } from 'wagmi/connectors'
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'your-project-id'
+// Only import WalletConnect on client side
+const getWalletConnectConnector = () => {
+  if (typeof window === 'undefined') return null
+  
+  try {
+    const { walletConnect } = require('wagmi/connectors')
+    return walletConnect({
+      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'test-project-id',
+    })
+  } catch (error) {
+    console.warn('WalletConnect initialization failed:', error)
+    return null
+  }
+}
 
-export const config = getDefaultConfig({
-  appName: 'SovaBTC Protocol',
-  projectId,
-  chains: supportedChains,
+const connectors = [
+  injected(),
+  metaMask(),
+  coinbaseWallet({ appName: 'SovaBTC Protocol' }),
+]
+
+// Add WalletConnect only if available
+const walletConnectConnector = getWalletConnectConnector()
+if (walletConnectConnector) {
+  connectors.push(walletConnectConnector)
+}
+
+export const config = createConfig({
+  chains: [baseSepolia, sepolia],
+  connectors,
+  transports: {
+    [baseSepolia.id]: http('https://sepolia.base.org'),
+    [sepolia.id]: http('https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161'),
+  },
   ssr: true,
 })
 
-// Re-export for convenience
-export { supportedChains } 
+// Supported chains for convenience
+export const supportedChains = [baseSepolia, sepolia] as const 

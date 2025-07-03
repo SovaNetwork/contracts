@@ -36,7 +36,7 @@ export function AmountInput({
   label,
 }: AmountInputProps) {
   const [focused, setFocused] = useState(false)
-  const { balance, formatted, isLoading } = useTokenBalance(token?.address)
+  const { balance, formattedBalance, isLoading } = useTokenBalance(token?.address)
 
   // Validate input as user types
   const [inputError, setInputError] = useState<string | null>(null)
@@ -142,7 +142,7 @@ export function AmountInput({
               {showBalance && (
                 <div className="text-sm text-muted-foreground">
                   Balance: <CompactBalance 
-                    balance={formatted} 
+                    balance={formattedBalance} 
                     symbol={token.symbol}
                     isLoading={isLoading}
                   />

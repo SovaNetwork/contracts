@@ -1,139 +1,92 @@
 'use client'
 
-import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { useAccount, useChainId } from 'wagmi'
-import { useContractStatus } from '@/hooks/use-contracts'
-import { getNetworkName } from '@/lib/constants'
+import { useAccount, useChainId, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
+import { baseSepolia, sepolia } from 'wagmi/chains'
 import { Wallet, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export function ConnectWallet() {
-  const { isConnected } = useAccount()
-  const chainId = useChainId()
-  const { isConfigured, supportedChain } = useContractStatus()
+  const { address, isConnected, chain } = useAccount()
+  const { connect, connectors } = useConnect()
+  const { disconnect } = useDisconnect()
+  const { switchChain } = useSwitchChain()
+
+  const supportedChains = [baseSepolia, sepolia]
+  const isUnsupportedChain = chain && !supportedChains.some(supportedChain => supportedChain.id === chain.id)
+
+  if (!isConnected) {
+    return (
+      <div className="flex items-center gap-3">
+        <Button 
+          onClick={() => {
+            const connector = connectors[0] // Use the first available connector
+            if (connector) {
+              connect({ connector })
+            }
+          }}
+          className="flex items-center gap-2"
+        >
+          <Wallet className="w-4 h-4" />
+          Connect Wallet
+        </Button>
+      </div>
+    )
+  }
+
+  if (isUnsupportedChain) {
+    return (
+      <div className="flex items-center gap-3">
+        <Button 
+          onClick={() => switchChain({ chainId: baseSepolia.id })}
+          variant="destructive"
+          className="flex items-center gap-2"
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Switch to Base Sepolia
+        </Button>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Network Status Badge */}
-    
-      {/* RainbowKit Connect Button */}
-      <ConnectButton.Custom>
-        {({
-          account,
-          chain,
-          openAccountModal,
-          openChainModal,
-          openConnectModal,
-          authenticationStatus,
-          mounted,
-        }) => {
-          const ready = mounted && authenticationStatus !== 'loading'
-          const connected =
-            ready &&
-            account &&
-            chain &&
-            (!authenticationStatus ||
-              authenticationStatus === 'authenticated')
-
-          return (
-            <div
-              {...(!ready && {
-                'aria-hidden': true,
-                'style': {
-                  opacity: 0,
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                },
-              })}
-            >
-              {(() => {
-                if (!connected) {
-                  return (
-                    <Button 
-                      onClick={openConnectModal} 
-                      className="flex items-center gap-2"
-                    >
-                      <Wallet className="w-4 h-4" />
-                      Connect Wallet
-                    </Button>
-                  )
-                }
-
-                if (chain.unsupported) {
-                  return (
-                    <Button 
-                      onClick={openChainModal} 
-                      variant="destructive"
-                      className="flex items-center gap-2"
-                    >
-                      <AlertTriangle className="w-4 h-4" />
-                      Wrong Network
-                    </Button>
-                  )
-                }
-
-                return (
-                  <div className="flex items-center gap-2">
-                    {/* Chain Switcher Button (Desktop) */}
-                    <Button
-                      onClick={openChainModal}
-                      variant="outline"
-                      size="sm"
-                      className="hidden sm:flex items-center gap-2"
-                    >
-                      {chain.hasIcon && (
-                        <div
-                          style={{
-                            background: chain.iconBackground,
-                            width: 16,
-                            height: 16,
-                            borderRadius: 999,
-                            overflow: 'hidden',
-                            marginRight: 4,
-                          }}
-                        >
-                          {chain.iconUrl && (
-                            <img
-                              alt={chain.name ?? 'Chain icon'}
-                              src={chain.iconUrl}
-                              style={{ width: 16, height: 16 }}
-                            />
-                          )}
-                        </div>
-                      )}
-                      {chain.name}
-                    </Button>
-
-                    {/* Account Button */}
-                    <Button
-                      onClick={openAccountModal}
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="hidden sm:inline">
-                        {account.displayName}
-                      </span>
-                      <span className="sm:hidden">
-                        {account.displayBalance ? ` (${account.displayBalance})` : ''}
-                      </span>
-                    </Button>
-                  </div>
-                )
-              })()}
-            </div>
-          )
+    <div className="flex items-center gap-2">
+      {/* Chain Switcher Button (Desktop) */}
+      <Button
+        onClick={() => {
+          const nextChain = chain?.id === baseSepolia.id ? sepolia : baseSepolia
+          switchChain({ chainId: nextChain.id })
         }}
-      </ConnectButton.Custom>
+        variant="outline"
+        size="sm"
+        className="hidden sm:flex items-center gap-2"
+      >
+        {chain?.name || 'Switch Chain'}
+      </Button>
+
+      {/* Account Button */}
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+        <span className="hidden sm:inline text-sm text-muted-foreground">
+          {address?.slice(0, 6)}...{address?.slice(-4)}
+        </span>
+        <Button
+          onClick={() => disconnect()}
+          variant="outline"
+          size="sm"
+        >
+          Disconnect
+        </Button>
+      </div>
     </div>
   )
 }
 
 // Simplified version for mobile or when you need just the connection status
 export function WalletStatus() {
-  const { isConnected } = useAccount()
-  const { isConfigured, supportedChain } = useContractStatus()
+  const { isConnected, chain } = useAccount()
+  const supportedChains = [baseSepolia, sepolia]
+  const supportedChain = chain && supportedChains.some(supportedChain => supportedChain.id === chain.id)
 
   if (!isConnected) {
     return (
@@ -147,11 +100,11 @@ export function WalletStatus() {
   return (
     <div className="flex items-center gap-2 text-sm">
       <div className={`w-2 h-2 rounded-full ${
-        supportedChain && isConfigured ? 'bg-green-500' : 'bg-yellow-500'
+        supportedChain ? 'bg-green-500' : 'bg-yellow-500'
       }`} />
       <span className="text-muted-foreground">
         {supportedChain 
-          ? (isConfigured ? 'Connected' : 'Network not configured')
+          ? 'Connected'
           : 'Unsupported network'
         }
       </span>
@@ -161,8 +114,9 @@ export function WalletStatus() {
 
 // Component to show wallet connection requirement
 export function RequireWallet({ children }: { children: React.ReactNode }) {
-  const { isConnected } = useAccount()
-  const { supportedChain } = useContractStatus()
+  const { isConnected, chain } = useAccount()
+  const supportedChains = [baseSepolia, sepolia]
+  const supportedChain = chain && supportedChains.some(supportedChain => supportedChain.id === chain.id)
 
   if (!isConnected) {
     return (

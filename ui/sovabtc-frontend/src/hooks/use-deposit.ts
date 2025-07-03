@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useAccount, useWaitForTransactionReceipt } from 'wagmi'
-import { Address } from 'viem'
+import { useAccount, useWaitForTransactionReceipt, useWriteContract, useChainId } from 'wagmi'
+import { Address, parseUnits } from 'viem'
 import { toast } from 'sonner'
 import { useWrapper } from './use-contracts'
 import { useTokenBalance } from './use-token-balances'
@@ -13,6 +13,14 @@ import {
 import { validateTokenPrecision } from '@/lib/decimal-conversion'
 import { MIN_DEPOSIT_SATOSHIS } from '@/lib/constants'
 import { DepositFormData, TransactionStatus } from '@/types/contracts'
+import { 
+  ERC20_ABI, 
+  SOVABTC_WRAPPER_ABI, 
+  CONTRACT_ADDRESSES, 
+  isSupportedChain,
+  CONTRACT_CONFIG
+} from '@/config/contracts'
+import { useTokenAllowance, useDepositApprovalCheck } from './use-allowances'
 
 interface DepositState {
   status: TransactionStatus
@@ -358,4 +366,233 @@ export function useDepositButton(
   }, [eligibility])
 
   return getButtonState()
+}
+
+// Hook for ERC20 token approvals
+export function useTokenApproval() {
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const approve = async (
+    tokenAddress: `0x${string}`,
+    spenderAddress: `0x${string}`,
+    amount: string,
+    decimals: number
+  ) => {
+    const parsedAmount = parseUnits(amount, decimals);
+    
+    writeContract({
+      address: tokenAddress,
+      abi: ERC20_ABI,
+      functionName: 'approve',
+      args: [spenderAddress, parsedAmount],
+    });
+  };
+
+  const approveMax = async (
+    tokenAddress: `0x${string}`,
+    spenderAddress: `0x${string}`
+  ) => {
+    writeContract({
+      address: tokenAddress,
+      abi: ERC20_ABI,
+      functionName: 'approve',
+      args: [spenderAddress, CONTRACT_CONFIG.MAX_UINT256],
+    });
+  };
+
+  return {
+    approve,
+    approveMax,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  };
+}
+
+// Hook for wrapper contract deposits
+export function useWrapperDeposit() {
+  const chainId = useChainId();
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const deposit = async (
+    tokenAddress: `0x${string}`,
+    amount: string,
+    tokenDecimals: number
+  ) => {
+    if (!isSupportedChain(chainId)) {
+      throw new Error('Unsupported chain');
+    }
+
+    const parsedAmount = parseUnits(amount, tokenDecimals);
+    const wrapperAddress = CONTRACT_ADDRESSES[chainId].WRAPPER;
+    
+    writeContract({
+      address: wrapperAddress,
+      abi: SOVABTC_WRAPPER_ABI,
+      functionName: 'deposit',
+      args: [tokenAddress, parsedAmount],
+    });
+  };
+
+  return {
+    deposit,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+  };
+}
+
+// Combined hook for the full deposit workflow (approval + deposit)
+export function useDepositWorkflow() {
+  const chainId = useChainId();
+  const approval = useTokenApproval();
+  const deposit = useWrapperDeposit();
+
+  const executeDeposit = async (
+    tokenAddress: `0x${string}`,
+    amount: string,
+    decimals: number,
+    useMaxApproval: boolean = false
+  ) => {
+    if (!isSupportedChain(chainId)) {
+      throw new Error('Unsupported chain');
+    }
+
+    const wrapperAddress = CONTRACT_ADDRESSES[chainId].WRAPPER;
+    
+    // Step 1: Approve if needed
+    if (useMaxApproval) {
+      await approval.approveMax(tokenAddress, wrapperAddress);
+    } else {
+      await approval.approve(tokenAddress, wrapperAddress, amount, decimals);
+    }
+
+    // Wait for approval to complete
+    if (approval.isSuccess) {
+      // Step 2: Execute deposit
+      await deposit.deposit(tokenAddress, amount, decimals);
+    }
+  };
+
+  return {
+    executeDeposit,
+    approval,
+    deposit,
+    isExecuting: approval.isPending || approval.isConfirming || deposit.isPending || deposit.isConfirming,
+    currentStep: approval.isPending || approval.isConfirming ? 'approving' : 
+                 deposit.isPending || deposit.isConfirming ? 'depositing' : 
+                 'idle',
+  };
+}
+
+// Hook for deposit validation and preparation
+export function useDepositPreparation(
+  tokenAddress: `0x${string}` | undefined,
+  amount: string,
+  decimals: number
+) {
+  const chainId = useChainId();
+  
+  if (!isSupportedChain(chainId) || !tokenAddress || !amount || amount === '0') {
+    return {
+      isValid: false,
+      needsApproval: false,
+      parsedAmount: BigInt(0),
+      approvalCheck: null,
+    };
+  }
+
+  const parsedAmount = parseUnits(amount, decimals);
+  const approvalCheck = useDepositApprovalCheck(tokenAddress, parsedAmount);
+
+  return {
+    isValid: true,
+    needsApproval: approvalCheck.needsApproval,
+    parsedAmount,
+    approvalCheck,
+  };
+}
+
+// Hook for WBTC deposit specifically
+export function useWBTCDeposit() {
+  const chainId = useChainId();
+  const depositWorkflow = useDepositWorkflow();
+  
+  const depositWBTC = async (amount: string, useMaxApproval: boolean = false) => {
+    if (!isSupportedChain(chainId)) {
+      throw new Error('Unsupported chain');
+    }
+
+    const wbtcAddress = CONTRACT_ADDRESSES[chainId].WBTC_TEST;
+    await depositWorkflow.executeDeposit(wbtcAddress, amount, 8, useMaxApproval);
+  };
+
+  return {
+    depositWBTC,
+    ...depositWorkflow,
+  };
+}
+
+// Hook for LBTC deposit specifically
+export function useLBTCDeposit() {
+  const chainId = useChainId();
+  const depositWorkflow = useDepositWorkflow();
+  
+  const depositLBTC = async (amount: string, useMaxApproval: boolean = false) => {
+    if (!isSupportedChain(chainId)) {
+      throw new Error('Unsupported chain');
+    }
+
+    const lbtcAddress = CONTRACT_ADDRESSES[chainId].LBTC_TEST;
+    await depositWorkflow.executeDeposit(lbtcAddress, amount, 8, useMaxApproval);
+  };
+
+  return {
+    depositLBTC,
+    ...depositWorkflow,
+  };
+}
+
+// Hook for USDC deposit specifically  
+export function useUSDCDeposit() {
+  const chainId = useChainId();
+  const depositWorkflow = useDepositWorkflow();
+  
+  const depositUSDC = async (amount: string, useMaxApproval: boolean = false) => {
+    if (!isSupportedChain(chainId)) {
+      throw new Error('Unsupported chain');
+    }
+
+    const usdcAddress = CONTRACT_ADDRESSES[chainId].USDC_TEST;
+    await depositWorkflow.executeDeposit(usdcAddress, amount, 6, useMaxApproval);
+  };
+
+  return {
+    depositUSDC,
+    ...depositWorkflow,
+  };
+}
+
+// Hook for deposit transaction status
+export function useDepositStatus(depositHash: `0x${string}` | undefined) {
+  const { isLoading: isConfirming, isSuccess, error } = useWaitForTransactionReceipt({
+    hash: depositHash,
+  });
+
+  return {
+    isConfirming,
+    isSuccess,
+    error,
+    status: isConfirming ? 'confirming' : isSuccess ? 'success' : error ? 'error' : 'idle',
+  };
 } 

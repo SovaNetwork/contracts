@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { Menu, Bitcoin, ArrowLeftRight, Coins, TrendingUp, Settings, ExternalLink, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EXTERNAL_LINKS } from '@/lib/constants'
-import { useIsOwner } from '@/hooks/use-admin'
+import { useAdmin } from '@/hooks/use-admin'
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
 
 const navigationItems = [
   {
@@ -47,10 +48,44 @@ const navigationItems = [
   },
 ]
 
+function WalletButton() {
+  const { address, isConnected } = useAccount()
+  const { connect, connectors } = useConnect()
+  const { disconnect } = useDisconnect()
+
+  if (isConnected && address) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">
+          {address.slice(0, 6)}...{address.slice(-4)}
+        </span>
+        <Button variant="outline" size="sm" onClick={() => disconnect()}>
+          Disconnect
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {connectors.slice(0, 1).map((connector) => (
+        <Button
+          key={connector.uid}
+          variant="default"
+          size="sm"
+          onClick={() => connect({ connector })}
+        >
+          Connect Wallet
+        </Button>
+      ))}
+    </div>
+  )
+}
+
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
-  const { isOwner } = useIsOwner()
+  const { isAdmin } = useAdmin()
 
   // Admin navigation item - only shown for owners, points to secret path
   const adminNavItem = {
@@ -60,7 +95,7 @@ export function Header() {
     description: 'Protocol administration panel',
   }
 
-  const allNavigationItems = isOwner ? [...navigationItems, adminNavItem] : navigationItems
+  const allNavigationItems = isAdmin ? [...navigationItems, adminNavItem] : navigationItems
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-sova-mint-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-lg">
@@ -119,7 +154,7 @@ export function Header() {
           </div>
 
           {/* Wallet Connection */}
-          <ConnectWallet />
+          <WalletButton />
 
           {/* Mobile Menu Button */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
