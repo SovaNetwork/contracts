@@ -1,0 +1,90 @@
+[
+  {
+    "inputs": [
+      {"internalType": "address", "name": "token", "type": "address"},
+      {"internalType": "uint256", "name": "sovaAmount", "type": "uint256"}
+    ],
+    "name": "redeem",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "fulfillRedemption",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "pendingRedemptions",
+    "outputs": [
+      {
+        "components": [
+          {"internalType": "address", "name": "token", "type": "address"},
+          {"internalType": "uint256", "name": "sovaAmount", "type": "uint256"},
+          {"internalType": "uint256", "name": "tokenAmount", "type": "uint256"},
+          {"internalType": "uint256", "name": "requestTime", "type": "uint256"},
+          {"internalType": "bool", "name": "fulfilled", "type": "bool"}
+        ],
+        "internalType": "struct RedemptionRequest",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "redemptionDelay",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "isRedemptionReady",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "getTimeRemaining",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllowedTokens",
+    "outputs": [{"internalType": "address[]", "name": "", "type": "address[]"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": true, "internalType": "address", "name": "token", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "sovaAmount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "tokenAmount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "fulfillmentTime", "type": "uint256"}
+    ],
+    "name": "RedemptionQueued",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": true, "internalType": "address", "name": "token", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "sovaAmount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "tokenAmount", "type": "uint256"}
+    ],
+    "name": "RedemptionFulfilled",
+    "type": "event"
+  }
+]

@@ -6,6 +6,7 @@ import { baseSepolia } from 'viem/chains';
 import { useTokenBalance } from '../hooks/use-token-balance';
 import { CONTRACT_ADDRESSES, TOKEN_CONFIGS } from '../contracts/addresses';
 import { DepositForm } from '../components/wrap/deposit-form';
+import { RedemptionForm } from '../components/redeem/redemption-form';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -83,9 +84,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Deposit Form */}
-        <div className="mt-8">
+        {/* Wrap and Redeem Forms */}
+        <div className="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-8">
           <DepositForm />
+          <div>
+            <RedemptionForm />
+          </div>
         </div>
 
         {/* Features Preview */}
