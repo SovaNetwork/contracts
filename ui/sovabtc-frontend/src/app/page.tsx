@@ -7,6 +7,8 @@ import { useTokenBalance } from '../hooks/use-token-balance';
 import { CONTRACT_ADDRESSES, TOKEN_CONFIGS } from '../contracts/addresses';
 import { DepositForm } from '../components/wrap/deposit-form';
 import { RedemptionForm } from '../components/redeem/redemption-form';
+import { StakeForm } from '../components/staking/stake-form';
+import { RewardsDisplay } from '../components/staking/rewards-display';
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -84,11 +86,26 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Wrap and Redeem Forms */}
-        <div className="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <DepositForm />
-          <div>
-            <RedemptionForm />
+        {/* Main Trading Actions */}
+        <div className="mt-8 space-y-8">
+          {/* Top Row: Wrap and Redeem */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <DepositForm />
+            <div>
+              <RedemptionForm />
+            </div>
+          </div>
+
+          {/* Bottom Row: Staking */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <StakeForm />
+            <RewardsDisplay 
+              stakingAddress={CONTRACT_ADDRESSES[baseSepolia.id].STAKING}
+              onRewardsClaimed={() => {
+                console.log('Rewards claimed - refreshing balances');
+                // Refresh token balances here if needed
+              }}
+            />
           </div>
         </div>
 
@@ -104,9 +121,9 @@ export default function Home() {
               <h3 className="font-semibold text-lg">Redeem Tokens</h3>
               <p className="text-sm text-gray-600">Queue redemptions and get your tokens back</p>
             </div>
-            <div className="text-center p-4 border rounded-lg">
-              <h3 className="font-semibold text-lg">Stake & Earn</h3>
-              <p className="text-sm text-gray-600">Stake sovaBTC and earn SOVA rewards</p>
+            <div className="text-center p-4 border rounded-lg bg-green-50 border-green-200">
+              <h3 className="font-semibold text-lg text-green-800">Stake & Earn</h3>
+              <p className="text-sm text-green-700">Stake sovaBTC and earn SOVA rewards • LIVE</p>
             </div>
           </div>
         </div>
