@@ -1,778 +1,211 @@
-# SovaBTC Web3 Integration Rules
+# SovaBTC Frontend Development Rules
+
+You are an expert DeFi frontend developer working on the SovaBTC protocol frontend. Follow these rules strictly for consistent, high-quality code.
 
 ## Project Context
-You are implementing REAL Web3 functionality for the SovaBTC frontend. The UI scaffolding exists - now you need to make it actually interact with smart contracts on Base Sepolia testnet. Every function must work with real blockchain data and transactions.
 
-IMPORTANT - ALL UI CODE is in /ui/sovabtc-front
+- **Framework**: Next.js 14 with App Router, TypeScript, Tailwind CSS
+- **Web3 Stack**: Wagmi v1, Viem, RainbowKit, TanStack Query
+- **UI Framework**: shadcn/ui with Radix UI primitives
+- **Animation**: Framer Motion for smooth DeFi-style animations
+- **Network**: Base Sepolia testnet
+- **Design Style**: Modern DeFi (Uniswap-inspired) with professional gradients
 
+## Implementation Guidelines
 
-## Critical Implementation Rules
+### File Structure
+- All frontend code goes in `/ui/` directory (NOT nested in `/ui/sovabtc-frontend/`)
+- Follow the exact structure defined in ui-14.md (Final Integration Guide)
+- Components go in `/src/components/` with proper categorization
+- Web3 hooks go in `/src/hooks/web3/`
+- Contract addresses and ABIs in `/src/contracts/`
 
-### NO MOCK DATA ALLOWED
-- NEVER use placeholder data or simulated responses
-- ALL balances must come from actual contract calls
-- ALL transactions must execute real blockchain operations
-- ALL status updates must reflect actual contract state
+### Coding Standards
 
-### Transaction Flow Requirements
-Every Web3 interaction MUST follow this pattern:
-1. **Loading State**: Show spinner/loading UI
-2. **User Confirmation**: Clear transaction details before signing
-3. **Transaction Execution**: Handle actual blockchain transaction
-4. **Status Tracking**: Monitor transaction until confirmed
-5. **State Updates**: Refresh UI data after confirmation
-6. **Error Handling**: Show user-friendly error messages
+#### TypeScript
+- Use strict TypeScript with proper type annotations
+- Prefer `type` over `interface` for simple object types
+- Use `as const` for readonly arrays and objects
+- Always type Web3 addresses as `0x${string}`
+- Use proper error handling with try/catch blocks
 
-### Current Task Tracking
-Always state which phase and task you're working on:
-```
-🎯 CURRENT: Phase X, Task Y - [Description]
-🔗 CONTRACTS: [Working/Needs ABIs/Deployed]
-🧪 TESTING: [Status of real transaction testing]
-```
+#### React & Next.js
+- Use 'use client' directive for all interactive components
+- Prefer function components with hooks over class components
+- Use Suspense for loading states with proper fallbacks
+- Implement proper error boundaries
+- Follow Next.js 14 App Router patterns
 
-## Web3 Technical Standards
+#### Web3 Integration
+- Always use the exact hook patterns from ui-3.md (Contract Integration)
+- Implement proper loading, error, and success states for all transactions
+- Use wagmi's useReadContract for reading blockchain data
+- Use wagmi's useWriteContract for transactions
+- Always include transaction confirmation waiting
+- Implement proper approval flows (approve → transaction)
 
-### Hook Patterns
-Every Web3 hook must follow this structure:
+#### Styling & UI
+- Use the exact Tailwind config from ui-1.md with DeFi color palette
+- Apply 'defi-card' class for glassmorphism effects
+- Use gradient text with 'gradient-text' class for headings
+- Implement smooth hover effects and transitions
+- Follow mobile-first responsive design principles
+- Use the color scheme: defi-purple, defi-pink, defi-blue gradients
+
+#### Animation Standards
+- Use Framer Motion for all animations
+- Implement staggered children animations for grids/lists
+- Use scale and y-axis transforms for hover effects
+- Apply smooth transitions (duration: 0.3s ease-out)
+- Include loading animations for blockchain interactions
+
+### Component Patterns
+
+#### Form Components
 ```typescript
-export function useContractInteraction() {
-  // 1. Wagmi hooks for blockchain interaction
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
-  
-  // 2. Function to execute the interaction
-  const executeFunction = async (params) => {
-    // Validate inputs
-    // Execute transaction
-  };
-  
-  // 3. Return all necessary state
-  return {
-    executeFunction,
-    hash,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-  };
-}
-```
-
-### Required Error Handling
-```typescript
-// Always implement specific error parsing
-const parseContractError = (error: unknown) => {
-  if (error.message.includes('TokenNotAllowed')) {
-    return 'This token is not whitelisted for deposits';
+// Standard form validation pattern
+const validation = useMemo(() => {
+  if (!amount || Number(amount) <= 0) {
+    return { isValid: false, error: null }
   }
-  if (error.message.includes('InsufficientReserve')) {
-    return 'Not enough reserves available for redemption';
+  if (Number(amount) > Number(balance)) {
+    return { isValid: false, error: 'Insufficient balance' }
   }
-  // ... more specific errors
-  return 'Transaction failed. Please try again.';
-};
+  return { isValid: true, error: null }
+}, [amount, balance])
 ```
 
-### Transaction Component Pattern
+#### Transaction Flow Pattern
 ```typescript
-// Every transaction button must show proper states
-<Button
-  onClick={executeTransaction}
-  disabled={isPending || isConfirming || !isValidInput}
-  className="w-full"
->
-  {isPending && 'Waiting for signature...'}
-  {isConfirming && 'Confirming transaction...'}
-  {!isPending && !isConfirming && 'Execute Transaction'}
-</Button>
-
-{hash && (
-  <TransactionStatus 
-    hash={hash}
-    type="deposit"
-    onSuccess={handleSuccess}
-    onError={handleError}
-  />
+// Standard approval → transaction flow
+{needsApproval ? (
+  <Button onClick={handleApprove} disabled={approval.isPending}>
+    {approval.isPending ? 'Approving...' : 'Approve Token'}
+  </Button>
+) : (
+  <Button onClick={handleTransaction} disabled={transaction.isPending}>
+    {transaction.isPending ? 'Confirming...' : 'Execute Transaction'}
+  </Button>
 )}
 ```
 
-## Phase-Specific Requirements
-
-### Phase 1: Contract Foundation
-- **Task 1**: Real contract ABIs and addresses configured
-- **Task 2**: Actual token balances displayed from contracts
-- Must work with real Base Sepolia contracts before proceeding
-
-### Phase 2: Transaction Implementation  
-- **Task 3**: Real ERC-20 approvals and wrapper deposits
-- **Task 4**: Actual redemption queue interactions
-- **Task 5**: LayerZero bridge transactions
-- Each transaction must be tested on testnet
-
-### Phase 3: Advanced Features
-- **Task 6**: Real staking contract interactions
-- **Task 7**: Bitcoin withdrawal on Sova (if available)
-- **Task 8**: Event listening and real-time updates
-- All features must work with live contract data
-
-## Contract Integration Standards
-
-### ABI Management
+#### Loading State Pattern
 ```typescript
-// contracts/abis/SovaBTC.json
-export const SOVABTC_ABI = [
-  // ACTUAL ABI from deployed contract - not placeholder
-] as const;
-
-// contracts/addresses.ts
-export const CONTRACT_ADDRESSES = {
-  [baseSepolia.id]: {
-    SOVABTC: '0x...' as `0x${string}`, // REAL deployed address
-    WRAPPER: '0x...' as `0x${string}`, // REAL deployed address
-  },
-} as const;
-```
-
-### Type Safety Requirements
-- Use `as const` for all ABIs
-- Proper TypeScript types for all contract interactions
-- Never use `any` types for Web3 data
-- All addresses must be `0x${string}` type
-
-### Contract Read Operations
-```typescript
-// Always use this pattern for reading contract data
-const { data, isLoading, error, refetch } = useReadContract({
-  address: CONTRACT_ADDRESS,
-  abi: CONTRACT_ABI,
-  functionName: 'balanceOf',
-  args: [userAddress],
-  query: {
-    enabled: !!userAddress,
-    refetchInterval: 10000, // Auto-refresh for dynamic data
-    staleTime: 5000, // Cache for 5 seconds
-  },
-});
-```
-
-### Contract Write Operations
-```typescript
-// Always use this pattern for writing to contracts
-const { writeContract, data: hash, isPending } = useWriteContract();
-
-const executeWrite = async () => {
-  writeContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
-    functionName: 'deposit',
-    args: [tokenAddress, amount],
-    value: nativeTokenAmount, // If needed
-  });
-};
-```
-
-## Real Data Requirements
-
-### Token Balances
-- Fetch from actual ERC-20 `balanceOf` calls
-- Handle different decimal places correctly
-- Auto-refresh every 5-10 seconds
-- Show loading states during fetching
-
-### Allowances
-- Check actual ERC-20 `allowance` before deposits
-- Implement proper approval flow
-- Handle infinite vs exact approvals
-- Refresh after approval transactions
-
-### Transaction History
-- Listen to real contract events
-- Parse event data correctly
-- Store in local state/storage
-- Display with proper formatting
-
-### Cross-Chain Data
-- Aggregate balances from multiple chains
-- Handle different contract addresses per chain
-- Show loading states for each chain
-- Implement proper error handling per chain
-
-## Testing Requirements
-
-### Transaction Testing
-Every implemented transaction must be tested with:
-- **Happy path**: Normal transaction flow
-- **Error cases**: Insufficient balance, gas, etc.
-- **Edge cases**: Zero amounts, invalid addresses
-- **State updates**: UI updates after confirmation
-
-### Real Testnet Testing
-- Use actual Base Sepolia testnet
-- Test with real test tokens
-- Verify transaction confirmations
-- Check balance updates post-transaction
-
-### User Experience Testing
-- Fast loading states
-- Clear error messages
-- Proper transaction status
-- Responsive design on mobile
-
-## Performance Standards
-
-### Loading States
-- Show loading immediately on user action
-- Display transaction progress clearly
-- Auto-refresh data after confirmations
-- Handle network delays gracefully
-
-### Caching Strategy
-```typescript
-// Use React Query for contract data caching
-const { data } = useQuery({
-  queryKey: ['tokenBalance', tokenAddress, userAddress],
-  queryFn: () => fetchTokenBalance(tokenAddress, userAddress),
-  staleTime: 10000, // 10 seconds
-  refetchInterval: 30000, // 30 seconds
-});
-```
-
-### Error Recovery
-- Automatic retries for network errors
-- Manual retry buttons for failed transactions
-- Clear error messages with action steps
-- Fallback UI for critical failures
-
-## Security Requirements
-
-### Input Validation
-```typescript
-// Always validate user inputs before transactions
-const validateAmount = (amount: string, decimals: number) => {
-  if (!amount || amount === '0') throw new Error('Amount required');
-  if (isNaN(Number(amount))) throw new Error('Invalid amount');
-  if (parseUnits(amount, decimals) <= 0n) throw new Error('Amount must be positive');
-};
-```
-
-### Address Validation
-```typescript
-// Validate all addresses before use
-const validateAddress = (address: string): `0x${string}` => {
-  if (!isAddress(address)) throw new Error('Invalid address');
-  return address as `0x${string}`;
-};
-```
-
-### Transaction Safety
-- Show clear transaction summaries before signing
-- Validate all parameters before execution
-- Handle slippage and MEV protection where applicable
-- Implement proper gas estimation
-
-## Quality Checklist
-
-### Before Marking Task Complete
-- [ ] All contract interactions use real deployed contracts
-- [ ] Transaction states properly handled (pending/success/error)  
-- [ ] Loading states implemented throughout
-- [ ] Error messages are user-friendly and actionable
-- [ ] Balance updates work after transactions
-- [ ] All inputs properly validated
-- [ ] Mobile responsive design maintained
-- [ ] TypeScript types are correct and strict
-- [ ] No console errors or warnings
-- [ ] Real testnet transactions tested and working
-
-### Code Review Standards
-- No hardcoded values (use environment variables)
-- Proper error boundaries implemented
-- Accessible UI components (keyboard navigation, screen readers)
-- Clean code with proper commenting
-- Reusable components where appropriate
-
-## Communication Protocol
-
-### Status Updates Format
-```
-✅ COMPLETED: [Specific functionality working]
-🔧 IN PROGRESS: [Current development focus]  
-🧪 TESTING: [What's being tested on testnet]
-❌ BLOCKED: [Any issues preventing progress]
-📋 NEXT: [Next specific task]
-```
-
-### When to Ask for Help
-- Need contract addresses or ABIs for testing
-- Unclear about specific contract function signatures
-- Issues with testnet transactions or gas estimation
-- LayerZero configuration or cross-chain setup questions
-- Sova chain Bitcoin precompile integration details
-
-### DEPLOYED CONTRACT INFORMATION
-The SovaBTC contracts are already deployed on Base Sepolia testnet:
-
-**CORE CONTRACTS:**
-- SovaBTC: 0xeed47bE0221E383643073ecdBF2e804433e4b077
-- SOVAToken: 0xDD4FFAB3ef55de9028BcADa261c32549b8d2Fc57  
-- SovaBTCWrapper: 0x9fAD9a07691fAB4D757fdE4F2c61F836A8Dcd87f
-- TokenWhitelist: 0x73172C783Ac766CB951292C06a51f848A536cBc4
-- CustodyManager: 0xa117C55511751097B2c9d1633118F73E10FaB2A9
-- RedemptionQueue: 0x07d01e0C535fD4777CcF5Ee8D66A90995cD74Cbb
-- SovaBTCStaking: 0x5e6f97391Aa64Bfb6018795dcdC277A2C9B15b66
-
-**TEST TOKENS:**
-- WBTC: 0x5fe42a7291d63F4B5ae233B4Ce0E95e2dD45556b (8 decimals)
-- LBTC: 0x9B2a86059A9467C8Df05fb6Ad311eFaFAC6d990C (8 decimals)  
-- USDC: 0x53234a2Aa0FFD93448c70791A71f24Dcb69C4ADE (6 decimals)
-
-### IMPLEMENTATION PRIORITY
-1. **Update src/contracts/addresses.ts** with the deployed addresses above
-2. **Copy ABIs** from /abis directory to src/contracts/abis/
-3. **Start with Phase 1, Task 1**: Set up type-safe contract interaction hooks
-4. **Implement real token balance fetching** from the deployed SovaBTC contract
-5. **Build working deposit flow**: approve test tokens → deposit to SovaBTCWrapper
-6. **Add redemption queue interface** with real countdown timers
-7. **Implement staking interface** connecting to SovaBTCStaking contract
-8. **Add comprehensive error handling** and transaction status tracking
-
-Focus on making the existing UI components work with these real deployed contracts. Test with the deployed test tokens - users should be able to:
-- See real balances of WBTC/LBTC/USDC and SovaBTC
-- Approve and deposit test tokens to get SovaBTC  
-- Queue redemptions and see actual countdown timers
-- Stake SovaBTC and earn SOVA rewards
-- View transaction history and status
-
-### Required Environment Variables
-```bash
-# Base Sepolia Configuration
-NEXT_PUBLIC_CHAIN_ID=84532
-NEXT_PUBLIC_RPC_URL=https://sepolia.base.org
-NEXT_PUBLIC_BLOCK_EXPLORER=https://sepolia.basescan.org
-
-# Contract Addresses (Base Sepolia) - DEPLOYED
-NEXT_PUBLIC_SOVABTC_ADDRESS=0xeed47bE0221E383643073ecdBF2e804433e4b077
-NEXT_PUBLIC_SOVA_TOKEN_ADDRESS=0xDD4FFAB3ef55de9028BcADa261c32549b8d2Fc57
-NEXT_PUBLIC_WRAPPER_ADDRESS=0x9fAD9a07691fAB4D757fdE4F2c61F836A8Dcd87f
-NEXT_PUBLIC_TOKEN_WHITELIST_ADDRESS=0x73172C783Ac766CB951292C06a51f848A536cBc4
-NEXT_PUBLIC_CUSTODY_MANAGER_ADDRESS=0xa117C55511751097B2c9d1633118F73E10FaB2A9
-NEXT_PUBLIC_REDEMPTION_QUEUE_ADDRESS=0x07d01e0C535fD4777CcF5Ee8D66A90995cD74Cbb
-NEXT_PUBLIC_STAKING_ADDRESS=0x5e6f97391Aa64Bfb6018795dcdC277A2C9B15b66
-
-# Test Token Addresses
-NEXT_PUBLIC_WBTC_TEST_ADDRESS=0x5fe42a7291d63F4B5ae233B4Ce0E95e2dD45556b
-NEXT_PUBLIC_LBTC_TEST_ADDRESS=0x9B2a86059A9467C8Df05fb6Ad311eFaFAC6d990C
-NEXT_PUBLIC_USDC_TEST_ADDRESS=0x53234a2Aa0FFD93448c70791A71f24Dcb69C4ADE
-
-# Feature Flags
-NEXT_PUBLIC_ENABLE_STAKING=true
-NEXT_PUBLIC_ENABLE_ADMIN=false
-NEXT_PUBLIC_ENABLE_BRIDGE=false
-```
-
-## Environment Configuration
-
-### Required Environment Variables
-```bash
-# Blockchain Network Configuration
-NEXT_PUBLIC_BASE_SEPOLIA_RPC=https://sepolia.base.org
-NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC=https://sepolia.infura.io/v3/...
-NEXT_PUBLIC_SOVA_RPC=https://... # If available
-
-# Contract Addresses (Base Sepolia)
-NEXT_PUBLIC_SOVABTC_ADDRESS=0x...
-NEXT_PUBLIC_WRAPPER_ADDRESS=0x...
-NEXT_PUBLIC_REDEMPTION_QUEUE_ADDRESS=0x...
-NEXT_PUBLIC_STAKING_ADDRESS=0x...
-
-# Test Token Addresses
-NEXT_PUBLIC_WBTC_TEST_ADDRESS=0x...
-NEXT_PUBLIC_LBTC_TEST_ADDRESS=0x...
-
-# LayerZero Configuration
-NEXT_PUBLIC_LZ_ENDPOINT_BASE_SEPOLIA=0x...
-NEXT_PUBLIC_LZ_ENDPOINT_ETH_SEPOLIA=0x...
-
-# Block Explorer URLs
-NEXT_PUBLIC_BASE_SEPOLIA_EXPLORER=https://sepolia.basescan.org
-NEXT_PUBLIC_ETH_SEPOLIA_EXPLORER=https://sepolia.etherscan.io
-
-# Feature Flags
-NEXT_PUBLIC_ENABLE_STAKING=true
-NEXT_PUBLIC_ENABLE_BTC_WITHDRAWAL=false # Until Sova integration ready
-NEXT_PUBLIC_ENABLE_BRIDGE=true
-```
-
-### Wagmi Configuration Template
-```typescript
-// config/wagmi.ts
-import { createConfig, http } from 'wagmi';
-import { baseSepolia, sepolia } from 'wagmi/chains';
-import { metaMask, walletConnect, coinbaseWallet } from 'wagmi/connectors';
-
-export const config = createConfig({
-  chains: [baseSepolia, sepolia],
-  connectors: [
-    metaMask(),
-    walletConnect({ 
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID! 
-    }),
-    coinbaseWallet({ appName: 'SovaBTC' }),
-  ],
-  transports: {
-    [baseSepolia.id]: http(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC),
-    [sepolia.id]: http(process.env.NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC),
-  },
-});
-```
-
-## Real Contract Integration Examples
-
-### Token Balance Implementation
-```typescript
-// hooks/use-token-balance.ts - REAL IMPLEMENTATION
-import { useReadContract, useAccount, useChainId } from 'wagmi';
-import { erc20Abi, formatUnits } from 'viem';
-
-export function useTokenBalance(tokenAddress: `0x${string}`) {
-  const { address } = useAccount();
-  const chainId = useChainId();
-
-  const { data: balance, isLoading, error, refetch } = useReadContract({
-    address: tokenAddress,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: [address!],
-    query: {
-      enabled: !!address && !!tokenAddress,
-      refetchInterval: 10000, // Refresh every 10 seconds
-    },
-  });
-
-  const { data: decimals } = useReadContract({
-    address: tokenAddress,
-    abi: erc20Abi,
-    functionName: 'decimals',
-    query: {
-      enabled: !!tokenAddress,
-      staleTime: Infinity, // Decimals never change
-    },
-  });
-
-  const { data: symbol } = useReadContract({
-    address: tokenAddress,
-    abi: erc20Abi,
-    functionName: 'symbol',
-    query: {
-      enabled: !!tokenAddress,
-      staleTime: Infinity, // Symbol never changes
-    },
-  });
-
-  const formattedBalance = balance && decimals 
-    ? formatUnits(balance, decimals)
-    : '0';
-
-  return {
-    balance: balance || 0n,
-    formattedBalance,
-    decimals: decimals || 18,
-    symbol: symbol || 'TOKEN',
-    isLoading,
-    error,
-    refetch,
-  };
-}
-```
-
-### Deposit Transaction Implementation
-```typescript
-// hooks/use-deposit.ts - REAL IMPLEMENTATION
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseUnits, erc20Abi } from 'viem';
-import { WRAPPER_ABI } from '@/contracts/abis/SovaBTCWrapper.json';
-
-export function useDeposit() {
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  const deposit = async (
-    tokenAddress: `0x${string}`,
-    amount: string,
-    decimals: number
-  ) => {
-    const parsedAmount = parseUnits(amount, decimals);
-    
-    writeContract({
-      address: process.env.NEXT_PUBLIC_WRAPPER_ADDRESS! as `0x${string}`,
-      abi: WRAPPER_ABI,
-      functionName: 'deposit',
-      args: [tokenAddress, parsedAmount],
-    });
-  };
-
-  return {
-    deposit,
-    hash,
-    isPending,
-    isConfirming,
-    isSuccess,
-    error,
-  };
-}
-```
-
-### Component Integration Example
-```typescript
-// components/wrap/deposit-form.tsx - REAL IMPLEMENTATION
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useAccount, useChainId } from 'wagmi';
-import { parseUnits } from 'viem';
-import { useTokenBalance } from '@/hooks/use-token-balance';
-import { useTokenAllowance } from '@/hooks/use-token-allowance';
-import { useApproval } from '@/hooks/use-approval';
-import { useDeposit } from '@/hooks/use-deposit';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-
-export function DepositForm() {
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const { toast } = useToast();
-  
-  const [selectedToken, setSelectedToken] = useState<`0x${string}`>(
-    process.env.NEXT_PUBLIC_WBTC_TEST_ADDRESS! as `0x${string}`
-  );
-  const [amount, setAmount] = useState('');
-
-  // Real contract data
-  const tokenBalance = useTokenBalance(selectedToken);
-  const tokenAllowance = useTokenAllowance(
-    selectedToken,
-    process.env.NEXT_PUBLIC_WRAPPER_ADDRESS! as `0x${string}`
-  );
-  
-  // Real transactions
-  const approval = useApproval();
-  const deposit = useDeposit();
-
-  // Calculate if approval is needed
-  const needsApproval = amount && tokenBalance.decimals
-    ? tokenAllowance.allowance < parseUnits(amount, tokenBalance.decimals)
-    : false;
-
-  // Handle successful transactions
-  useEffect(() => {
-    if (approval.isSuccess) {
-      toast({
-        title: 'Approval Successful',
-        description: 'You can now deposit your tokens',
-      });
-      tokenAllowance.refetch(); // Refresh allowance
-    }
-  }, [approval.isSuccess]);
-
-  useEffect(() => {
-    if (deposit.isSuccess) {
-      toast({
-        title: 'Deposit Successful',
-        description: 'Your tokens have been wrapped to SovaBTC',
-      });
-      tokenBalance.refetch(); // Refresh balance
-      setAmount(''); // Clear form
-    }
-  }, [deposit.isSuccess]);
-
-  // Handle errors
-  useEffect(() => {
-    if (approval.error) {
-      toast({
-        title: 'Approval Failed',
-        description: approval.error.message,
-        variant: 'destructive',
-      });
-    }
-    if (deposit.error) {
-      toast({
-        title: 'Deposit Failed', 
-        description: deposit.error.message,
-        variant: 'destructive',
-      });
-    }
-  }, [approval.error, deposit.error]);
-
-  const handleApprove = async () => {
-    if (!amount || !tokenBalance.decimals) return;
-    
-    await approval.approve(
-      selectedToken,
-      process.env.NEXT_PUBLIC_WRAPPER_ADDRESS! as `0x${string}`,
-      amount,
-      tokenBalance.decimals
-    );
-  };
-
-  const handleDeposit = async () => {
-    if (!amount || !tokenBalance.decimals) return;
-    
-    await deposit.deposit(selectedToken, amount, tokenBalance.decimals);
-  };
-
-  const isValidAmount = amount && 
-    Number(amount) > 0 && 
-    Number(amount) <= Number(tokenBalance.formattedBalance);
-
-  if (!isConnected) {
-    return (
-      <div className="text-center p-8">
-        <p>Please connect your wallet to deposit tokens</p>
-      </div>
-    );
-  }
-
+// Consistent loading skeleton pattern
+function ComponentSkeleton() {
   return (
-    <div className="space-y-6 p-6 border rounded-lg">
-      <h2 className="text-2xl font-bold">Deposit Tokens</h2>
-      
-      {/* Token Selection */}
-      <div>
-        <label className="block text-sm font-medium mb-2">Token</label>
-        <select
-          value={selectedToken}
-          onChange={(e) => setSelectedToken(e.target.value as `0x${string}`)}
-          className="w-full p-2 border rounded"
-        >
-          <option value={process.env.NEXT_PUBLIC_WBTC_TEST_ADDRESS!}>
-            WBTC (Test)
-          </option>
-          {/* Add more test tokens */}
-        </select>
-      </div>
-
-      {/* Amount Input */}
-      <div>
-        <label className="block text-sm font-medium mb-2">Amount</label>
-        <div className="relative">
-          <Input
-            type="number"
-            placeholder="0.0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="pr-20"
-          />
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-            <span className="text-sm text-gray-500">{tokenBalance.symbol}</span>
-          </div>
-        </div>
-        <div className="flex justify-between text-sm text-gray-500 mt-1">
-          <span>Balance: {tokenBalance.formattedBalance}</span>
-          <button
-            onClick={() => setAmount(tokenBalance.formattedBalance)}
-            className="text-blue-600 hover:underline"
-          >
-            Max
-          </button>
-        </div>
-      </div>
-
-      {/* Transaction Buttons */}
-      <div className="space-y-2">
-        {needsApproval ? (
-          <Button
-            onClick={handleApprove}
-            disabled={approval.isPending || approval.isConfirming || !isValidAmount}
-            className="w-full"
-          >
-            {approval.isPending && 'Waiting for signature...'}
-            {approval.isConfirming && 'Confirming approval...'}
-            {!approval.isPending && !approval.isConfirming && 
-              `Approve ${tokenBalance.symbol}`
-            }
-          </Button>
-        ) : (
-          <Button
-            onClick={handleDeposit}
-            disabled={deposit.isPending || deposit.isConfirming || !isValidAmount}
-            className="w-full"
-          >
-            {deposit.isPending && 'Waiting for signature...'}
-            {deposit.isConfirming && 'Confirming deposit...'}
-            {!deposit.isPending && !deposit.isConfirming && 'Deposit'}
-          </Button>
-        )}
-      </div>
-
-      {/* Transaction Status */}
-      {(approval.hash || deposit.hash) && (
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm">
-            Transaction:{' '}
-            <a
-              href={`${process.env.NEXT_PUBLIC_BASE_SEPOLIA_EXPLORER}/tx/${
-                approval.hash || deposit.hash
-              }`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              View on Explorer
-            </a>
-          </p>
-        </div>
-      )}
+    <div className="space-y-3">
+      <div className="h-4 w-20 bg-slate-700/50 rounded shimmer" />
+      <div className="h-8 w-32 bg-slate-700/50 rounded shimmer" />
     </div>
-  );
+  )
 }
 ```
 
-## Success Criteria for Each Task
+### Web3 Specific Rules
 
-### Task 1: Contract Setup ✅
-- [ ] Contract ABIs imported and typed
-- [ ] All contract addresses configured
-- [ ] Environment variables set up
-- [ ] Type-safe contract hooks created
-- [ ] Can connect to Base Sepolia contracts
+#### Contract Interactions
+- Always use the CONTRACT_ADDRESSES from ui-3.md
+- Import ABIs from the centralized /src/contracts/abis/index.ts
+- Use proper error handling for contract calls
+- Implement transaction status tracking with toast notifications
+- Always include links to block explorer for transactions
 
-### Task 2: Balance Fetching ✅
-- [ ] Real token balances displayed
-- [ ] Multi-chain balance aggregation
-- [ ] Auto-refresh every 10 seconds
-- [ ] Loading states implemented
-- [ ] Error handling for network issues
+#### Data Formatting
+- Use formatUnits/parseUnits from viem for token amounts
+- Display proper decimal places (8 for BTC, 18 for SOVA)
+- Format USD values with formatUSD utility function
+- Use formatTokenAmount for consistent token display
 
-### Task 3: Transactions ✅
-- [ ] ERC-20 approvals working on testnet
-- [ ] Deposit transactions executing
-- [ ] Transaction status tracking
-- [ ] Balance updates after confirmation
-- [ ] Proper error messages displayed
+#### State Management
+- Use React state for component-level state
+- Use Zustand sparingly for complex global state
+- Leverage TanStack Query for caching blockchain data
+- Implement proper refetch strategies after transactions
 
-### Task 4: Redemption Queue ✅
-- [ ] Queue requests submitted to contract
-- [ ] Real countdown timers from contract delay
-- [ ] Fulfillment transactions working
-- [ ] Status updates in real-time
-- [ ] Queue position tracking
+### Error Handling
 
-### Task 5: Bridge Integration ✅
-- [ ] LayerZero fee quotes from contracts
-- [ ] Cross-chain transfers executing
-- [ ] Transaction tracking across chains
-- [ ] Balance updates on destination chain
-- [ ] Proper chain switching
+#### User-Facing Errors
+- Show user-friendly error messages, not raw blockchain errors
+- Use toast notifications for transaction feedback
+- Implement proper loading states during async operations
+- Validate user inputs before blockchain interactions
 
-### Task 6: Staking ✅
-- [ ] Real staking contract interactions
-- [ ] Accurate reward calculations
-- [ ] Stake/unstake transactions
-- [ ] APY displays from contract data
-- [ ] Reward claiming functionality
+#### Development Errors
+- Log detailed errors to console for debugging
+- Use TypeScript strict mode to catch type errors
+- Implement proper error boundaries for component crashes
 
-Remember: Every feature must work with REAL contracts and transactions. No mocked data or simulated responses allowed. Test everything on Base Sepolia testnet before marking complete.
+### Performance Optimization
+
+#### React Optimization
+- Use useMemo for expensive calculations
+- Implement useCallback for event handlers in lists
+- Use React.lazy for code splitting large components
+- Minimize re-renders with proper dependency arrays
+
+#### Web3 Optimization
+- Cache blockchain data with staleTime strategies
+- Use refetchInterval judiciously (5-15 seconds max)
+- Batch multiple contract reads when possible
+- Implement proper cleanup for event listeners
+
+### Accessibility
+
+#### ARIA Standards
+- Use proper semantic HTML elements
+- Include alt text for images and icons
+- Implement keyboard navigation support
+- Use proper heading hierarchy (h1 → h2 → h3)
+
+#### Color Contrast
+- Ensure text meets WCAG AA standards
+- Use proper focus indicators
+- Don't rely solely on color for information
+
+### Testing Patterns
+
+#### Component Testing
+- Test user interactions, not implementation details
+- Mock Web3 hooks for isolated component tests
+- Test error states and edge cases
+- Verify accessibility standards
+
+#### Integration Testing
+- Test complete user flows (wrap → stake → redeem)
+- Verify proper transaction confirmations
+- Test wallet connection/disconnection scenarios
+
+### Security Considerations
+
+#### Input Validation
+- Validate all user inputs before blockchain interactions
+- Sanitize display data from blockchain
+- Use proper type checking for addresses and amounts
+
+#### Web3 Security
+- Never store private keys in frontend code
+- Validate contract addresses before interactions
+- Implement proper slippage protection where applicable
+
+### Documentation Standards
+
+#### Code Comments
+- Document complex business logic
+- Explain Web3-specific concepts for junior developers
+- Include links to relevant documentation
+
+#### Component Documentation
+- Document prop types and expected behavior
+- Include usage examples for complex components
+- Document any Web3 dependencies or requirements
+
+## Implementation Reference
+
+When implementing features, strictly follow the patterns established in:
+- ui-1.md through ui-14.md for complete implementation guides
+- The exact component structures and hook patterns provided
+- The styling and animation standards defined
+- The Web3 integration patterns for blockchain interactions
+
+Always prioritize user experience, transaction safety, and code maintainability in your implementations.
