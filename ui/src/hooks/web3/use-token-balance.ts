@@ -1,13 +1,12 @@
 'use client'
 
-import { useReadContract, useAccount, useChainId } from 'wagmi'
+import { useReadContract, useAccount } from 'wagmi'
 import { ERC20_ABI } from '@/contracts/abis'
 import { formatUnits } from 'viem'
 import { useMemo } from 'react'
 
 export function useTokenBalance(tokenAddress: `0x${string}`) {
   const { address } = useAccount()
-  const chainId = useChainId()
 
   const { 
     data: balance, 

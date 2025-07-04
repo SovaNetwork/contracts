@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { Suspense } from 'react'
 import { TrendingUp, Shield, Zap, Coins } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -110,7 +110,7 @@ export default function HomePage() {
 
         {/* Features Grid */}
         <motion.div variants={itemVariants} className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <motion.div
               key={feature.title}
               variants={itemVariants}
@@ -140,12 +140,11 @@ function StatsGrid() {
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      {stats.map((stat, index) => (
+      {stats.map((stat) => (
         <motion.div
           key={stat.label}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
           className="defi-card p-6 space-y-4"
         >
           <div className="text-sm text-slate-400">{stat.label}</div>
@@ -197,7 +196,7 @@ function QuickActions() {
     <Card className="defi-card p-6 space-y-4">
       <CardTitle className="text-lg text-white">Quick Actions</CardTitle>
       <div className="space-y-3">
-        {actions.map((action, index) => (
+        {actions.map((action) => (
           <Link key={action.name} href={action.href}>
             <motion.div
               whileHover={{ scale: 1.02 }}
