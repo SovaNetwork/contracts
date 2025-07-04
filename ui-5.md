@@ -1,7 +1,7 @@
-# Dashboard Components: Portfolio & Quick Actions
+# UI-5: Dashboard Components - Portfolio & Quick Actions
 
 ## Overview
-Creating professional dashboard components with real-time data and smooth animations.
+Creating professional dashboard components with real-time data and smooth animations for the SovaBTC home page.
 
 ## Step 1: Portfolio Overview Component
 
@@ -74,6 +74,187 @@ export function PortfolioOverview() {
       <Card className="defi-card">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-defi-purple-500/20">
+              <Bitcoin className="h-5 w-5 text-defi-purple-400" />
+            </div>
+            <span className="gradient-text">Portfolio Overview</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Total Value */}
+          <div className="text-center space-y-2">
+            <p className="text-sm text-slate-400">Total Portfolio Value</p>
+            <motion.p 
+              className="text-4xl font-bold gradient-text"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {formatUSD(totalValue)}
+            </motion.p>
+            <div className="flex items-center justify-center gap-1 text-sm text-defi-green-400">
+              <TrendingUp className="h-3 w-3" />
+              <span>+2.4% (24h)</span>
+            </div>
+          </div>
+
+          {/* Asset Breakdown */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* SovaBTC Balance */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
+                    ₿
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">SovaBTC</p>
+                    <p className="text-xs text-slate-400">Bitcoin-backed</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-white">
+                    {sovaBTCBalance.isLoading ? (
+                      <span className="shimmer w-16 h-4 rounded inline-block"></span>
+                    ) : (
+                      `${formatTokenAmount(sovaBTCBalance.balance, 8)} sovaBTC`
+                    )}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {formatUSD(sovaBTCValue)}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-slate-400">
+                  <span>Portfolio weight</span>
+                  <span>{totalValue > 0 ? ((sovaBTCValue / totalValue) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <Progress 
+                  value={totalValue > 0 ? (sovaBTCValue / totalValue) * 100 : 0} 
+                  className="h-2 bg-slate-800"
+                />
+              </div>
+            </div>
+
+            {/* SOVA Balance */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-defi-purple-400 to-defi-pink-400 flex items-center justify-center text-white font-bold text-sm">
+                    S
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">SOVA</p>
+                    <p className="text-xs text-slate-400">Reward token</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-white">
+                    {sovaTokenBalance.isLoading ? (
+                      <span className="shimmer w-16 h-4 rounded inline-block"></span>
+                    ) : (
+                      `${formatTokenAmount(sovaTokenBalance.balance, 18)} SOVA`
+                    )}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {formatUSD(sovaValue)}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-slate-400">
+                  <span>Portfolio weight</span>
+                  <span>{totalValue > 0 ? ((sovaValue / totalValue) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <Progress 
+                  value={totalValue > 0 ? (sovaValue / totalValue) * 100 : 0} 
+                  className="h-2 bg-slate-800"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+            <div className="text-center">
+              <p className="text-xs text-slate-400">Staked</p>
+              <p className="text-sm font-semibold text-white">85%</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-400">APY</p>
+              <p className="text-sm font-semibold text-defi-green-400">12.4%</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-400">Rewards</p>
+              <p className="text-sm font-semibold text-defi-purple-400">Active</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
+```
+
+## Step 2: Quick Actions Component
+
+```typescript
+// src/components/dashboard/quick-actions.tsx
+'use client'
+
+import { motion } from 'framer-motion'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowUpDown, Coins, Timer, Zap, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+
+const actionVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.3, ease: "easeOut" }
+  }
+}
+
+const actions = [
+  {
+    title: 'Wrap Tokens',
+    description: 'Convert BTC assets to SovaBTC',
+    icon: ArrowUpDown,
+    href: '/wrap',
+    gradient: 'from-defi-purple-500 to-defi-pink-500',
+    bgGradient: 'from-defi-purple-500/10 to-defi-pink-500/10',
+    borderGradient: 'from-defi-purple-500/30 to-defi-pink-500/30',
+  },
+  {
+    title: 'Stake & Earn',
+    description: 'Earn SOVA rewards on deposits',
+    icon: Coins,
+    href: '/stake',
+    gradient: 'from-defi-blue-500 to-defi-purple-500',
+    bgGradient: 'from-defi-blue-500/10 to-defi-purple-500/10',
+    borderGradient: 'from-defi-blue-500/30 to-defi-purple-500/30',
+  },
+  {
+    title: 'Redeem Queue',
+    description: 'Queue tokens for redemption',
+    icon: Timer,
+    href: '/redeem',
+    gradient: 'from-defi-pink-500 to-defi-blue-500',
+    bgGradient: 'from-defi-pink-500/10 to-defi-blue-500/10',
+    borderGradient: 'from-defi-pink-500/30 to-defi-blue-500/30',
+  },
+]
+
+export function QuickActions() {
+  return (
+    <motion.div variants={actionVariants}>
+      <Card className="defi-card">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-defi-blue-500/20">
               <Zap className="h-5 w-5 text-defi-blue-400" />
             </div>
@@ -127,7 +308,6 @@ export function PortfolioOverview() {
 import { motion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { TrendingUp, Users, DollarSign, Activity } from 'lucide-react'
-import { formatUSD } from '@/lib/utils'
 
 const statsVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -220,7 +400,6 @@ export function StatsGrid() {
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, ArrowUpDown, Coins, Timer, ExternalLink } from 'lucide-react'
-import { formatTokenAmount } from '@/lib/utils'
 
 const activityVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -379,92 +558,114 @@ export function RecentActivity() {
 }
 ```
 
-## Step 5: Wrap Stats Component
+## Step 5: Progress Component (Required)
 
 ```typescript
-// src/components/wrap/wrap-stats.tsx
+// src/components/ui/progress.tsx
+"use client"
+
+import * as React from "react"
+import * as ProgressPrimitive from "@radix-ui/react-progress"
+import { cn } from "@/lib/utils"
+
+const Progress = React.forwardRef<
+  React.ElementRef<typeof ProgressPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
+>(({ className, value, ...props }, ref) => (
+  <ProgressPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative h-4 w-full overflow-hidden rounded-full bg-slate-800",
+      className
+    )}
+    {...props}
+  >
+    <ProgressPrimitive.Indicator
+      className="h-full w-full flex-1 bg-gradient-to-r from-defi-purple-500 to-defi-pink-500 transition-all"
+      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+    />
+  </ProgressPrimitive.Root>
+))
+Progress.displayName = ProgressPrimitive.Root.displayName
+
+export { Progress }
+```
+
+## Step 6: Update Home Page to Use Dashboard Components
+
+```typescript
+// src/app/page.tsx (updated sections)
 'use client'
 
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { TrendingUp, Shield, Zap } from 'lucide-react'
-import { formatUSD } from '@/lib/utils'
+import { Suspense } from 'react'
+import { PortfolioOverview } from '@/components/dashboard/portfolio-overview'
+import { QuickActions } from '@/components/dashboard/quick-actions'
+import { StatsGrid } from '@/components/dashboard/stats-grid'
+import { RecentActivity } from '@/components/dashboard/recent-activity'
+import { TrendingUp, Shield, Zap, Coins } from 'lucide-react'
 
-const statsVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-}
+// ... existing containerVariants and itemVariants ...
 
-export function WrapStats() {
-  // Mock data - replace with real contract data
-  const stats = {
-    totalLocked: 2400000,
-    conversionRate: '1:1',
-    processingTime: 'Instant',
-    fees: '0%',
-  }
-
+export default function HomePage() {
   return (
-    <motion.div variants={statsVariants}>
-      <Card className="defi-card">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-defi-blue-500/20">
-              <TrendingUp className="h-5 w-5 text-defi-blue-400" />
-            </div>
-            <span className="text-lg font-semibold text-white">Wrap Stats</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-400">Total Locked</span>
-              <span className="text-sm font-semibold text-white">
-                {formatUSD(stats.totalLocked)}
-              </span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-400">Conversion Rate</span>
-              <span className="text-sm font-semibold text-defi-green-400">
-                {stats.conversionRate}
-              </span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-400">Processing</span>
-              <span className="text-sm font-semibold text-defi-blue-400">
-                {stats.processingTime}
-              </span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-slate-400">Fees</span>
-              <span className="text-sm font-semibold text-defi-purple-400">
-                {stats.fees}
-              </span>
-            </div>
-          </div>
+    <div className="container mx-auto px-6 py-12 max-w-7xl">
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-12"
+      >
+        {/* Hero Section */}
+        <motion.div variants={itemVariants} className="text-center space-y-6">
+          <motion.h1 
+            className="text-5xl md:text-6xl font-bold gradient-text leading-tight"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+          >
+            Next-Gen Bitcoin DeFi
+          </motion.h1>
+          <motion.p 
+            className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed"
+            variants={itemVariants}
+          >
+            Wrap, stake, and earn with Bitcoin-backed tokens. Professional DeFi experience 
+            with institutional-grade security and transparency.
+          </motion.p>
+        </motion.div>
+
+        {/* Stats Grid */}
+        <motion.div variants={itemVariants}>
+          <Suspense fallback={<StatsGridSkeleton />}>
+            <StatsGrid />
+          </Suspense>
+        </motion.div>
+
+        {/* Main Dashboard */}
+        <div className="grid gap-8 lg:grid-cols-3">
+          <motion.div variants={itemVariants} className="lg:col-span-2">
+            <Suspense fallback={<PortfolioSkeleton />}>
+              <PortfolioOverview />
+            </Suspense>
+          </motion.div>
           
-          <div className="pt-4 border-t border-white/10 space-y-3">
-            <div className="flex items-center gap-2 text-xs text-defi-green-400">
-              <Shield className="h-3 w-3" />
-              <span>Secured by multi-sig custody</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-defi-blue-400">
-              <Zap className="h-3 w-3" />
-              <span>Instant settlement on-chain</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          <motion.div variants={itemVariants}>
+            <QuickActions />
+          </motion.div>
+        </div>
+
+        {/* Recent Activity */}
+        <motion.div variants={itemVariants}>
+          <Suspense fallback={<ActivitySkeleton />}>
+            <RecentActivity />
+          </Suspense>
+        </motion.div>
+      </motion.div>
+    </div>
   )
 }
+
+// ... existing skeleton components ...
 ```
 
 ## Next Steps
@@ -472,7 +673,7 @@ export function WrapStats() {
 After implementing these dashboard components:
 1. Test real-time data fetching from your contracts
 2. Verify portfolio calculations are accurate
-3. Move to Phase 5: Redemption Queue Interface
+3. Move to Phase 6: Token Wrapping Interface
 
 This provides:
 - ✅ Professional portfolio overview with real balances
@@ -481,185 +682,3 @@ This provides:
 - ✅ Activity tracking (ready for real transaction data)
 - ✅ Comprehensive loading and empty states
 - ✅ Mobile-responsive design with smooth animations
-            <div className="p-2 rounded-lg bg-defi-purple-500/20">
-              <Bitcoin className="h-5 w-5 text-defi-purple-400" />
-            </div>
-            <span className="gradient-text">Portfolio Overview</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Total Value */}
-          <div className="text-center space-y-2">
-            <p className="text-sm text-slate-400">Total Portfolio Value</p>
-            <motion.p 
-              className="text-4xl font-bold gradient-text"
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {formatUSD(totalValue)}
-            </motion.p>
-            <div className="flex items-center justify-center gap-1 text-sm text-defi-green-400">
-              <TrendingUp className="h-3 w-3" />
-              <span>+2.4% (24h)</span>
-            </div>
-          </div>
-
-          {/* Asset Breakdown */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* SovaBTC Balance */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
-                    ₿
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">SovaBTC</p>
-                    <p className="text-xs text-slate-400">Bitcoin-backed</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-white">
-                    {sovaBTCBalance.isLoading ? (
-                      <span className="shimmer w-16 h-4 rounded inline-block"></span>
-                    ) : (
-                      `${formatTokenAmount(sovaBTCBalance.balance, 8)} sovaBTC`
-                    )}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {formatUSD(sovaBTCValue)}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Portfolio weight</span>
-                  <span>{totalValue > 0 ? ((sovaBTCValue / totalValue) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <Progress 
-                  value={totalValue > 0 ? (sovaBTCValue / totalValue) * 100 : 0} 
-                  className="h-2 bg-slate-800"
-                />
-              </div>
-            </div>
-
-            {/* SOVA Balance */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-defi-purple-400 to-defi-pink-400 flex items-center justify-center text-white font-bold text-sm">
-                    S
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">SOVA</p>
-                    <p className="text-xs text-slate-400">Reward token</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-white">
-                    {sovaTokenBalance.isLoading ? (
-                      <span className="shimmer w-16 h-4 rounded inline-block"></span>
-                    ) : (
-                      `${formatTokenAmount(sovaTokenBalance.balance, 18)} SOVA`
-                    )}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {formatUSD(sovaValue)}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Portfolio weight</span>
-                  <span>{totalValue > 0 ? ((sovaValue / totalValue) * 100).toFixed(1) : 0}%</span>
-                </div>
-                <Progress 
-                  value={totalValue > 0 ? (sovaValue / totalValue) * 100 : 0} 
-                  className="h-2 bg-slate-800"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
-            <div className="text-center">
-              <p className="text-xs text-slate-400">Staked</p>
-              <p className="text-sm font-semibold text-white">85%</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-slate-400">APY</p>
-              <p className="text-sm font-semibold text-defi-green-400">12.4%</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-slate-400">Rewards</p>
-              <p className="text-sm font-semibold text-defi-purple-400">Active</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  )
-}
-```
-
-## Step 2: Quick Actions Component
-
-```typescript
-// src/components/dashboard/quick-actions.tsx
-'use client'
-
-import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowUpDown, Coins, Timer, Zap, TrendingUp } from 'lucide-react'
-import Link from 'next/link'
-
-const actionVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.3, ease: "easeOut" }
-  }
-}
-
-const actions = [
-  {
-    title: 'Wrap Tokens',
-    description: 'Convert BTC assets to SovaBTC',
-    icon: ArrowUpDown,
-    href: '/wrap',
-    gradient: 'from-defi-purple-500 to-defi-pink-500',
-    bgGradient: 'from-defi-purple-500/10 to-defi-pink-500/10',
-    borderGradient: 'from-defi-purple-500/30 to-defi-pink-500/30',
-  },
-  {
-    title: 'Stake & Earn',
-    description: 'Earn SOVA rewards on deposits',
-    icon: Coins,
-    href: '/stake',
-    gradient: 'from-defi-blue-500 to-defi-purple-500',
-    bgGradient: 'from-defi-blue-500/10 to-defi-purple-500/10',
-    borderGradient: 'from-defi-blue-500/30 to-defi-purple-500/30',
-  },
-  {
-    title: 'Redeem Queue',
-    description: 'Queue tokens for redemption',
-    icon: Timer,
-    href: '/redeem',
-    gradient: 'from-defi-pink-500 to-defi-blue-500',
-    bgGradient: 'from-defi-pink-500/10 to-defi-blue-500/10',
-    borderGradient: 'from-defi-pink-500/30 to-defi-blue-500/30',
-  },
-]
-
-export function QuickActions() {
-  return (
-    <motion.div variants={actionVariants}>
-      <Card className="defi-card">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-3">
