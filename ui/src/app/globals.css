@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    @apply bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* DeFi Glass Card Effect */
+  .defi-card {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+    @apply shadow-defi-card hover:shadow-defi-card-hover;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .defi-card:hover {
+    @apply bg-white/10 border-white/20;
+    @apply shadow-defi-glow;
+  }
+  
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-defi-purple-400 via-defi-pink-400 to-defi-blue-400;
+    @apply bg-clip-text text-transparent;
+  }
+  
+  /* Shimmer Effect for Loading */
+  .shimmer {
+    background: linear-gradient(
+      110deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 60%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+  
+  /* Interactive Button Animations */
+  .defi-button {
+    @apply relative overflow-hidden;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:scale-105 active:scale-95;
+  }
+  
+  .defi-button::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-defi-purple-500/20 via-defi-pink-500/20 to-defi-blue-500/20;
+    @apply translate-x-[-100%] transition-transform duration-500 ease-out;
+  }
+  
+  .defi-button:hover::before {
+    @apply translate-x-[100%];
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-900/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-defi-purple-500/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-defi-purple-500/70;
+}
