@@ -15,12 +15,12 @@ import { useUnstake } from '../../hooks/use-unstake';
 import { useStakingPools } from '../../hooks/use-staking-pools';
 import { CONTRACT_ADDRESSES } from '../../contracts/addresses';
 import { componentStyles, designSystem } from '../../lib/design-system';
-import { TrendingUp, Wallet, ArrowUpDown, DollarSign, ExternalLink } from 'lucide-react';
+import { TrendingUp, Wallet, ArrowUpDown, ExternalLink } from 'lucide-react';
 
 type ActionType = 'stake' | 'unstake';
 
 export function StakeForm() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const chainId = useChainId();
   
   const [actionType, setActionType] = useState<ActionType>('stake');
@@ -382,7 +382,7 @@ export function StakeForm() {
             <li>• APY calculated based on current reward rate and pool size</li>
             <li>• Claim rewards anytime without unstaking</li>
             <li>• No lock-up period - unstake anytime</li>
-            <li>• Use "Exit" to unstake all and claim rewards in one transaction</li>
+            <li>• Use &quot;Exit&quot; to unstake all and claim rewards in one transaction</li>
           </ul>
         </div>
       </div>

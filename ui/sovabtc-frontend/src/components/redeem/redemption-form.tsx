@@ -20,7 +20,7 @@ interface TokenOption {
 }
 
 export function RedemptionForm() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const chainId = useChainId();
   
   const [selectedToken, setSelectedToken] = useState<TokenOption>();

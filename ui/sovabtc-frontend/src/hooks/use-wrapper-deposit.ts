@@ -23,13 +23,23 @@ export function useWrapperDeposit() {
     try {
       const parsedAmount = parseUnits(amount, tokenDecimals);
       
+      console.log('Deposit transaction details:', {
+        wrapperAddress,
+        tokenAddress,
+        amount,
+        parsedAmount: parsedAmount.toString(),
+        tokenDecimals
+      });
+      
       writeContract({
         address: wrapperAddress,
         abi: SovaBTCWrapperABI,
         functionName: 'deposit',
         args: [tokenAddress, parsedAmount],
+        gas: BigInt(500000), // Set a reasonable gas limit
       });
     } catch (error) {
+      console.error('Deposit preparation failed:', error);
       setIsDepositing(false);
       throw error;
     }

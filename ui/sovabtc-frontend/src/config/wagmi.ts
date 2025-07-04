@@ -1,11 +1,12 @@
 import { createConfig, http } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
-import { metaMask, walletConnect, coinbaseWallet, injected } from 'wagmi/connectors';
+import { metaMask, coinbaseWallet, injected } from 'wagmi/connectors';
 
 // Define the chains we support
 export const chains = [baseSepolia] as const;
 
-// Create wagmi config
+// Create wagmi config without WalletConnect to avoid SSR issues
+// WalletConnect will be handled by Rainbow Kit if needed
 export const wagmiConfig = createConfig({
   chains,
   connectors: [
@@ -14,14 +15,12 @@ export const wagmiConfig = createConfig({
       appName: 'SovaBTC',
       appLogoUrl: '/logo.svg',
     }),
-    walletConnect({
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id',
-    }),
     injected(),
   ],
   transports: {
     [baseSepolia.id]: http(process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC || 'https://sepolia.base.org'),
   },
+  ssr: true, // Enable SSR support
 });
 
 // Export chain information

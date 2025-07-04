@@ -179,7 +179,7 @@ export function RewardsDisplay({ stakingAddress, onRewardsClaimed }: RewardsDisp
             <li>• Rewards are distributed continuously while staking</li>
             <li>• APY depends on total staked amount and reward rate</li>
             <li>• Claim rewards anytime without unstaking</li>
-            <li>• Use "Exit" to unstake all and claim rewards in one transaction</li>
+            <li>• Use &quot;Exit&quot; to unstake all and claim rewards in one transaction</li>
           </ul>
         </div>
       </div>

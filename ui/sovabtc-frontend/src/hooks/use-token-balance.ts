@@ -1,10 +1,9 @@
-import { useReadContract, useAccount, useChainId } from 'wagmi';
+import { useReadContract, useAccount } from 'wagmi';
 import { formatUnits } from 'viem';
 import { erc20Abi } from 'viem';
 
 export function useTokenBalance(tokenAddress: `0x${string}`) {
   const { address } = useAccount();
-  const chainId = useChainId();
 
   const { data: balance, isLoading, error, refetch } = useReadContract({
     address: tokenAddress,

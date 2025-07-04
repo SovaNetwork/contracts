@@ -4,7 +4,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useChainId } from 'wagmi';
 import { baseSepolia } from 'viem/chains';
 import { useTokenBalance } from '../hooks/use-token-balance';
-import { CONTRACT_ADDRESSES, TOKEN_CONFIGS } from '../contracts/addresses';
+import { CONTRACT_ADDRESSES } from '../contracts/addresses';
 import { DepositForm } from '../components/wrap/deposit-form';
 import { RedemptionForm } from '../components/redeem/redemption-form';
 import { StakeForm } from '../components/staking/stake-form';

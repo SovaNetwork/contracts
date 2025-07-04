@@ -73,15 +73,16 @@ export function useStakingPools(stakingAddress: `0x${string}`) {
     },
   });
 
-  const { data: rewardsDuration } = useReadContract({
-    address: stakingAddress,
-    abi: SovaBTCStakingABI,
-    functionName: 'rewardsDuration',
-    query: {
-      enabled: !!stakingAddress,
-      staleTime: Infinity, // Duration rarely changes
-    },
-  });
+  // Rewards duration is available but not currently used in calculations
+  // const { data: rewardsDuration } = useReadContract({
+  //   address: stakingAddress,
+  //   abi: SovaBTCStakingABI,
+  //   functionName: 'rewardsDuration',
+  //   query: {
+  //     enabled: !!stakingAddress,
+  //     staleTime: Infinity, // Duration rarely changes
+  //   },
+  // });
 
   // Calculate APY
   const calculateAPY = (): number => {

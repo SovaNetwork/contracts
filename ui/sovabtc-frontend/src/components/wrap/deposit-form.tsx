@@ -11,6 +11,7 @@ import { useTokenBalance } from '../../hooks/use-token-balance';
 import { useTokenAllowance } from '../../hooks/use-token-allowance';
 import { useTokenApproval } from '../../hooks/use-token-approval';
 import { useWrapperDeposit } from '../../hooks/use-wrapper-deposit';
+import { useTokenWhitelist } from '../../hooks/use-token-whitelist';
 import { CONTRACT_ADDRESSES, TOKEN_CONFIGS } from '../../contracts/addresses';
 import { componentStyles, designSystem } from '../../lib/design-system';
 import { ArrowRight, Coins, Shield, ExternalLink } from 'lucide-react';
@@ -23,7 +24,7 @@ interface TokenOption {
 }
 
 export function DepositForm() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const chainId = useChainId();
   
   const [selectedToken, setSelectedToken] = useState<TokenOption>();
@@ -53,6 +54,10 @@ export function DepositForm() {
     selectedToken?.address || '0x0',
     wrapperAddress || '0x0'
   );
+  const tokenWhitelist = useTokenWhitelist(
+    wrapperAddress || '0x0',
+    selectedToken?.address || '0x0'
+  );
   
   // Real transactions
   const approval = useTokenApproval();
@@ -76,6 +81,9 @@ export function DepositForm() {
   const isValidAmount = amount && 
     Number(amount) > 0 && 
     Number(amount) <= Number(tokenBalance.formattedBalance);
+
+  // Check if token is whitelisted and all conditions are met
+  const canDeposit = isValidAmount && tokenWhitelist.isAllowed && !needsApproval;
 
   // Handle successful transactions
   useEffect(() => {
@@ -261,13 +269,31 @@ export function DepositForm() {
           </div>
         )}
 
+        {/* Debug Information */}
+        {selectedToken && amount && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h4 className="font-medium text-yellow-900 mb-2">Debug Information</h4>
+            <div className="text-xs text-yellow-800 space-y-1">
+              <p>Token: {selectedToken.address}</p>
+              <p>Amount: {amount} {selectedToken.symbol}</p>
+              <p>Parsed Amount: {amount ? parseUnits(amount, selectedToken.decimals).toString() : 'N/A'}</p>
+              <p>Balance: {tokenBalance.formattedBalance} {selectedToken.symbol}</p>
+              <p>Allowance: {tokenAllowance.formattedAllowance} {selectedToken.symbol}</p>
+              <p>Needs Approval: {needsApproval ? 'Yes' : 'No'}</p>
+              <p>Valid Amount: {isValidAmount ? 'Yes' : 'No'}</p>
+              <p>Token Whitelisted: {tokenWhitelist.isAllowed ? 'Yes' : 'No'}</p>
+              <p>Wrapper: {wrapperAddress}</p>
+            </div>
+          </div>
+        )}
+
         {/* Transaction Buttons */}
         {selectedToken && (
           <div className="space-y-3">
             {needsApproval ? (
               <Button
                 onClick={handleApprove}
-                disabled={approval.isPending || approval.isConfirming || !isValidAmount}
+                disabled={approval.isPending || approval.isConfirming || !isValidAmount || !tokenWhitelist.isAllowed}
                 variant="secondary"
                 size="lg"
                 className="w-full"
@@ -280,7 +306,7 @@ export function DepositForm() {
             ) : (
               <Button
                 onClick={handleDeposit}
-                disabled={deposit.isPending || deposit.isConfirming || !isValidAmount}
+                disabled={deposit.isPending || deposit.isConfirming || !canDeposit}
                 variant="primary"
                 size="lg"
                 className="w-full"
@@ -300,6 +326,37 @@ export function DepositForm() {
                     : 'Insufficient balance'
                   }
                 </p>
+              </div>
+            )}
+
+            {/* Token whitelist validation */}
+            {selectedToken && !tokenWhitelist.isLoading && !tokenWhitelist.isAllowed && (
+              <div className="flex items-center space-x-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <p className="text-sm text-red-700 font-medium">
+                  {selectedToken.symbol} is not whitelisted for wrapping
+                </p>
+              </div>
+            )}
+
+            {/* Transaction Error Display */}
+            {(approval.error || deposit.error) && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <h4 className="font-medium text-red-900 mb-2">Transaction Error</h4>
+                <div className="text-sm text-red-800 space-y-2">
+                  {approval.error && (
+                    <div>
+                      <p className="font-medium">Approval Error:</p>
+                      <p className="text-xs break-words">{approval.error.message}</p>
+                    </div>
+                  )}
+                  {deposit.error && (
+                    <div>
+                      <p className="font-medium">Deposit Error:</p>
+                      <p className="text-xs break-words">{deposit.error.message}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
