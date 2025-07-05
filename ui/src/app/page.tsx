@@ -1,302 +1,210 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, Shield, Zap, Coins, Sparkles, ArrowRight } from 'lucide-react'
-
+import { useAccount } from 'wagmi'
+import { Bitcoin, TrendingUp, Shield, Zap, Users, Target, ArrowUpRight, ExternalLink } from 'lucide-react'
+import StatsOverview from '@/components/home/stats-overview'
+import QuickActions from '@/components/home/quick-actions'
+import FeatureShowcase from '@/components/home/feature-showcase'
+import RecentActivity from '@/components/home/recent-activity'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 
-const PortfolioOverview = dynamic(() => import('@/components/dashboard/portfolio-overview').then(mod => ({ default: mod.PortfolioOverview })), {
-  ssr: false,
-  loading: () => <PortfolioSkeleton />
-})
+const fadeInUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, ease: "easeOut" }
+}
 
-const QuickActions = dynamic(() => import('@/components/dashboard/quick-actions').then(mod => ({ default: mod.QuickActions })), {
-  ssr: false,
-  loading: () => <QuickActionsSkeleton />
-})
-
-const StatsGrid = dynamic(() => import('@/components/dashboard/stats-grid').then(mod => ({ default: mod.StatsGrid })), {
-  ssr: false,
-  loading: () => <StatsGridSkeleton />
-})
-
-const RecentActivity = dynamic(() => import('@/components/dashboard/recent-activity').then(mod => ({ default: mod.RecentActivity })), {
-  ssr: false,
-  loading: () => <ActivitySkeleton />
-})
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
+const staggerChildren = {
+  animate: {
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
+      staggerChildren: 0.1
     }
   }
 }
 
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1 }
-}
-
-const heroVariants = {
-  hidden: { y: 30, opacity: 0 },
-  visible: { y: 0, opacity: 1 }
-}
-
-const features = [
-  {
-    icon: Shield,
-    title: "Secure Wrapping",
-    description: "Multi-signature custody with transparent reserves and institutional-grade security",
-    color: "from-defi-purple-500 to-defi-blue-500"
-  },
-  {
-    icon: TrendingUp,
-    title: "Yield Generation",
-    description: "Earn SOVA rewards through optimized staking mechanisms and yield farming",
-    color: "from-defi-green-500 to-defi-blue-500"
-  },
-  {
-    icon: Zap,
-    title: "Fast Redemption",
-    description: "Efficient queue system with predictable timing and instant fulfillment",
-    color: "from-defi-pink-500 to-defi-purple-500"
-  },
-  {
-    icon: Coins,
-    title: "Multi-Chain",
-    description: "Cross-chain Bitcoin representation with seamless interoperability",
-    color: "from-defi-blue-500 to-defi-purple-500"
-  }
-]
-
 export default function HomePage() {
+  const { isConnected } = useAccount()
+
   return (
-    <div className="container mx-auto px-6 py-16 max-w-7xl">
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-16"
+    <div className="min-h-screen bg-mesh-dark">
+      {/* Hero Section */}
+      <motion.section 
+        className="relative overflow-hidden pt-16 pb-32"
+        initial="initial"
+        animate="animate"
+        variants={staggerChildren}
       >
-        {/* Enhanced Hero Section */}
-        <motion.div variants={heroVariants} transition={{ duration: 0.8, ease: "easeOut" }} className="text-center space-y-8 relative">
-          <div className="relative">
-            <motion.h1 
-              className="text-6xl md:text-7xl lg:text-8xl font-bold gradient-text leading-tight relative"
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-            >
-              Next-Gen Bitcoin DeFi
-            </motion.h1>
-            <div className="absolute -inset-8 bg-defi-gradient-glow rounded-3xl opacity-20 blur-3xl -z-10" />
-            <Sparkles className="absolute -top-4 -right-4 h-8 w-8 text-defi-pink-400 animate-pulse" />
-            <Sparkles className="absolute -bottom-4 -left-4 h-6 w-6 text-defi-blue-400 animate-pulse" style={{ animationDelay: '1s' } as React.CSSProperties} />
-          </div>
-          
-          <motion.p 
-            className="text-xl md:text-2xl text-defi-gray-400 max-w-3xl mx-auto leading-relaxed font-medium"
-            variants={itemVariants}
-          >
-            Wrap, stake, and earn with Bitcoin-backed tokens. Professional DeFi experience 
-            with institutional-grade security and transparency.
-          </motion.p>
-          
-          <motion.div 
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
-            variants={itemVariants}
-          >
-            <Link href="/wrap">
-              <Button size="lg" className="defi-button h-14 px-8 text-lg font-semibold group">
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+        {/* Background Elements */}
+        <div className="absolute inset-0 backdrop-pattern opacity-30" />
+        <div className="absolute top-20 left-10 w-32 h-32 bg-bitcoin-500/10 rounded-full blur-3xl floating" />
+        <div className="absolute top-40 right-10 w-24 h-24 bg-neon-500/10 rounded-full blur-2xl floating-delayed" />
+        <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl floating" />
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <motion.div variants={fadeInUp} className="mb-8">
+              <Badge className="status-badge-info mb-6">
+                <Zap className="w-4 h-4" />
+                Powered by Bitcoin. Secured by Base.
+              </Badge>
+              <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                <span className="bitcoin-gradient-text">Bitcoin</span>
+                <br />
+                <span className="aurora-text">DeFi Revolution</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-obsidian-300 max-w-3xl mx-auto leading-relaxed">
+                Experience the future of Bitcoin finance with SovaBTC. Wrap, stake, and earn with
+                institutional-grade security and maximum yield opportunities.
+              </p>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              <Button asChild size="lg" className="neo-button text-lg px-8 py-4 h-auto">
+                <Link href="/wrap">
+                  Start Earning
+                  <ArrowUpRight className="w-5 h-5 ml-2" />
+                </Link>
               </Button>
-            </Link>
-            <Link href="/portfolio">
-              <Button variant="outline" size="lg" className="defi-button-secondary h-14 px-8 text-lg font-semibold">
-                View Portfolio
+              <Button asChild variant="outline" size="lg" className="neo-button-secondary text-lg px-8 py-4 h-auto">
+                <Link href="/portfolio">
+                  View Portfolio
+                  <Target className="w-5 h-5 ml-2" />
+                </Link>
               </Button>
-            </Link>
-          </motion.div>
-        </motion.div>
+            </motion.div>
 
-        {/* Enhanced Stats Grid */}
-        <motion.div variants={itemVariants}>
-          <StatsGrid />
-        </motion.div>
-
-        {/* Enhanced Main Dashboard */}
-        <div className="grid gap-8 lg:grid-cols-3">
-          <motion.div variants={itemVariants} className="lg:col-span-2">
-            <PortfolioOverview />
-          </motion.div>
-          
-          <motion.div variants={itemVariants}>
-            <QuickActions />
-          </motion.div>
-        </div>
-
-        {/* Enhanced Recent Activity */}
-        <motion.div variants={itemVariants}>
-          <RecentActivity />
-        </motion.div>
-
-        {/* Enhanced Features Grid */}
-        <motion.div variants={itemVariants} className="space-y-8">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold gradient-text">Why Choose SovaBTC?</h2>
-            <p className="text-lg text-defi-gray-400 max-w-2xl mx-auto">
-              Experience the future of Bitcoin DeFi with cutting-edge technology and unmatched security
-            </p>
-          </div>
-          
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                variants={itemVariants}
-                whileHover={{ y: -8, scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-                className="defi-stats-card p-8 text-center space-y-6 group relative overflow-hidden"
-              >
-                <div className="relative">
-                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} group-hover:scale-110 transition-transform duration-300 relative`}>
-                    <feature.icon className="h-8 w-8 text-white" />
-                    <div className="absolute -inset-2 bg-gradient-to-r from-defi-purple-500/30 to-defi-pink-500/30 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-white group-hover:text-defi-purple-300 transition-colors">{feature.title}</h3>
-                  <p className="text-sm text-defi-gray-400 leading-relaxed group-hover:text-defi-gray-300 transition-colors">{feature.description}</p>
-                </div>
-                
-                {/* Hover gradient overlay */}
-                <div className="absolute inset-0 bg-defi-gradient-subtle opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                
-                {/* Feature number indicator */}
-                <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-defi-gradient-subtle flex items-center justify-center">
-                  <span className="text-xs font-bold text-defi-purple-300">{index + 1}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Call to Action Section */}
-        <motion.div 
-          variants={itemVariants}
-          className="text-center space-y-8 py-16 relative"
-        >
-          <div className="relative">
-            <h3 className="text-4xl md:text-5xl font-bold gradient-text mb-4">
-              Ready to Get Started?
-            </h3>
-            <p className="text-xl text-defi-gray-400 max-w-2xl mx-auto">
-              Join thousands of users who trust SovaBTC for their Bitcoin DeFi needs
-            </p>
-            <div className="absolute -inset-4 bg-defi-gradient-glow rounded-2xl opacity-10 blur-2xl -z-10" />
-          </div>
-          
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Link href="/wrap">
-              <Button size="lg" className="defi-button h-16 px-12 text-xl font-bold">
-                Start Wrapping Bitcoin
-              </Button>
-            </Link>
-          </motion.div>
-        </motion.div>
-      </motion.div>
-    </div>
-  )
-}
-
-function QuickActionsSkeleton() {
-  return (
-    <div className="defi-card p-6 space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="h-6 w-6 bg-defi-gray-700/50 rounded-lg defi-skeleton" />
-        <div className="h-6 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
-      </div>
-      <div className="space-y-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="defi-stats-card p-4 rounded-xl">
-            <div className="flex items-center gap-4">
-              <div className="h-11 w-11 bg-defi-gray-700/50 rounded-lg defi-skeleton" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-24 bg-defi-gray-700/50 rounded defi-skeleton" />
-                <div className="h-3 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
+            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-8 text-sm text-obsidian-400">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-emerald-500" />
+                <span>Audited & Secure</span>
               </div>
-            </div>
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-bitcoin-500" />
+                <span>Maximum Yield</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-neon-500" />
+                <span>Community Driven</span>
+              </div>
+            </motion.div>
           </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+        </div>
+      </motion.section>
 
-function ActivitySkeleton() {
-  return (
-    <div className="defi-card p-6 space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="h-6 w-6 bg-defi-gray-700/50 rounded-lg defi-skeleton" />
-        <div className="h-6 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
-      </div>
-      <div className="space-y-3">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 p-3">
-            <div className="h-8 w-8 bg-defi-gray-700/50 rounded-lg defi-skeleton" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-20 bg-defi-gray-700/50 rounded defi-skeleton" />
-              <div className="h-3 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
-            </div>
+      {/* Stats Overview */}
+      <motion.section 
+        className="relative py-16 -mt-16"
+        initial="initial"
+        animate="animate"
+        variants={staggerChildren}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <StatsOverview />
+        </div>
+      </motion.section>
+
+      {/* Quick Actions */}
+      {isConnected && (
+        <motion.section 
+          className="py-16"
+          initial="initial"
+          animate="animate"
+          variants={staggerChildren}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div variants={fadeInUp} className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <span className="aurora-text">Quick Actions</span>
+              </h2>
+              <p className="text-obsidian-300 text-lg max-w-2xl mx-auto">
+                Fast-track your Bitcoin DeFi journey with one-click actions
+              </p>
+            </motion.div>
+            <QuickActions />
           </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+        </motion.section>
+      )}
 
-function PortfolioSkeleton() {
-  return (
-    <div className="defi-card p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="h-6 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
-        <div className="h-4 w-20 bg-defi-gray-700/50 rounded defi-skeleton" />
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <div className="h-4 w-24 bg-defi-gray-700/50 rounded defi-skeleton" />
-          <div className="h-8 w-40 bg-defi-gray-700/50 rounded defi-skeleton" />
-          <div className="h-3 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
+      {/* Feature Showcase */}
+      <motion.section 
+        className="py-16 relative"
+        initial="initial"
+        animate="animate"
+        variants={staggerChildren}
+      >
+        <div className="absolute inset-0 backdrop-pattern opacity-20" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={fadeInUp} className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <span className="bitcoin-gradient-text">Why Choose SovaBTC?</span>
+            </h2>
+            <p className="text-obsidian-300 text-lg max-w-2xl mx-auto">
+              Built for the next generation of Bitcoin DeFi with cutting-edge technology
+            </p>
+          </motion.div>
+          <FeatureShowcase />
         </div>
-        <div className="space-y-3">
-          <div className="h-4 w-24 bg-defi-gray-700/50 rounded defi-skeleton" />
-          <div className="h-8 w-40 bg-defi-gray-700/50 rounded defi-skeleton" />
-          <div className="h-3 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
-        </div>
-      </div>
-    </div>
-  )
-}
+      </motion.section>
 
-function StatsGridSkeleton() {
-  return (
-    <div className="grid gap-6 md:grid-cols-3">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="defi-stats-card p-6 space-y-4">
-          <div className="h-4 w-20 bg-defi-gray-700/50 rounded defi-skeleton" />
-          <div className="h-8 w-32 bg-defi-gray-700/50 rounded defi-skeleton" />
-          <div className="h-3 w-24 bg-defi-gray-700/50 rounded defi-skeleton" />
+      {/* Recent Activity */}
+      {isConnected && (
+        <motion.section 
+          className="py-16"
+          initial="initial"
+          animate="animate"
+          variants={staggerChildren}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div variants={fadeInUp} className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                <span className="aurora-text">Recent Activity</span>
+              </h2>
+              <p className="text-obsidian-300 text-lg max-w-2xl mx-auto">
+                Track your latest transactions and portfolio performance
+              </p>
+            </motion.div>
+            <RecentActivity />
+          </div>
+        </motion.section>
+      )}
+
+      {/* Call to Action */}
+      <motion.section 
+        className="py-20 relative"
+        initial="initial"
+        animate="animate"
+        variants={staggerChildren}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-bitcoin-500/10 via-neon-500/10 to-emerald-500/10" />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div variants={fadeInUp}>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              <span className="aurora-text">Ready to Start Your Bitcoin DeFi Journey?</span>
+            </h2>
+            <p className="text-obsidian-300 text-lg mb-8 max-w-2xl mx-auto">
+              Join thousands of users who are already earning with SovaBTC. 
+              Start with as little as 0.001 BTC and watch your portfolio grow.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" className="neo-button text-lg px-8 py-4 h-auto">
+                <Link href="/wrap">
+                  Get Started Now
+                  <Bitcoin className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="neo-button-secondary text-lg px-8 py-4 h-auto">
+                <Link href="https://docs.sovabtc.com" target="_blank" rel="noopener noreferrer">
+                  Read Documentation
+                  <ExternalLink className="w-5 h-5 ml-2" />
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
         </div>
-      ))}
+      </motion.section>
     </div>
   )
 }
