@@ -231,28 +231,44 @@ export function DepositForm() {
           )}
         </AnimatePresence>
 
-        {/* Validation Error */}
-        <AnimatePresence>
-          {validation.error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex items-center gap-2 text-sm text-defi-red-400 bg-defi-red-500/10 border border-defi-red-500/20 rounded-lg p-3"
-            >
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              <span>{validation.error}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Validation Error */}
+      <AnimatePresence>
+        {validation.error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center gap-2 text-sm text-defi-red-400 bg-defi-red-500/10 border border-defi-red-500/20 rounded-lg p-3"
+          >
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{validation.error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transaction Error */}
+      <AnimatePresence>
+        {deposit.error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center gap-2 text-sm text-defi-red-400 bg-defi-red-500/10 border border-defi-red-500/20 rounded-lg p-3"
+          >
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{deposit.error.message || 'Transaction failed'}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       </div>
 
       {/* Transaction Status */}
-      <TransactionStatus 
+      <TransactionStatus
         approvalHash={approval.hash}
         depositHash={deposit.hash}
         approvalSuccess={approval.isSuccess}
         depositSuccess={deposit.isSuccess}
+        depositError={deposit.error}
       />
     </motion.div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, ExternalLink, Loader2 } from 'lucide-react'
+import { CheckCircle, ExternalLink, Loader2, AlertCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -10,13 +10,15 @@ interface TransactionStatusProps {
   depositHash?: `0x${string}`
   approvalSuccess?: boolean
   depositSuccess?: boolean
+  depositError?: Error | null
 }
 
 export function TransactionStatus({
   approvalHash,
   depositHash,
   approvalSuccess,
-  depositSuccess
+  depositSuccess,
+  depositError,
 }: TransactionStatusProps) {
   const hasTransactions = approvalHash || depositHash
 
@@ -103,7 +105,7 @@ export function TransactionStatus({
           </div>
 
           {/* Success Message */}
-          {depositSuccess && (
+          {depositSuccess && depositHash && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -113,8 +115,30 @@ export function TransactionStatus({
               <div>
                 <div className="font-medium text-defi-green-400">Wrap Completed!</div>
                 <div className="text-sm text-slate-400">
-                  Your tokens have been successfully wrapped to sovaBTC
+                  Tx:{' '}
+                  <a
+                    href={`https://sepolia.basescan.org/tx/${depositHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    {depositHash.slice(0, 8)}...
+                  </a>
                 </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Error Message */}
+          {depositError && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center gap-3 p-4 rounded-lg bg-defi-red-500/10 border border-defi-red-500/20"
+            >
+              <AlertCircle className="h-6 w-6 text-defi-red-500" />
+              <div className="text-sm text-defi-red-400">
+                {depositError.message || 'Transaction failed'}
               </div>
             </motion.div>
           )}
