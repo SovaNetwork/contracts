@@ -2,9 +2,9 @@
 
 import '@rainbow-me/rainbowkit/styles.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { WagmiProvider } from 'wagmi'
+import { WagmiConfig } from 'wagmi'
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
-import { wagmiConfig } from '@/config/wagmi'
+import { wagmiConfig, chains } from '@/config/wagmi'
 import { useState, useEffect } from 'react'
 import { Toaster } from 'sonner'
 
@@ -35,9 +35,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiConfig config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider 
+        <RainbowKitProvider
+          chains={chains}
           theme={darkTheme({
             accentColor: '#f59e0b',
             accentColorForeground: 'white',
@@ -57,6 +58,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           />
         </RainbowKitProvider>
       </QueryClientProvider>
-    </WagmiProvider>
+    </WagmiConfig>
   )
 }
