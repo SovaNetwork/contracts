@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   useAccount,
   useSimulateContract as usePrepareContractWrite,
   useContractWrite,
   useWaitForTransactionReceipt,
+  useReadContract,
 } from 'wagmi'
+import { formatUnits } from 'viem'
 
 // Minimal ABI fragments for the SovaBTC contract
 const SOVABTC_ADDRESS = '0x2100000000000000000000000000000000000020'
@@ -37,7 +39,7 @@ const SOVABTC_ABI = [
 ] as const
 
 export default function HomePage() {
-  const { isConnected } = useAccount()
+  const { address, isConnected } = useAccount()
 
   // Deposit form state
   const [depositAmount, setDepositAmount] = useState('')
@@ -49,6 +51,28 @@ export default function HomePage() {
   const [withdrawGasLimit, setWithdrawGasLimit] = useState('')
   const [withdrawHeight, setWithdrawHeight] = useState('')
   const [withdrawAddress, setWithdrawAddress] = useState('')
+
+  // Status messages
+  const [depositStatus, setDepositStatus] = useState<
+    | { type: 'success' | 'error'; message: React.ReactNode }
+    | null
+  >(null)
+  const [withdrawStatus, setWithdrawStatus] = useState<
+    | { type: 'success' | 'error'; message: React.ReactNode }
+    | null
+  >(null)
+
+  // User balance
+  const { data: balanceData, refetch: refetchBalance } = useReadContract({
+    address: SOVABTC_ADDRESS,
+    abi: SOVABTC_ABI,
+    functionName: 'balanceOf',
+    args: [address!],
+    query: { enabled: Boolean(address), watch: true },
+  })
+  const balanceFormatted = balanceData
+    ? formatUnits(balanceData, 8)
+    : '0.00000000'
 
   // Prepare hooks
   const { data: depositPrep } = usePrepareContractWrite({
@@ -68,9 +92,17 @@ export default function HomePage() {
     },
   })
 
-  const { data: depositHash, writeContract: depositWrite, isPending: isDepositing } =
-    useContractWrite()
-  const { isLoading: depositConfirming } = useWaitForTransactionReceipt({
+  const {
+    data: depositHash,
+    writeContract: depositWrite,
+    isPending: isDepositing,
+    error: depositWriteError,
+  } = useContractWrite()
+  const {
+    isLoading: depositConfirming,
+    isSuccess: depositSuccess,
+    error: depositTxError,
+  } = useWaitForTransactionReceipt({
     hash: depositHash,
   })
 
@@ -98,14 +130,23 @@ export default function HomePage() {
     },
   })
 
-  const { data: withdrawHash, writeContract: withdrawWrite, isPending: isWithdrawing } =
-    useContractWrite()
-  const { isLoading: withdrawConfirming } = useWaitForTransactionReceipt({
+  const {
+    data: withdrawHash,
+    writeContract: withdrawWrite,
+    isPending: isWithdrawing,
+    error: withdrawWriteError,
+  } = useContractWrite()
+  const {
+    isLoading: withdrawConfirming,
+    isSuccess: withdrawSuccess,
+    error: withdrawTxError,
+  } = useWaitForTransactionReceipt({
     hash: withdrawHash,
   })
 
   const handleDeposit = (e: React.FormEvent) => {
     e.preventDefault()
+    setDepositStatus(null)
     if (depositPrep?.request) {
       depositWrite(depositPrep.request)
     }
@@ -113,13 +154,79 @@ export default function HomePage() {
 
   const handleWithdraw = (e: React.FormEvent) => {
     e.preventDefault()
+    setWithdrawStatus(null)
     if (withdrawPrep?.request) {
       withdrawWrite(withdrawPrep.request)
     }
   }
 
+  useEffect(() => {
+    if (depositSuccess && depositHash) {
+      setDepositStatus({
+        type: 'success',
+        message: (
+          <span>
+            Deposit submitted! Tx:{' '}
+            <a
+              href={`https://sepolia.basescan.org/tx/${depositHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              {depositHash.slice(0, 8)}...
+            </a>
+          </span>
+        ),
+      })
+      refetchBalance()
+    }
+  }, [depositSuccess, depositHash, refetchBalance])
+
+  useEffect(() => {
+    if (depositWriteError || depositTxError) {
+      setDepositStatus({
+        type: 'error',
+        message: depositWriteError?.message || depositTxError?.message || 'Transaction failed',
+      })
+    }
+  }, [depositWriteError, depositTxError])
+
+  useEffect(() => {
+    if (withdrawSuccess && withdrawHash) {
+      setWithdrawStatus({
+        type: 'success',
+        message: (
+          <span>
+            Withdraw submitted! Tx:{' '}
+            <a
+              href={`https://sepolia.basescan.org/tx/${withdrawHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              {withdrawHash.slice(0, 8)}...
+            </a>
+          </span>
+        ),
+      })
+      refetchBalance()
+    }
+  }, [withdrawSuccess, withdrawHash, refetchBalance])
+
+  useEffect(() => {
+    if (withdrawWriteError || withdrawTxError) {
+      setWithdrawStatus({
+        type: 'error',
+        message: withdrawWriteError?.message || withdrawTxError?.message || 'Transaction failed',
+      })
+    }
+  }, [withdrawWriteError, withdrawTxError])
+
   return (
     <main className="container mx-auto p-4 mt-8">
+      <div className="mb-6 text-gray-200 text-sm">
+        Your sovaBTC Balance: <span className="font-semibold">{balanceFormatted}</span>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <section className="bg-gray-800 rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-white mb-4">
@@ -184,6 +291,17 @@ export default function HomePage() {
             >
               {isDepositing || depositConfirming ? 'Processing...' : 'Deposit'}
             </button>
+            {depositStatus && (
+              <div
+                className={`mt-2 p-2 rounded text-sm ${
+                  depositStatus.type === 'success'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {depositStatus.message}
+              </div>
+            )}
           </form>
         </section>
         <section className="bg-gray-800 rounded-lg shadow-md p-6">
@@ -266,6 +384,17 @@ export default function HomePage() {
             >
               {isWithdrawing || withdrawConfirming ? 'Processing...' : 'Withdraw'}
             </button>
+            {withdrawStatus && (
+              <div
+                className={`mt-2 p-2 rounded text-sm ${
+                  withdrawStatus.type === 'success'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {withdrawStatus.message}
+              </div>
+            )}
           </form>
         </section>
       </div>
