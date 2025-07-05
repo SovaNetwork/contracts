@@ -7,9 +7,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { 
   AlertTriangle, 
-  Pause, 
-  Play, 
-  Shield, 
+  Pause,
+  Shield,
   StopCircle,
   Loader2,
   CheckCircle
@@ -17,7 +16,7 @@ import {
 
 import { useAdminActions } from '@/hooks/web3/use-admin-actions'
 import { CONTRACT_ADDRESSES } from '@/contracts/addresses'
-import { SOVABTC_STAKING_ABI, SOVABTC_ABI } from '@/contracts/abis'
+import { SOVABTC_STAKING_ABI } from '@/contracts/abis'
 import { baseSepolia } from 'viem/chains'
 
 export function EmergencyControls() {
@@ -72,12 +71,10 @@ export function EmergencyControls() {
           )
           break
         case 'pause-wrapper':
-          // Would need wrapper contract pause function
-          console.log('Pausing wrapper contract...')
+          // TODO: implement wrapper contract pause functionality
           break
         case 'emergency-shutdown':
-          // Would implement protocol-wide shutdown
-          console.log('Emergency shutdown initiated...')
+          // TODO: implement protocol wide shutdown
           break
       }
     } catch (error) {

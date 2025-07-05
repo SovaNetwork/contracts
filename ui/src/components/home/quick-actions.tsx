@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Zap, TrendingUp, ArrowDownUp, Gift, ArrowUpRight, Timer } from 'lucide-react'
+import { Zap, TrendingUp, ArrowDownUp, Gift, ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { useAccount } from 'wagmi'
 import { useTokenBalance } from '@/hooks/web3/use-token-balance'
@@ -29,7 +29,7 @@ const staggerChildren = {
 }
 
 export default function QuickActions() {
-  const { address } = useAccount()
+  useAccount()
   const sovaBTCBalance = useTokenBalance(CONTRACT_ADDRESSES[baseSepolia.id].SOVABTC)
   const stakingData = useStakingData(CONTRACT_ADDRESSES[baseSepolia.id].STAKING)
   const redemptionStatus = useRedemptionStatus(CONTRACT_ADDRESSES[baseSepolia.id].REDEMPTION_QUEUE)
@@ -88,7 +88,7 @@ export default function QuickActions() {
       animate="animate"
       variants={staggerChildren}
     >
-      {actions.map((action, index) => (
+      {actions.map((action) => (
         <motion.div key={action.title} variants={fadeInUp}>
           <Card className="neo-card group h-full">
             <CardHeader className="pb-4">

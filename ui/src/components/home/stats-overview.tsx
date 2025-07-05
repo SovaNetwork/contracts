@@ -98,7 +98,7 @@ export default function StatsOverview() {
       animate="animate"
       variants={staggerChildren}
     >
-      {statCards.map((stat, index) => (
+      {statCards.map((stat) => (
         <motion.div key={stat.title} variants={fadeInUp}>
           <Card className="neo-card group">
             <CardContent className="p-6">

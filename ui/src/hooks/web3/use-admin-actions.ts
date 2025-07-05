@@ -1,6 +1,7 @@
 'use client'
 
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import type { Abi } from 'viem'
 import { TOKEN_WHITELIST_ABI, REDEMPTION_QUEUE_ABI, SOVABTC_STAKING_ABI } from '@/contracts/abis'
 import { useToast } from '@/hooks/use-toast'
 import { useCallback, useEffect } from 'react'
@@ -87,7 +88,7 @@ export function useAdminActions() {
 
   const pauseContract = useCallback(async (
     contractAddress: `0x${string}`,
-    abi: any
+    abi: Abi
   ) => {
     writeContract({
       address: contractAddress,
@@ -99,7 +100,7 @@ export function useAdminActions() {
 
   const unpauseContract = useCallback(async (
     contractAddress: `0x${string}`,
-    abi: any
+    abi: Abi
   ) => {
     writeContract({
       address: contractAddress,
