@@ -1,14 +1,52 @@
 'use client'
 
-import { getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { baseSepolia } from 'wagmi/chains'
+import { configureChains, createConfig } from 'wagmi'
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
+import { getDefaultWallets } from '@rainbow-me/rainbowkit'
 
-// Get WalletConnect Project ID with fallback
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id'
+// Custom Base Sepolia chain configuration
+export const baseSepoliaChain = {
+  id: 84531,
+  name: 'Base Sepolia',
+  network: 'base-sepolia',
+  nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: ['https://base-sepolia.blockpi.network/v1/rpc/public'],
+    },
+    public: {
+      http: ['https://base-sepolia.blockpi.network/v1/rpc/public'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Basescan', url: 'https://base-sepolia.basescan.org' },
+  },
+} as const
 
-export const wagmiConfig = getDefaultConfig({
-  appName: 'SovaBTC - Modern DeFi Protocol',
-  projectId,
-  chains: [baseSepolia],
-  ssr: false, // Disable SSR to avoid indexedDB issues
+// Configure chains with JSON RPC provider
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+  [baseSepoliaChain],
+  [
+    jsonRpcProvider({
+      rpc: () => ({
+        http: baseSepoliaChain.rpcUrls.default.http[0],
+      }),
+    }),
+  ],
+)
+
+// Set up wallet connectors using RainbowKit helper
+const { connectors } = getDefaultWallets({
+  appName: 'SovaBTC dApp',
+  chains,
 })
+
+// Create wagmi configuration
+export const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors,
+  publicClient,
+  webSocketPublicClient,
+})
+
+export { chains }
