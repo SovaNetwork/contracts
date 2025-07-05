@@ -31,7 +31,9 @@ const containerVariants = {
   }
 }
 
-const itemVariants = {
+import type { Variants } from 'framer-motion'
+
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,

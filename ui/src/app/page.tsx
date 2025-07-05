@@ -68,7 +68,7 @@ export default function HomePage() {
     abi: SOVABTC_ABI,
     functionName: 'balanceOf',
     args: [address!],
-    query: { enabled: Boolean(address), watch: true },
+    query: { enabled: Boolean(address) },
   })
   const balanceFormatted = balanceData
     ? formatUnits(balanceData, 8)

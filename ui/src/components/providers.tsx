@@ -26,7 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // Show loading state during SSR and initial hydration
   if (!isMounted) {
     return (
-      <div className="flex min-h-screen flex-col bg-obsidian-950">
+      <div className="flex min-h-screen flex-col" style={{ backgroundColor: '#0c0c0e' }}>
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bitcoin-500"></div>
         </div>

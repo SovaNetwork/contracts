@@ -20,7 +20,7 @@ import {
 import { useAdminActions } from '@/hooks/web3/use-admin-actions'
 import { CONTRACT_ADDRESSES } from '@/contracts/addresses'
 import { SOVABTC_STAKING_ABI, REDEMPTION_QUEUE_ABI } from '@/contracts/abis'
-import { parseUnits, formatUnits } from 'viem'
+import { parseUnits, formatUnits, type Abi } from 'viem'
 import { baseSepolia } from 'viem/chains'
 
 export function ContractManagement() {
@@ -67,9 +67,9 @@ export function ContractManagement() {
 
   const handlePauseToggle = async () => {
     if (isPaused) {
-      await adminActions.unpauseContract(stakingAddress, SOVABTC_STAKING_ABI)
+      await adminActions.unpauseContract(stakingAddress, SOVABTC_STAKING_ABI as Abi)
     } else {
-      await adminActions.pauseContract(stakingAddress, SOVABTC_STAKING_ABI)
+      await adminActions.pauseContract(stakingAddress, SOVABTC_STAKING_ABI as Abi)
     }
   }
 
