@@ -31,102 +31,516 @@
   * {
     border-color: hsl(var(--border));
   }
+  
   body {
     color: hsl(var(--foreground));
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0f172a 50%, #1e293b 75%, #0f172a 100%);
+    background-size: 400% 400%;
+    animation: gradient-xy 15s ease infinite;
     min-height: 100vh;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Improved scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #9c88ff 0%, #f054ff 100%);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #b9a7ff 0%, #f687ff 100%);
+  }
+  
+  ::-webkit-scrollbar-corner {
+    background: rgba(15, 23, 42, 0.5);
   }
 }
 
 @layer components {
-  /* DeFi Glass Card Effect */
+  /* Enhanced DeFi Glass Card Effect */
   .defi-card {
-    backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease-out;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.08) 0%, 
+      rgba(255, 255, 255, 0.03) 50%, 
+      rgba(255, 255, 255, 0.01) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 -1px 0 rgba(0, 0, 0, 0.1) inset;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .defi-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+      rgba(156, 136, 255, 0.03) 0%, 
+      rgba(240, 84, 255, 0.03) 50%, 
+      rgba(14, 165, 233, 0.03) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
   
   .defi-card:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.12) 0%, 
+      rgba(255, 255, 255, 0.06) 50%, 
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.18),
+      0 0 0 1px rgba(156, 136, 255, 0.2),
+      0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    transform: translateY(-2px);
   }
   
-  /* Gradient Text */
+  .defi-card:hover::before {
+    opacity: 1;
+  }
+  
+  /* Enhanced Gradient Text */
   .gradient-text {
-    background: linear-gradient(90deg, #a78bfa 0%, #f472b6 50%, #60a5fa 100%);
+    background: linear-gradient(135deg, #b9a7ff 0%, #f687ff 40%, #38bdf8 80%, #9c88ff 100%);
+    background-size: 200% 200%;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+    animation: gradient-x 6s ease infinite;
+    font-weight: 600;
+    text-shadow: 0 0 30px rgba(156, 136, 255, 0.3);
   }
   
-  /* Shimmer Effect for Loading */
+  /* Enhanced Shimmer Effect */
   .shimmer {
     background: linear-gradient(
       110deg,
-      transparent 40%,
-      rgba(255, 255, 255, 0.1) 50%,
-      transparent 60%
+      transparent 35%,
+      rgba(255, 255, 255, 0.15) 45%,
+      rgba(156, 136, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.15) 55%,
+      transparent 65%
     );
     background-size: 200% 100%;
-    animation: shimmer 2s linear infinite;
+    animation: shimmer 2.5s ease infinite;
+    border-radius: 0.5rem;
   }
   
-  /* Interactive Button Animations */
+  /* Modern DeFi Button Styles */
   .defi-button {
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease-out;
-  }
-  
-  .defi-button:hover {
-    transform: scale(1.05);
-  }
-  
-  .defi-button:active {
-    transform: scale(0.95);
+    background: linear-gradient(135deg, #9c88ff 0%, #f054ff 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 4px 12px rgba(156, 136, 255, 0.3),
+      0 1px 0 rgba(255, 255, 255, 0.1) inset;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
   
   .defi-button::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, rgba(139, 92, 246, 0.2) 0%, rgba(244, 114, 182, 0.2) 50%, rgba(59, 130, 246, 0.2) 100%);
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.2) 0%, 
+      transparent 50%, 
+      rgba(255, 255, 255, 0.1) 100%
+    );
     transform: translateX(-100%);
-    transition: transform 0.5s ease-out;
+    transition: transform 0.6s ease;
+  }
+  
+  .defi-button:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #b9a7ff 0%, #f687ff 100%);
+    box-shadow: 
+      0 8px 24px rgba(156, 136, 255, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.1),
+      0 1px 0 rgba(255, 255, 255, 0.15) inset;
   }
   
   .defi-button:hover::before {
     transform: translateX(100%);
   }
+  
+  .defi-button:active {
+    transform: translateY(0);
+  }
+  
+  /* Enhanced Button Variants */
+  .defi-button-secondary {
+    background: linear-gradient(135deg, 
+      rgba(156, 136, 255, 0.1) 0%, 
+      rgba(240, 84, 255, 0.1) 100%
+    );
+    border: 1px solid rgba(156, 136, 255, 0.3);
+    color: #b9a7ff;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .defi-button-secondary:hover {
+    background: linear-gradient(135deg, 
+      rgba(156, 136, 255, 0.2) 0%, 
+      rgba(240, 84, 255, 0.2) 100%
+    );
+    border: 1px solid rgba(156, 136, 255, 0.5);
+    color: #d2c8ff;
+  }
+  
+  /* Modern Input Styles */
+  .defi-input {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.05) 0%, 
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .defi-input:focus {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.08) 0%, 
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    border: 1px solid rgba(156, 136, 255, 0.4);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.15),
+      0 0 0 3px rgba(156, 136, 255, 0.1);
+  }
+  
+  /* Enhanced Stats Cards */
+  .defi-stats-card {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.06) 0%, 
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .defi-stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(156, 136, 255, 0.5) 50%, 
+      transparent 100%
+    );
+  }
+  
+  .defi-stats-card:hover {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.04) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transform: translateY(-4px);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(156, 136, 255, 0.1);
+  }
+  
+  /* Progress Bar Enhancements */
+  .defi-progress {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.05) 0%, 
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .defi-progress::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+      rgba(156, 136, 255, 0.1) 0%, 
+      rgba(240, 84, 255, 0.1) 50%, 
+      rgba(14, 165, 233, 0.1) 100%
+    );
+    opacity: 0.3;
+  }
+  
+  .defi-progress-indicator {
+    background: linear-gradient(135deg, #9c88ff 0%, #f054ff 50%, #38bdf8 100%);
+    background-size: 200% 100%;
+    animation: gradient-x 3s ease infinite;
+    box-shadow: 
+      0 0 20px rgba(156, 136, 255, 0.4),
+      0 0 40px rgba(240, 84, 255, 0.2);
+    position: relative;
+  }
+  
+  .defi-progress-indicator::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.3) 0%, 
+      transparent 50%, 
+      rgba(255, 255, 255, 0.1) 100%
+    );
+  }
+  
+  /* Loading Skeleton Improvements */
+  .defi-skeleton {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.03) 0%, 
+      rgba(255, 255, 255, 0.08) 50%, 
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    background-size: 200% 200%;
+    animation: shimmer-slow 3s ease infinite;
+    border-radius: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .defi-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+      transparent 0%, 
+      rgba(156, 136, 255, 0.1) 50%, 
+      transparent 100%
+    );
+    animation: gradient-x 2s ease infinite;
+  }
+  
+  /* Enhanced Badge Styles */
+  .defi-badge {
+    background: linear-gradient(135deg, 
+      rgba(156, 136, 255, 0.2) 0%, 
+      rgba(240, 84, 255, 0.2) 100%
+    );
+    border: 1px solid rgba(156, 136, 255, 0.3);
+    color: #d2c8ff;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    font-weight: 500;
+    text-shadow: 0 0 10px rgba(156, 136, 255, 0.3);
+  }
+  
+  .defi-badge-success {
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.2) 0%, 
+      rgba(22, 163, 74, 0.2) 100%
+    );
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #86efac;
+  }
+  
+  .defi-badge-error {
+    background: linear-gradient(135deg, 
+      rgba(239, 68, 68, 0.2) 0%, 
+      rgba(220, 38, 38, 0.2) 100%
+    );
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+  }
+  
+  /* Modern Separator */
+  .defi-separator {
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(255, 255, 255, 0.1) 50%, 
+      transparent 100%
+    );
+    height: 1px;
+    border: none;
+  }
+  
+  /* Enhanced Focus Styles */
+  .defi-focus-ring {
+    transition: all 0.2s ease;
+  }
+  
+  .defi-focus-ring:focus {
+    outline: none;
+    box-shadow: 
+      0 0 0 3px rgba(156, 136, 255, 0.1),
+      0 0 0 1px rgba(156, 136, 255, 0.3);
+  }
+  
+  /* Floating Action Button */
+  .defi-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #9c88ff 0%, #f054ff 100%);
+    box-shadow: 
+      0 8px 32px rgba(156, 136, 255, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 50;
+  }
+  
+  .defi-fab:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 
+      0 16px 48px rgba(156, 136, 255, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Modern Tooltip */
+  .defi-tooltip {
+    background: linear-gradient(135deg, 
+      rgba(15, 23, 42, 0.95) 0%, 
+      rgba(30, 41, 59, 0.95) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(156, 136, 255, 0.1);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #e2e8f0;
+  }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(139, 92, 246, 0.5);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 92, 246, 0.7);
-}
-
-/* Keyframes */
+/* Enhanced Animations */
 @keyframes shimmer {
-  from {
+  0% {
     background-position: 0 0;
   }
-  to {
+  100% {
     background-position: -200% 0;
+  }
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes gradient-y {
+  0%, 100% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+}
+
+@keyframes gradient-xy {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Media Queries for Enhanced Responsiveness */
+@media (max-width: 768px) {
+  .defi-card {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  .defi-fab {
+    bottom: 1rem;
+    right: 1rem;
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High DPI Display Optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .defi-card {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Dark mode specific enhancements */
+@media (prefers-color-scheme: dark) {
+  .defi-card {
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.05) 50%, 
+      rgba(255, 255, 255, 0.02) 100%
+    );
+  }
+}
+
+/* Print styles */
+@media print {
+  .defi-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+  }
+  
+  .gradient-text {
+    color: #333 !important;
+    background: none !important;
   }
 }
