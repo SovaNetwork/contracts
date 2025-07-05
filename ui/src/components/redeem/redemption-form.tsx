@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,11 @@ export function RedemptionForm() {
   const approval = useTokenApproval()
   const redemptionRequest = useRedemptionRequest()
   const redemptionStatus = useRedemptionStatus(queueAddress)
+
+  const [txStatus, setTxStatus] = useState<
+    | { type: 'success' | 'error'; message: React.ReactNode }
+    | null
+  >(null)
   
   // Check if user already has an active redemption
   const hasActiveRedemption = redemptionStatus.queueData.isActive
@@ -79,7 +84,9 @@ export function RedemptionForm() {
 
   const handleRedeem = async () => {
     if (!amount || !validation.isValid) return
-    
+
+    setTxStatus(null)
+
     await redemptionRequest.requestRedemption(
       selectedToken.address,
       amount,
@@ -93,8 +100,35 @@ export function RedemptionForm() {
       setAmount('')
       sovaBTCBalance.refetch()
       redemptionStatus.refetch()
+      if (redemptionRequest.hash) {
+        setTxStatus({
+          type: 'success',
+          message: (
+            <span>
+              Redemption submitted! Tx:{' '}
+              <a
+                href={`https://sepolia.basescan.org/tx/${redemptionRequest.hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                {redemptionRequest.hash.slice(0, 8)}...
+              </a>
+            </span>
+          ),
+        })
+      }
     }
-  }, [redemptionRequest.isSuccess, sovaBTCBalance, redemptionStatus])
+  }, [redemptionRequest.isSuccess, redemptionRequest.hash, sovaBTCBalance, redemptionStatus])
+
+  useEffect(() => {
+    if (redemptionRequest.error) {
+      setTxStatus({
+        type: 'error',
+        message: redemptionRequest.error.message || 'Transaction failed',
+      })
+    }
+  }, [redemptionRequest.error])
 
   if (!isConnected) {
     return (
@@ -311,7 +345,16 @@ export function RedemptionForm() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Transaction Status */}
+        {txStatus && (
+          <div
+            className={`mt-2 p-2 rounded text-sm ${txStatus.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+          >
+            {txStatus.message}
+          </div>
+        )}
       </div>
     </motion.div>
   )
-} 
+}
