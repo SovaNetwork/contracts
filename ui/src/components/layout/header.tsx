@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Bitcoin, Menu } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -18,11 +18,17 @@ const navigation = [
   { name: 'Redeem', href: '/redeem' },
   { name: 'Stake', href: '/stake' },
   { name: 'Portfolio', href: '/portfolio' },
+  { name: 'Admin', href: '/admin' },
 ]
 
 export function Header() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   return (
     <motion.header 
@@ -84,23 +90,29 @@ export function Header() {
 
         {/* Wallet Connection */}
         <div className="flex items-center space-x-4">
-          <div className="hidden sm:block">
-            <ConnectButton 
-              showBalance={false}
-              chainStatus="icon"
-              accountStatus={{
-                smallScreen: 'avatar',
-                largeScreen: 'full',
-              }}
-            />
-          </div>
-          <div className="sm:hidden">
-            <ConnectButton 
-              showBalance={false}
-              chainStatus="none"
-              accountStatus="avatar"
-            />
-          </div>
+          {isMounted ? (
+            <>
+              <div className="hidden sm:block">
+                <ConnectButton 
+                  showBalance={false}
+                  chainStatus="icon"
+                  accountStatus={{
+                    smallScreen: 'avatar',
+                    largeScreen: 'full',
+                  }}
+                />
+              </div>
+              <div className="sm:hidden">
+                <ConnectButton 
+                  showBalance={false}
+                  chainStatus="none"
+                  accountStatus="avatar"
+                />
+              </div>
+            </>
+          ) : (
+            <div className="h-10 w-32 bg-slate-700/50 rounded-lg shimmer" />
+          )}
 
           {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>

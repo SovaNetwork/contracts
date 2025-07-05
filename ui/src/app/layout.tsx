@@ -4,11 +4,11 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/layout/header";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: "SovaBTC - Modern Multi-Chain Bitcoin Protocol",
-  description: "Wrap, stake, and redeem Bitcoin across multiple chains with professional DeFi experience",
+  title: "SovaBTC - Modern Bitcoin DeFi Protocol",
+  description: "Professional Bitcoin DeFi with transparent wrapping, staking, and yield farming",
   keywords: "DeFi, Bitcoin, SovaBTC, Staking, Wrapping, Base",
   authors: [{ name: "SovaBTC Team" }],
   openGraph: {
@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <Providers>
           <div className="relative flex min-h-screen flex-col">
             <Header />
