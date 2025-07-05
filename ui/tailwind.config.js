@@ -73,88 +73,76 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Enhanced DeFi Brand Colors - More sophisticated palette
-        'defi-purple': {
-          50: '#f8f7ff',
-          100: '#f1eeff',
-          200: '#e5e0ff',
-          300: '#d2c8ff',
-          400: '#b9a7ff',
-          500: '#9c88ff', // Enhanced primary
-          600: '#8b5cf6',
-          700: '#7c3aed',
-          800: '#6d28d9',
-          900: '#5b21b6',
-          950: '#4c1d95',
+        // New Modern Bitcoin-themed Color System
+        'bitcoin': {
+          50: '#fefae8',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b', // Primary Bitcoin orange
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+          950: '#451a03',
         },
-        'defi-pink': {
-          50: '#fef7ff',
-          100: '#fdeeff',
-          200: '#fcd9ff',
-          300: '#fab8ff',
-          400: '#f687ff',
-          500: '#f054ff', // Enhanced secondary
-          600: '#ec4899',
-          700: '#db2777',
-          800: '#be185d',
-          900: '#9d174d',
-          950: '#831843',
+        'obsidian': {
+          50: '#f7f7f8',
+          100: '#eeeef0',
+          200: '#d9d9de',
+          300: '#b8b9c1',
+          400: '#92939f',
+          500: '#757683',
+          600: '#5f606a',
+          700: '#4e4f57',
+          800: '#44444a',
+          900: '#1a1a1d', // Deep obsidian
+          950: '#0c0c0e',
         },
-        'defi-blue': {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9', // Enhanced accent
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
+        'neon': {
+          50: '#ecfeff',
+          100: '#cffafe',
+          200: '#a5f3fc',
+          300: '#67e8f9',
+          400: '#22d3ee',
+          500: '#06b6d4', // Neon cyan
+          600: '#0891b2',
+          700: '#0e7490',
+          800: '#155e75',
+          900: '#164e63',
+          950: '#083344',
         },
-        // Enhanced success/error colors for modern DeFi
-        'defi-green': {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
+        'emerald': {
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#10b981', // Success emerald
+          600: '#059669',
+          700: '#047857',
+          800: '#065f46',
+          900: '#064e3b',
+          950: '#022c22',
         },
-        'defi-red': {
+        'crimson': {
           50: '#fef2f2',
           100: '#fee2e2',
           200: '#fecaca',
           300: '#fca5a5',
           400: '#f87171',
-          500: '#ef4444',
+          500: '#ef4444', // Error crimson
           600: '#dc2626',
           700: '#b91c1c',
           800: '#991b1b',
           900: '#7f1d1d',
-        },
-        // Modern neutral colors for better contrast
-        'defi-gray': {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+          950: '#450a0a',
         },
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
+        mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.75rem' }],
@@ -175,48 +163,39 @@ module.exports = {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        // Enhanced modern DeFi gradients
-        'defi-gradient': 'linear-gradient(135deg, #9c88ff 0%, #f054ff 50%, #0ea5e9 100%)',
-        'defi-gradient-soft': 'linear-gradient(135deg, #f8f7ff 0%, #fef7ff 50%, #f0f9ff 100%)',
-        'defi-gradient-subtle': 'linear-gradient(135deg, rgba(156, 136, 255, 0.1) 0%, rgba(240, 84, 255, 0.1) 50%, rgba(14, 165, 233, 0.1) 100%)',
-        'defi-gradient-glow': 'linear-gradient(135deg, rgba(156, 136, 255, 0.2) 0%, rgba(240, 84, 255, 0.2) 50%, rgba(14, 165, 233, 0.2) 100%)',
-        'defi-card-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-        'defi-button-gradient': 'linear-gradient(135deg, #9c88ff 0%, #f054ff 100%)',
-        'defi-button-gradient-hover': 'linear-gradient(135deg, #b9a7ff 0%, #f687ff 100%)',
-        // Mesh gradients for modern backgrounds
-        'mesh-gradient': `
-          radial-gradient(at 40% 20%, #9c88ff 0px, transparent 50%),
-          radial-gradient(at 80% 0%, #f054ff 0px, transparent 50%),
-          radial-gradient(at 0% 50%, #0ea5e9 0px, transparent 50%),
-          radial-gradient(at 80% 50%, #9c88ff 0px, transparent 50%),
-          radial-gradient(at 0% 100%, #f054ff 0px, transparent 50%),
-          radial-gradient(at 80% 100%, #0ea5e9 0px, transparent 50%),
-          radial-gradient(at 0% 0%, #9c88ff 0px, transparent 50%)
+        // New Modern Gradients
+        'bitcoin-gradient': 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
+        'neon-gradient': 'linear-gradient(135deg, #06b6d4 0%, #22d3ee 50%, #67e8f9 100%)',
+        'emerald-gradient': 'linear-gradient(135deg, #10b981 0%, #34d399 50%, #6ee7b7 100%)',
+        'obsidian-gradient': 'linear-gradient(135deg, #1a1a1d 0%, #44444a 50%, #5f606a 100%)',
+        'aurora': 'linear-gradient(135deg, #f59e0b 0%, #06b6d4 25%, #10b981 50%, #22d3ee 75%, #d97706 100%)',
+        'dark-aurora': 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(6, 182, 212, 0.1) 25%, rgba(16, 185, 129, 0.1) 50%, rgba(34, 211, 238, 0.1) 75%, rgba(217, 119, 6, 0.1) 100%)',
+        // Mesh Gradients for Background
+        'mesh-dark': `
+          radial-gradient(at 40% 20%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
+          radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+          radial-gradient(at 0% 50%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
+          radial-gradient(at 80% 50%, rgba(34, 211, 238, 0.15) 0px, transparent 50%),
+          radial-gradient(at 0% 100%, rgba(217, 119, 6, 0.15) 0px, transparent 50%),
+          radial-gradient(at 80% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%),
+          radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.15) 0px, transparent 50%)
         `,
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "slide-up": "slide-up 0.3s ease-out",
-        "slide-down": "slide-down 0.3s ease-out",
-        "slide-in-left": "slide-in-left 0.3s ease-out",
-        "slide-in-right": "slide-in-right 0.3s ease-out",
-        "fade-in": "fade-in 0.2s ease-out",
-        "fade-in-up": "fade-in-up 0.3s ease-out",
-        "scale-in": "scale-in 0.2s ease-out",
-        "bounce-gentle": "bounce-gentle 2s infinite",
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "pulse-glow": "pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "fade-in": "fade-in 0.5s ease-out",
+        "fade-in-up": "fade-in-up 0.6s ease-out",
+        "scale-in": "scale-in 0.4s ease-out",
+        "slide-in-left": "slide-in-left 0.5s ease-out",
+        "slide-in-right": "slide-in-right 0.5s ease-out",
+        "bounce-subtle": "bounce-subtle 2s infinite",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "float": "float 6s ease-in-out infinite",
+        "rotate-slow": "rotate-slow 20s linear infinite",
         "shimmer": "shimmer 2s linear infinite",
-        "shimmer-slow": "shimmer 3s linear infinite",
-        "float": "float 3s ease-in-out infinite",
-        "glow": "glow 2s ease-in-out infinite alternate",
-        "gradient-x": "gradient-x 3s ease infinite",
-        "gradient-y": "gradient-y 3s ease infinite",
-        "gradient-xy": "gradient-xy 3s ease infinite",
-        "spin-slow": "spin 3s linear infinite",
-        "wiggle": "wiggle 1s ease-in-out infinite",
-        "heartbeat": "heartbeat 2s ease-in-out infinite",
+        "aurora": "aurora 20s ease infinite",
+        "typing": "typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite",
       },
       keyframes: {
         "accordion-down": {
@@ -227,13 +206,17 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
-        "slide-up": {
-          from: { transform: "translateY(100%)", opacity: 0 },
-          to: { transform: "translateY(0)", opacity: 1 },
+        "fade-in": {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
         },
-        "slide-down": {
-          from: { transform: "translateY(-100%)", opacity: 0 },
-          to: { transform: "translateY(0)", opacity: 1 },
+        "fade-in-up": {
+          from: { opacity: 0, transform: "translateY(30px)" },
+          to: { opacity: 1, transform: "translateY(0)" },
+        },
+        "scale-in": {
+          from: { transform: "scale(0.95)", opacity: 0 },
+          to: { transform: "scale(1)", opacity: 1 },
         },
         "slide-in-left": {
           from: { transform: "translateX(-100%)", opacity: 0 },
@@ -243,21 +226,9 @@ module.exports = {
           from: { transform: "translateX(100%)", opacity: 0 },
           to: { transform: "translateX(0)", opacity: 1 },
         },
-        "fade-in": {
-          from: { opacity: 0 },
-          to: { opacity: 1 },
-        },
-        "fade-in-up": {
-          from: { opacity: 0, transform: "translateY(20px)" },
-          to: { opacity: 1, transform: "translateY(0)" },
-        },
-        "scale-in": {
-          from: { transform: "scale(0.9)", opacity: 0 },
-          to: { transform: "scale(1)", opacity: 1 },
-        },
-        "bounce-gentle": {
+        "bounce-subtle": {
           "0%, 100%": { 
-            transform: "translateY(-5%)",
+            transform: "translateY(-3%)",
             animationTimingFunction: "cubic-bezier(0.8, 0, 1, 1)",
           },
           "50%": { 
@@ -269,84 +240,49 @@ module.exports = {
           "0%, 100%": { 
             opacity: 1,
             transform: "scale(1)",
+            filter: "brightness(1)",
           },
           "50%": { 
-            opacity: 0.8,
+            opacity: 0.9,
             transform: "scale(1.02)",
-          },
-        },
-        "shimmer": {
-          from: {
-            backgroundPosition: "0 0",
-          },
-          to: {
-            backgroundPosition: "-200% 0",
+            filter: "brightness(1.1)",
           },
         },
         "float": {
           "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-10px)" },
+          "50%": { transform: "translateY(-8px)" },
         },
-        "glow": {
-          "0%": { boxShadow: "0 0 5px rgba(156, 136, 255, 0.2)" },
-          "100%": { boxShadow: "0 0 20px rgba(156, 136, 255, 0.4)" },
+        "rotate-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
         },
-        "gradient-x": {
-          "0%, 100%": {
-            backgroundSize: "200% 200%",
-            backgroundPosition: "left center",
-          },
-          "50%": {
-            backgroundSize: "200% 200%",
-            backgroundPosition: "right center",
-          },
+        "shimmer": {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
-        "gradient-y": {
-          "0%, 100%": {
-            backgroundSize: "400% 400%",
-            backgroundPosition: "center top",
-          },
-          "50%": {
-            backgroundSize: "200% 200%",
-            backgroundPosition: "center center",
-          },
+        "aurora": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
         },
-        "gradient-xy": {
-          "0%, 100%": {
-            backgroundSize: "400% 400%",
-            backgroundPosition: "left center",
-          },
-          "50%": {
-            backgroundSize: "200% 200%",
-            backgroundPosition: "right center",
-          },
+        "typing": {
+          from: { width: "0" },
+          to: { width: "100%" },
         },
-        "wiggle": {
-          "0%, 100%": { transform: "rotate(-3deg)" },
-          "50%": { transform: "rotate(3deg)" },
-        },
-        "heartbeat": {
-          "0%, 100%": { transform: "scale(1)" },
-          "50%": { transform: "scale(1.05)" },
+        "blink-caret": {
+          "from, to": { borderColor: "transparent" },
+          "50%": { borderColor: "#f59e0b" },
         },
       },
       boxShadow: {
-        'defi-glow': '0 0 20px rgba(156, 136, 255, 0.3)',
-        'defi-glow-lg': '0 0 30px rgba(156, 136, 255, 0.4)',
-        'defi-glow-xl': '0 0 40px rgba(156, 136, 255, 0.5)',
-        'defi-card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        'defi-card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-        'defi-card-elevated': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        'defi-inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
-        'defi-inner-lg': 'inset 0 4px 8px 0 rgba(0, 0, 0, 0.12)',
-        // Modern glass morphism shadows
-        'glass': '0 8px 32px rgba(0, 0, 0, 0.1)',
-        'glass-lg': '0 12px 40px rgba(0, 0, 0, 0.15)',
-        'glass-xl': '0 16px 48px rgba(0, 0, 0, 0.2)',
-        // Colored shadows
-        'purple-glow': '0 0 20px rgba(156, 136, 255, 0.4)',
-        'pink-glow': '0 0 20px rgba(240, 84, 255, 0.4)',
-        'blue-glow': '0 0 20px rgba(14, 165, 233, 0.4)',
+        'neo': '12px 12px 24px rgba(0, 0, 0, 0.15), -12px -12px 24px rgba(255, 255, 255, 0.05)',
+        'neo-inset': 'inset 6px 6px 12px rgba(0, 0, 0, 0.15), inset -6px -6px 12px rgba(255, 255, 255, 0.05)',
+        'bitcoin-glow': '0 0 30px rgba(245, 158, 11, 0.3)',
+        'neon-glow': '0 0 30px rgba(6, 182, 212, 0.4)',
+        'emerald-glow': '0 0 30px rgba(16, 185, 129, 0.3)',
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.12)',
+        'glass-lg': '0 24px 48px rgba(0, 0, 0, 0.2)',
+        'card-hover': '0 20px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(245, 158, 11, 0.05)',
       },
       backdropBlur: {
         xs: '2px',
