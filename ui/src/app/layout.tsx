@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Header } from "@/components/layout/header";
+import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-sans' });
 
@@ -25,7 +26,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body
+        className={cn(
+          "min-h-screen bg-gray-900 text-gray-100 font-sans",
+          inter.className
+        )}
+        suppressHydrationWarning
+      >
         <Providers>
           <div className="relative flex min-h-screen flex-col">
             <Header />

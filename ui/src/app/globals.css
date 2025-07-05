@@ -12,19 +12,19 @@
     --card-foreground: 247 247 248; /* obsidian-50 */
     --popover: 26 26 29; /* obsidian-900 */
     --popover-foreground: 247 247 248; /* obsidian-50 */
-    --primary: 245 158 11; /* bitcoin-500 */
+    --primary: 139 92 246; /* sova-500 */
     --primary-foreground: 26 26 29; /* obsidian-900 */
     --secondary: 68 68 74; /* obsidian-800 */
     --secondary-foreground: 247 247 248; /* obsidian-50 */
     --muted: 68 68 74; /* obsidian-800 */
     --muted-foreground: 184 185 193; /* obsidian-300 */
-    --accent: 6 182 212; /* neon-500 */
+    --accent: 139 92 246; /* sova-500 */
     --accent-foreground: 26 26 29; /* obsidian-900 */
     --destructive: 239 68 68; /* crimson-500 */
     --destructive-foreground: 247 247 248; /* obsidian-50 */
     --border: 95 95 111; /* obsidian-600 */
     --input: 78 79 87; /* obsidian-700 */
-    --ring: 245 158 11; /* bitcoin-500 */
+    --ring: 139 92 246; /* sova-500 */
     --radius: 1rem;
   }
 }
