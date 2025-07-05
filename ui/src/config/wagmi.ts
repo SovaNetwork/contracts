@@ -10,5 +10,5 @@ export const wagmiConfig = getDefaultConfig({
   appName: 'SovaBTC - Modern DeFi Protocol',
   projectId,
   chains: [baseSepolia],
-  ssr: true,
+  ssr: false, // Disable SSR to avoid indexedDB issues
 })

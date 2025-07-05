@@ -9,28 +9,27 @@ import { useState, useEffect } from 'react'
 import { Toaster } from 'sonner'
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: false,
+      },
+    },
+  }))
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // Prevent SSR hydration issues with Web3 providers
+  // Show loading state during SSR and initial hydration
   if (!isMounted) {
     return (
-      <div className="flex min-h-screen flex-col">
-        {children}
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: 'hsl(222.2 84% 4.9%)',
-              color: 'hsl(210 40% 98%)',
-              border: '1px solid hsl(217.2 32.6% 17.5%)',
-            },
-          }}
-        />
+      <div className="flex min-h-screen flex-col bg-obsidian-950">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bitcoin-500"></div>
+        </div>
       </div>
     )
   }
@@ -40,7 +39,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider 
           theme={darkTheme({
-            accentColor: '#8b5cf6',
+            accentColor: '#f59e0b',
             accentColorForeground: 'white',
             borderRadius: 'medium',
           })}
