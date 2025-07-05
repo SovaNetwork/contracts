@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { NavBar } from "@/components/layout/navbar";
 import { cn } from "@/lib/utils";
-
-const inter = Inter({ subsets: ["latin"], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: "SovaBTC - Modern Bitcoin DeFi Protocol",
@@ -28,8 +25,7 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={cn(
-          "min-h-screen bg-gray-900 text-gray-100 font-sans",
-          inter.className
+          "min-h-screen bg-gray-900 text-gray-100 font-sans"
         )}
         suppressHydrationWarning
       >
