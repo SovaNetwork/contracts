@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { useReadContract } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,8 +14,7 @@ import {
   DollarSign, 
   Clock,
   Loader2,
-  CheckCircle,
-  AlertCircle
+  CheckCircle
 } from 'lucide-react'
 
 import { useAdminActions } from '@/hooks/web3/use-admin-actions'

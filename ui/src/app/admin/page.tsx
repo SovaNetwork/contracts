@@ -57,7 +57,7 @@ export default function AdminPage() {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-white">Access Denied</h1>
             <p className="text-lg text-slate-400">
-              You don't have administrator privileges to access this page.
+              You don&apos;t have administrator privileges to access this page.
             </p>
           </div>
           <Card className="defi-card border-defi-red-500/30 bg-defi-red-500/5 max-w-md mx-auto">

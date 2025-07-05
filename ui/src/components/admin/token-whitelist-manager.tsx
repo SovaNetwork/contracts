@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useReadContract } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,18 +18,16 @@ import {
 
 import { useAdminActions } from '@/hooks/web3/use-admin-actions'
 import { CONTRACT_ADDRESSES } from '@/contracts/addresses'
-import { TOKEN_WHITELIST_ABI } from '@/contracts/abis'
 import { baseSepolia } from 'viem/chains'
 import { isAddress } from 'viem'
 
 export function TokenWhitelistManager() {
   const [newTokenAddress, setNewTokenAddress] = useState('')
-  const [removeTokenAddress, setRemoveTokenAddress] = useState('')
   
   const whitelistAddress = CONTRACT_ADDRESSES[baseSepolia.id].TOKEN_WHITELIST
   const adminActions = useAdminActions()
 
-  // Mock whitelisted tokens for demonstration
+  // Example whitelisted tokens
   const whitelistedTokens = [
     { address: CONTRACT_ADDRESSES[baseSepolia.id].WBTC_TEST, symbol: 'WBTC', name: 'Wrapped Bitcoin' },
     { address: CONTRACT_ADDRESSES[baseSepolia.id].LBTC_TEST, symbol: 'LBTC', name: 'Liquid Bitcoin' },

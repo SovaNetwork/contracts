@@ -194,7 +194,7 @@ export default function StakePage() {
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-16"
             variants={staggerChildren}
           >
-            {benefits.map((benefit, index) => (
+            {benefits.map((benefit) => (
               <motion.div key={benefit.title} variants={fadeInUp}>
                 <Card className="neo-card group h-full">
                   <CardContent className="p-6 text-center">

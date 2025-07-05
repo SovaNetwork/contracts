@@ -6,8 +6,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ExternalLink, ArrowUpRight, ArrowDownLeft, TrendingUp, Gift, Clock } from 'lucide-react'
 import { useAccount } from 'wagmi'
-import { formatTokenAmount } from '@/lib/utils'
-import { useState, useEffect } from 'react'
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -34,59 +32,8 @@ interface ActivityItem {
 }
 
 export default function RecentActivity() {
-  const { address } = useAccount()
-  const [activities, setActivities] = useState<ActivityItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Mock data - in a real app, this would come from an API or subgraph
-  useEffect(() => {
-    const mockActivities: ActivityItem[] = [
-      {
-        id: '1',
-        type: 'wrap',
-        amount: '0.5',
-        token: 'WBTC',
-        txHash: '0x1234567890abcdef1234567890abcdef12345678',
-        timestamp: Date.now() - 1000 * 60 * 30, // 30 minutes ago
-        status: 'completed'
-      },
-      {
-        id: '2',
-        type: 'stake',
-        amount: '0.25',
-        token: 'SovaBTC',
-        txHash: '0xabcdef1234567890abcdef1234567890abcdef12',
-        timestamp: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
-        status: 'completed'
-      },
-      {
-        id: '3',
-        type: 'claim',
-        amount: '150.75',
-        token: 'SOVA',
-        txHash: '0x567890abcdef1234567890abcdef1234567890ab',
-        timestamp: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
-        status: 'completed'
-      },
-      {
-        id: '4',
-        type: 'redeem',
-        amount: '0.1',
-        token: 'SovaBTC',
-        txHash: '0xcdef1234567890abcdef1234567890abcdef1234',
-        timestamp: Date.now() - 1000 * 60 * 60 * 24 * 2, // 2 days ago
-        status: 'pending'
-      }
-    ]
-
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setActivities(mockActivities)
-      setIsLoading(false)
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [address])
+  useAccount()
+  const activities: ActivityItem[] = []
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -165,29 +112,6 @@ export default function RecentActivity() {
     return 'Just now'
   }
 
-  if (isLoading) {
-    return (
-      <Card className="neo-card">
-        <CardHeader>
-          <CardTitle className="text-xl font-bold text-obsidian-50">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 rounded-lg">
-                <div className="h-10 w-10 bg-obsidian-700/50 rounded-lg shimmer" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 bg-obsidian-700/50 rounded shimmer" />
-                  <div className="h-3 w-24 bg-obsidian-700/50 rounded shimmer" />
-                </div>
-                <div className="h-6 w-16 bg-obsidian-700/50 rounded shimmer" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <motion.div 
@@ -213,7 +137,7 @@ export default function RecentActivity() {
             </motion.div>
           ) : (
             <div className="space-y-3">
-              {activities.map((activity, index) => {
+              {activities.map((activity) => {
                 const Icon = getActivityIcon(activity.type)
                 const color = getActivityColor(activity.type)
                 

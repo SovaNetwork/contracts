@@ -102,7 +102,7 @@ export default function FeatureShowcase() {
       animate="animate"
       variants={staggerChildren}
     >
-      {features.map((feature, index) => (
+      {features.map((feature) => (
         <motion.div key={feature.title} variants={fadeInUp}>
           <Card className="neo-card group h-full">
             <CardHeader className="pb-4">

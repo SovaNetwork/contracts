@@ -1,11 +1,10 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Bitcoin, ArrowRight, Shield, Zap, TrendingUp, Info, ExternalLink } from 'lucide-react'
+import { Bitcoin, Shield, Zap, TrendingUp, Info, ExternalLink } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { DepositForm } from '@/components/wrap/deposit-form'
 
@@ -109,8 +108,8 @@ export default function WrapPage() {
                 <span className="aurora-text">Into DeFi</span>
               </h1>
               <p className="text-xl text-obsidian-300 max-w-3xl mx-auto leading-relaxed">
-                Convert your Bitcoin tokens into SovaBTC and unlock the full potential of DeFi. 
-                Earn rewards, provide liquidity, and maintain exposure to Bitcoin's price.
+                Convert your Bitcoin tokens into SovaBTC and unlock the full potential of DeFi.
+                Earn rewards, provide liquidity, and maintain exposure to Bitcoin&apos;s price.
               </p>
             </motion.div>
           </div>
@@ -120,7 +119,7 @@ export default function WrapPage() {
             className="grid gap-6 md:grid-cols-3 mb-16"
             variants={staggerChildren}
           >
-            {benefits.map((benefit, index) => (
+            {benefits.map((benefit) => (
               <motion.div key={benefit.title} variants={fadeInUp}>
                 <Card className="neo-card group h-full">
                   <CardContent className="p-6 text-center">
