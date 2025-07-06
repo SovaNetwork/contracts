@@ -87,7 +87,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         if (!tokenWhitelist.isTokenAllowed(token)) revert TokenNotAllowed(token);
 
         // Get token decimals
-        uint8 tokenDecimals = tokenWhitelist.tokenDecimals(token);
+        uint8 tokenDecimals = tokenWhitelist.getTokenDecimals(token);
 
         // Convert to satoshi amount (8 decimals)
         uint256 sovaAmount;
@@ -136,7 +136,7 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
             revert TokenNotAllowed(token);
         }
 
-        uint8 tokenDecimals = tokenWhitelist.tokenDecimals(token);
+        uint8 tokenDecimals = tokenWhitelist.getTokenDecimals(token);
 
         if (tokenDecimals == 8) {
             return amount; // 1:1 conversion

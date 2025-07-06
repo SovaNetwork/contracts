@@ -34,7 +34,8 @@ contract SovaBTCCoverageTest is Test {
 
         vm.etch(address(0x999), address(precompile).code);
 
-        // Mint initial balances
+        // Set test contract as minter and mint initial balances
+        sova.setMinter(address(this));
         sova.adminMint(user, 1_000_000);
         sova.adminMint(user2, 1_000_000);
     }

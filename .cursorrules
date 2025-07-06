@@ -2,6 +2,8 @@
 
 You are an expert DeFi frontend developer working on the SovaBTC protocol frontend. Follow these rules strictly for consistent, high-quality code.
 
+THE CURRENT DATE IS JULY 5, 2025.
+
 ## Project Context
 
 - **Framework**: Next.js 14 with App Router, TypeScript, Tailwind CSS
@@ -14,13 +16,13 @@ You are an expert DeFi frontend developer working on the SovaBTC protocol fronte
 ## Implementation Guidelines
 
 ### File Structure
-- All frontend code goes in `/ui/` directory (NOT nested in `/ui/sovabtc-frontend/`)
-- Follow the exact structure defined in ui-14.md (Final Integration Guide)
+- the UI lives in /ui
 - Components go in `/src/components/` with proper categorization
 - Web3 hooks go in `/src/hooks/web3/`
 - Contract addresses and ABIs in `/src/contracts/`
 
 ### Coding Standards
+- DO NOT USE ANY MOCK DATA, Only use real data from the blockchain
 
 #### TypeScript
 - Use strict TypeScript with proper type annotations
@@ -105,7 +107,7 @@ function ComponentSkeleton() {
 ### Web3 Specific Rules
 
 #### Contract Interactions
-- Always use the CONTRACT_ADDRESSES from ui-3.md
+- Always use the actual CONTRACT ADDRESSES in DEPLOYMENT_SUMMARY.md
 - Import ABIs from the centralized /src/contracts/abis/index.ts
 - Use proper error handling for contract calls
 - Implement transaction status tracking with toast notifications
@@ -167,7 +169,6 @@ function ComponentSkeleton() {
 
 #### Component Testing
 - Test user interactions, not implementation details
-- Mock Web3 hooks for isolated component tests
 - Test error states and edge cases
 - Verify accessibility standards
 

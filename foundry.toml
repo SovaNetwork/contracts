@@ -9,6 +9,7 @@ remappings = [
   '@solady/=lib/solady/src/',
   '@solady-v0.0.245/=lib/solady-v0.0.245/src/',
   "@openzeppelin/=lib/openzeppelin-contracts/",
+  "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
   "@layerzerolabs/=lib/LayerZero-v2/"
 ]
 

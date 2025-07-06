@@ -1,403 +1,211 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import {
-  useAccount,
-  useSimulateContract as usePrepareContractWrite,
-  useContractWrite,
-  useWaitForTransactionReceipt,
-  useReadContract,
-} from 'wagmi'
-import { formatUnits } from 'viem'
-
-// Minimal ABI fragments for the SovaBTC contract
-const SOVABTC_ADDRESS = '0x2100000000000000000000000000000000000020'
-const SOVABTC_ABI = [
-  {
-    inputs: [
-      { internalType: 'uint64', name: 'amount', type: 'uint64' },
-      { internalType: 'bytes', name: 'signedTx', type: 'bytes' },
-      { internalType: 'uint8', name: 'voutIndex', type: 'uint8' },
-    ],
-    name: 'depositBTC',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      { internalType: 'uint64', name: 'amount', type: 'uint64' },
-      { internalType: 'uint64', name: 'btcGasLimit', type: 'uint64' },
-      { internalType: 'uint64', name: 'btcBlockHeight', type: 'uint64' },
-      { internalType: 'string', name: 'dest', type: 'string' },
-    ],
-    name: 'withdraw',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-] as const
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useBalance } from 'wagmi';
+import { formatTokenAmount } from '@/lib/formatters';
+import { TOKEN_INFO } from '@/contracts/addresses';
+import { APP_NAME } from '@/lib/constants';
 
 export default function HomePage() {
-  const { address, isConnected } = useAccount()
+  const { address, isConnected } = useAccount();
+  
+  // Get ETH balance
+  const { data: ethBalance } = useBalance({
+    address: address,
+  });
 
-  // Deposit form state
-  const [depositAmount, setDepositAmount] = useState('')
-  const [depositTx, setDepositTx] = useState('')
-  const [depositIndex, setDepositIndex] = useState('')
+  // Get SovaBTC balance
+  const { data: sovaBTCBalance } = useBalance({
+    address: address,
+    token: TOKEN_INFO.SOVABTC.address,
+  });
 
-  // Withdraw form state
-  const [withdrawAmount, setWithdrawAmount] = useState('')
-  const [withdrawGasLimit, setWithdrawGasLimit] = useState('')
-  const [withdrawHeight, setWithdrawHeight] = useState('')
-  const [withdrawAddress, setWithdrawAddress] = useState('')
-
-  // Status messages
-  const [depositStatus, setDepositStatus] = useState<
-    | { type: 'success' | 'error'; message: React.ReactNode }
-    | null
-  >(null)
-  const [withdrawStatus, setWithdrawStatus] = useState<
-    | { type: 'success' | 'error'; message: React.ReactNode }
-    | null
-  >(null)
-
-  // User balance
-  const { data: balanceData, refetch: refetchBalance } = useReadContract({
-    address: SOVABTC_ADDRESS,
-    abi: SOVABTC_ABI,
-    functionName: 'balanceOf',
-    args: [address!],
-    query: { enabled: Boolean(address) },
-  })
-  const balanceFormatted = balanceData
-    ? formatUnits(balanceData, 8)
-    : '0.00000000'
-
-  // Prepare hooks
-  const { data: depositPrep } = usePrepareContractWrite({
-    address: SOVABTC_ADDRESS,
-    abi: SOVABTC_ABI,
-    functionName: 'depositBTC',
-    args:
-      depositAmount && depositTx && depositIndex
-        ? [
-            BigInt(depositAmount),
-            depositTx as `0x${string}`,
-            Number(depositIndex),
-          ]
-        : undefined,
-    query: {
-      enabled: Boolean(depositAmount && depositTx && depositIndex && isConnected),
-    },
-  })
-
-  const {
-    data: depositHash,
-    writeContract: depositWrite,
-    isPending: isDepositing,
-    error: depositWriteError,
-  } = useContractWrite()
-  const {
-    isLoading: depositConfirming,
-    isSuccess: depositSuccess,
-    error: depositTxError,
-  } = useWaitForTransactionReceipt({
-    hash: depositHash,
-  })
-
-  const { data: withdrawPrep } = usePrepareContractWrite({
-    address: SOVABTC_ADDRESS,
-    abi: SOVABTC_ABI,
-    functionName: 'withdraw',
-    args:
-      withdrawAmount && withdrawGasLimit && withdrawHeight && withdrawAddress
-        ? [
-            BigInt(withdrawAmount),
-            BigInt(withdrawGasLimit),
-            BigInt(withdrawHeight),
-            withdrawAddress,
-          ]
-        : undefined,
-    query: {
-      enabled: Boolean(
-        withdrawAmount &&
-          withdrawGasLimit &&
-          withdrawHeight &&
-          withdrawAddress &&
-          isConnected,
-      ),
-    },
-  })
-
-  const {
-    data: withdrawHash,
-    writeContract: withdrawWrite,
-    isPending: isWithdrawing,
-    error: withdrawWriteError,
-  } = useContractWrite()
-  const {
-    isLoading: withdrawConfirming,
-    isSuccess: withdrawSuccess,
-    error: withdrawTxError,
-  } = useWaitForTransactionReceipt({
-    hash: withdrawHash,
-  })
-
-  const handleDeposit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setDepositStatus(null)
-    if (depositPrep?.request) {
-      depositWrite(depositPrep.request)
-    }
-  }
-
-  const handleWithdraw = (e: React.FormEvent) => {
-    e.preventDefault()
-    setWithdrawStatus(null)
-    if (withdrawPrep?.request) {
-      withdrawWrite(withdrawPrep.request)
-    }
-  }
-
-  useEffect(() => {
-    if (depositSuccess && depositHash) {
-      setDepositStatus({
-        type: 'success',
-        message: (
-          <span>
-            Deposit submitted! Tx:{' '}
-            <a
-              href={`https://sepolia.basescan.org/tx/${depositHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              {depositHash.slice(0, 8)}...
-            </a>
-          </span>
-        ),
-      })
-      refetchBalance()
-    }
-  }, [depositSuccess, depositHash, refetchBalance])
-
-  useEffect(() => {
-    if (depositWriteError || depositTxError) {
-      setDepositStatus({
-        type: 'error',
-        message: depositWriteError?.message || depositTxError?.message || 'Transaction failed',
-      })
-    }
-  }, [depositWriteError, depositTxError])
-
-  useEffect(() => {
-    if (withdrawSuccess && withdrawHash) {
-      setWithdrawStatus({
-        type: 'success',
-        message: (
-          <span>
-            Withdraw submitted! Tx:{' '}
-            <a
-              href={`https://sepolia.basescan.org/tx/${withdrawHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              {withdrawHash.slice(0, 8)}...
-            </a>
-          </span>
-        ),
-      })
-      refetchBalance()
-    }
-  }, [withdrawSuccess, withdrawHash, refetchBalance])
-
-  useEffect(() => {
-    if (withdrawWriteError || withdrawTxError) {
-      setWithdrawStatus({
-        type: 'error',
-        message: withdrawWriteError?.message || withdrawTxError?.message || 'Transaction failed',
-      })
-    }
-  }, [withdrawWriteError, withdrawTxError])
+  // Get SOVA balance
+  const { data: sovaBalance } = useBalance({
+    address: address,
+    token: TOKEN_INFO.SOVA.address,
+  });
 
   return (
-    <main className="container mx-auto p-4 mt-8">
-      <div className="mb-6 text-gray-200 text-sm">
-        Your sovaBTC Balance: <span className="font-semibold">{balanceFormatted}</span>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <section className="bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            Deposit BTC for sovaBTC
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+      {/* Header */}
+      <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink"></div>
+              <h1 className="text-xl font-bold gradient-text">{APP_NAME}</h1>
+            </div>
+            
+            <nav className="hidden md:flex items-center space-x-6">
+              <a href="/wrap" className="text-foreground/80 hover:text-foreground transition-colors">
+                Wrap
+              </a>
+              <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">
+                Stake
+              </a>
+              <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">
+                Redeem
+              </a>
+              <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">
+                Analytics
+              </a>
+            </nav>
+            
+            <ConnectButton />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-16">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-6xl font-bold mb-6">
+            <span className="gradient-text">
+              Decentralized Bitcoin
+            </span>
+            <br />
+            Infrastructure on Base
           </h2>
-          <form className="space-y-4" onSubmit={handleDeposit}>
-            <div>
-              <label
-                htmlFor="deposit-amount"
-                className="block text-sm font-medium text-gray-200 mb-1"
+          <p className="text-xl text-foreground/80 max-w-2xl mx-auto mb-8">
+            Wrap your Bitcoin, earn rewards through staking, and participate in the future of decentralized finance.
+          </p>
+          
+          {!isConnected ? (
+            <div className="flex flex-col items-center space-y-4">
+              <ConnectButton />
+              <div className="text-foreground/60">or</div>
+              <a 
+                href="/wrap" 
+                className="btn-defi px-6 py-3 rounded-lg font-medium text-white hover:scale-105 transition-all duration-200"
               >
-                Amount (satoshis)
-              </label>
-              <input
-                id="deposit-amount"
-                type="number"
-                required
-                placeholder="e.g. 100000"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(e.target.value)}
-                className="w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2 placeholder-gray-400"
-              />
+                Start Wrapping →
+              </a>
             </div>
-            <div>
-              <label
-                htmlFor="deposit-tx"
-                className="block text-sm font-medium text-gray-200 mb-1"
-              >
-                Signed BTC Transaction (hex)
-              </label>
-              <input
-                id="deposit-tx"
-                type="text"
-                required
-                placeholder="Paste the signed transaction hex"
-                value={depositTx}
-                onChange={(e) => setDepositTx(e.target.value)}
-                className="w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2 placeholder-gray-400"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="deposit-index"
-                className="block text-sm font-medium text-gray-200 mb-1"
-              >
-                Output Index
-              </label>
-              <input
-                id="deposit-index"
-                type="number"
-                required
-                placeholder="e.g. 0"
-                value={depositIndex}
-                onChange={(e) => setDepositIndex(e.target.value)}
-                className="w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2 placeholder-gray-400"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isDepositing || depositConfirming || !depositPrep?.request}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
-            >
-              {isDepositing || depositConfirming ? 'Processing...' : 'Deposit'}
-            </button>
-            {depositStatus && (
-              <div
-                className={`mt-2 p-2 rounded text-sm ${
-                  depositStatus.type === 'success'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {depositStatus.message}
+          ) : (
+            <div className="space-y-4">
+              <p className="text-lg text-foreground/60">
+                Welcome back! Your wallet is connected.
+              </p>
+              
+              {/* Wallet Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                <div className="defi-card p-4 text-center">
+                  <div className="text-sm text-foreground/60 mb-1">ETH Balance</div>
+                  <div className="text-lg font-semibold">
+                    {ethBalance ? formatTokenAmount(ethBalance.value, 18, 4) : '0.0000'} ETH
+                  </div>
+                </div>
+                
+                <div className="defi-card p-4 text-center">
+                  <div className="text-sm text-foreground/60 mb-1">SovaBTC Balance</div>
+                  <div className="text-lg font-semibold">
+                    {sovaBTCBalance ? formatTokenAmount(sovaBTCBalance.value, 8, 8) : '0.00000000'} sovaBTC
+                  </div>
+                </div>
+                
+                <div className="defi-card p-4 text-center">
+                  <div className="text-sm text-foreground/60 mb-1">SOVA Balance</div>
+                  <div className="text-lg font-semibold">
+                    {sovaBalance ? formatTokenAmount(sovaBalance.value, 18, 4) : '0.0000'} SOVA
+                  </div>
+                </div>
               </div>
-            )}
-          </form>
-        </section>
-        <section className="bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            Withdraw sovaBTC to BTC
-          </h2>
-          <form className="space-y-4" onSubmit={handleWithdraw}>
-            <div>
-              <label
-                htmlFor="withdraw-amount"
-                className="block text-sm font-medium text-gray-200 mb-1"
-              >
-                Amount (satoshis)
-              </label>
-              <input
-                id="withdraw-amount"
-                type="number"
-                required
-                placeholder="e.g. 100000"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(e.target.value)}
-                className="w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2 placeholder-gray-400"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="withdraw-gas"
-                className="block text-sm font-medium text-gray-200 mb-1"
-              >
-                BTC Gas Limit (satoshis)
-              </label>
-              <input
-                id="withdraw-gas"
-                type="number"
-                required
-                placeholder="e.g. 500"
-                value={withdrawGasLimit}
-                onChange={(e) => setWithdrawGasLimit(e.target.value)}
-                className="w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2 placeholder-gray-400"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="withdraw-height"
-                className="block text-sm font-medium text-gray-200 mb-1"
-              >
-                BTC Block Height
-              </label>
-              <input
-                id="withdraw-height"
-                type="number"
-                required
-                placeholder="e.g. 820000"
-                value={withdrawHeight}
-                onChange={(e) => setWithdrawHeight(e.target.value)}
-                className="w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2 placeholder-gray-400"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="withdraw-address"
-                className="block text-sm font-medium text-gray-200 mb-1"
-              >
-                Destination BTC Address
-              </label>
-              <input
-                id="withdraw-address"
-                type="text"
-                required
-                placeholder="bc1..."
-                value={withdrawAddress}
-                onChange={(e) => setWithdrawAddress(e.target.value)}
-                className="w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2 placeholder-gray-400"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isWithdrawing || withdrawConfirming || !withdrawPrep?.request}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
-            >
-              {isWithdrawing || withdrawConfirming ? 'Processing...' : 'Withdraw'}
-            </button>
-            {withdrawStatus && (
-              <div
-                className={`mt-2 p-2 rounded text-sm ${
-                  withdrawStatus.type === 'success'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
-              >
-                {withdrawStatus.message}
+              
+              <div className="flex justify-center mt-6">
+                <a 
+                  href="/wrap" 
+                  className="btn-defi px-6 py-3 rounded-lg font-medium text-white hover:scale-105 transition-all duration-200"
+                >
+                  Wrap Tokens →
+                </a>
               </div>
-            )}
-          </form>
-        </section>
-      </div>
-    </main>
-  )
+            </div>
+          )}
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="defi-card p-6 text-center card-hover">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink mx-auto mb-4"></div>
+            <h3 className="text-xl font-semibold mb-2">Wrap Bitcoin</h3>
+            <p className="text-foreground/80">
+              Convert your Bitcoin-backed tokens into sovaBTC and join the Base ecosystem.
+            </p>
+          </div>
+          
+          <div className="defi-card p-6 text-center card-hover">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-defi-pink to-defi-blue mx-auto mb-4"></div>
+            <h3 className="text-xl font-semibold mb-2">Earn Rewards</h3>
+            <p className="text-foreground/80">
+              Stake your sovaBTC and SOVA tokens to earn attractive yields and protocol rewards.
+            </p>
+          </div>
+          
+          <div className="defi-card p-6 text-center card-hover">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-r from-defi-blue to-defi-purple mx-auto mb-4"></div>
+            <h3 className="text-xl font-semibold mb-2">Secure Redemption</h3>
+            <p className="text-foreground/80">
+              Redeem your sovaBTC back to Bitcoin with our secure 10-day redemption queue.
+            </p>
+          </div>
+        </div>
+
+        {/* Stats Section */}
+        <div className="defi-card p-8 text-center">
+          <h3 className="text-2xl font-bold mb-6 gradient-text">Protocol Stats</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <div className="text-2xl font-bold">$0.00</div>
+              <div className="text-sm text-foreground/60">Total Value Locked</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">0.00</div>
+              <div className="text-sm text-foreground/60">sovaBTC Supply</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">0.00%</div>
+              <div className="text-sm text-foreground/60">Average APY</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-sm text-foreground/60">Active Stakers</div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/40 bg-background/50 backdrop-blur-sm mt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+              <div className="h-6 w-6 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink"></div>
+              <span className="font-semibold">{APP_NAME}</span>
+            </div>
+            
+            <div className="flex space-x-6">
+              <a href="#" className="text-foreground/60 hover:text-foreground transition-colors">
+                Docs
+              </a>
+              <a href="#" className="text-foreground/60 hover:text-foreground transition-colors">
+                Twitter
+              </a>
+              <a href="#" className="text-foreground/60 hover:text-foreground transition-colors">
+                Discord
+              </a>
+              <a href="#" className="text-foreground/60 hover:text-foreground transition-colors">
+                GitHub
+              </a>
+            </div>
+          </div>
+          
+          <div className="text-center mt-8 text-foreground/60 text-sm">
+            <p>© 2024 SovaBTC Protocol. Built on Base Sepolia Testnet.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }

@@ -35,8 +35,9 @@ contract SovaBTCPerfectCoverageTest is Test {
         // Setup precompile at the expected address
         vm.etch(SovaBitcoin.BTC_PRECOMPILE, address(precompile).code);
 
-        // Give user some tokens for withdrawal testing
+        // Set owner as minter and give user some tokens for withdrawal testing
         vm.startPrank(owner);
+        sova.setMinter(owner);
         sova.adminMint(user, 1e8); // 1 BTC worth of tokens
         vm.stopPrank();
     }

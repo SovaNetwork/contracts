@@ -145,7 +145,7 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
         }
 
         // Calculate underlying token amount based on decimals
-        uint8 tokenDecimals = tokenWhitelist.tokenDecimals(token);
+        uint8 tokenDecimals = tokenWhitelist.getTokenDecimals(token);
         uint256 underlyingAmount;
 
         if (tokenDecimals == 8) {

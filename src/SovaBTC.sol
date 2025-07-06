@@ -31,6 +31,9 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /// @notice Pause state of the contract
     bool private _paused;
 
+    /// @notice Address authorized to mint tokens (wrapper contract)
+    address public minter;
+
     /// @notice Mapping to track Bitcoin txids that have been used for deposits
     mapping(bytes32 => bool) private usedTxids;
 
@@ -53,6 +56,8 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     error TransactionAlreadyUsed();
     error PendingDepositExists();
     error PendingWithdrawalExists();
+    error UnauthorizedMinter(address caller);
+    error ZeroAddress();
 
     event Deposit(bytes32 txid, uint256 amount);
     event Withdraw(bytes32 txid, uint256 amount);
@@ -61,6 +66,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     event MaxGasLimitAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event ContractPausedByOwner(address indexed account);
     event ContractUnpausedByOwner(address indexed account);
+    event MinterUpdated(address indexed oldMinter, address indexed newMinter);
 
     modifier whenNotPaused() {
         if (_paused) {
@@ -76,12 +82,18 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         _;
     }
 
+    modifier onlyMinter() {
+        if (msg.sender != minter) revert UnauthorizedMinter(msg.sender);
+        _;
+    }
+
     constructor() Ownable() {
         _initializeOwner(msg.sender);
 
         minDepositAmount = 10_000; // (starts at 10,000 sats)
         maxDepositAmount = 100_000_000_000; // (starts at 1000 BTC = 100 billion sats)
         maxGasLimitAmount = 50_000_000; // (starts at 0.5 BTC = 50,000,000 sats)
+        minter = address(0); // Initialize with no minter, owner can set later
         _paused = false;
     }
 
@@ -274,17 +286,30 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         emit ContractUnpausedByOwner(msg.sender);
     }
 
+    /* ------------------- ADMIN FUNCTIONS -------------------- */
+
+    /**
+     * @notice Update minter address
+     * @param _newMinter New minter address
+     */
+    function setMinter(address _newMinter) external onlyOwner {
+        if (_newMinter == address(0)) revert ZeroAddress();
+        address oldMinter = minter;
+        minter = _newMinter;
+        emit MinterUpdated(oldMinter, _newMinter);
+    }
+
     /* ------------------- ADMIN MINT/BURN -------------------- */
 
     /**
      * @notice Mint uBTC to a wallet (wrapper or bridge usage).
-     * @dev Only owner. Primarily intended for bridging wrappers on other chains.
+     * @dev Only authorized minter. Primarily intended for bridging wrappers on other chains.
      */
-    function adminMint(address wallet, uint256 amount) external onlyOwner {
+    function adminMint(address wallet, uint256 amount) external onlyMinter {
         _mint(wallet, amount);
     }
 
-    function adminBurn(address wallet, uint256 amount) external onlyOwner {
+    function adminBurn(address wallet, uint256 amount) external onlyMinter {
         _burn(wallet, amount);
     }
 }
