@@ -5,6 +5,7 @@ import { useAccount, useBalance } from 'wagmi';
 import { formatTokenAmount } from '@/lib/formatters';
 import { TOKEN_INFO } from '@/contracts/addresses';
 import { APP_NAME } from '@/lib/constants';
+import { Header } from '@/components/layout/Header';
 
 export default function HomePage() {
   const { address, isConnected } = useAccount();
@@ -28,34 +29,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
-      {/* Header */}
-      <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink"></div>
-              <h1 className="text-xl font-bold gradient-text">{APP_NAME}</h1>
-            </div>
-            
-            <nav className="hidden md:flex items-center space-x-6">
-              <a href="/wrap" className="text-foreground/80 hover:text-foreground transition-colors">
-                Wrap
-              </a>
-              <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">
-                Stake
-              </a>
-              <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">
-                Redeem
-              </a>
-              <a href="#" className="text-foreground/80 hover:text-foreground transition-colors">
-                Analytics
-              </a>
-            </nav>
-            
-            <ConnectButton />
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-16">

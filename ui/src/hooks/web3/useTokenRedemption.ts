@@ -8,15 +8,16 @@ interface UseTokenRedemptionProps {
   userAddress: Address | undefined;
 }
 
-// Type for redemption request (matches contract struct)
+// Type for redemption request (matches NEW contract struct with ID)
 type RedemptionRequest = {
+  id: bigint;
   user: Address;
   token: Address;
   sovaAmount: bigint;
   underlyingAmount: bigint;
   requestTime: bigint;
   fulfilled: boolean;
-} | null;
+};
 
 export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
   const [lastRedemptionHash, setLastRedemptionHash] = useState<Address | undefined>();
@@ -39,14 +40,14 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     hash: lastRedemptionHash,
   });
 
-  // Get user's current redemption request
+  // Get user's redemption IDs
   const {
-    data: redemptionRequestRaw,
-    refetch: refetchRedemptionRequest,
+    data: userRedemptionIds,
+    refetch: refetchRedemptionIds,
   } = useReadContract({
     address: ADDRESSES.REDEMPTION_QUEUE,
     abi: RedemptionQueueABI,
-    functionName: 'getRedemptionRequest',
+    functionName: 'getUserRedemptions',
     args: userAddress ? [userAddress] : undefined,
     query: {
       enabled: Boolean(userAddress),
@@ -54,49 +55,99 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     },
   });
 
-  // Cast and validate redemption request data
-  const redemptionRequest: RedemptionRequest = useMemo(() => {
-    if (!redemptionRequestRaw || !Array.isArray(redemptionRequestRaw)) return null;
-    
-    const [user, token, sovaAmount, underlyingAmount, requestTime, fulfilled] = redemptionRequestRaw;
-    
-    // If requestTime is 0, no redemption exists
-    if (!requestTime || requestTime === 0n) return null;
-    
-    return {
-      user: user as Address,
-      token: token as Address,
-      sovaAmount: sovaAmount as bigint,
-      underlyingAmount: underlyingAmount as bigint,
-      requestTime: requestTime as bigint,
-      fulfilled: fulfilled as boolean,
-    };
-  }, [redemptionRequestRaw]);
+  // Get all user's redemption details
+  const {
+    data: allRedemptionsRaw,
+    refetch: refetchAllRedemptions,
+  } = useReadContract({
+    address: ADDRESSES.REDEMPTION_QUEUE,
+    abi: RedemptionQueueABI,
+    functionName: 'getUserRedemptionDetails',
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: Boolean(userAddress),
+      refetchInterval: 10000,
+    },
+  });
 
-  // Check if redemption is ready to be fulfilled
+  // Get pending redemptions only
+  const {
+    data: pendingRedemptionsRaw,
+    refetch: refetchPendingRedemptions,
+  } = useReadContract({
+    address: ADDRESSES.REDEMPTION_QUEUE,
+    abi: RedemptionQueueABI,
+    functionName: 'getPendingRedemptions',
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: Boolean(userAddress),
+      refetchInterval: 10000,
+    },
+  });
+
+  // Parse all redemptions
+  const allRedemptions: RedemptionRequest[] = useMemo(() => {
+    if (!allRedemptionsRaw || !Array.isArray(allRedemptionsRaw)) return [];
+    
+    return allRedemptionsRaw.map((redemption: any) => ({
+      id: redemption.id,
+      user: redemption.user,
+      token: redemption.token,
+      sovaAmount: redemption.sovaAmount,
+      underlyingAmount: redemption.underlyingAmount,
+      requestTime: redemption.requestTime,
+      fulfilled: redemption.fulfilled,
+    }));
+  }, [allRedemptionsRaw]);
+
+  // Parse pending redemptions
+  const pendingRedemptions: RedemptionRequest[] = useMemo(() => {
+    if (!pendingRedemptionsRaw || !Array.isArray(pendingRedemptionsRaw)) return [];
+    
+    return pendingRedemptionsRaw.map((redemption: any) => ({
+      id: redemption.id,
+      user: redemption.user,
+      token: redemption.token,
+      sovaAmount: redemption.sovaAmount,
+      underlyingAmount: redemption.underlyingAmount,
+      requestTime: redemption.requestTime,
+      fulfilled: redemption.fulfilled,
+    }));
+  }, [pendingRedemptionsRaw]);
+
+  // Get the most recent redemption for backward compatibility
+  const redemptionRequest: RedemptionRequest | null = useMemo(() => {
+    if (pendingRedemptions.length === 0) return null;
+    // Return the most recent pending redemption
+    return pendingRedemptions.reduce((latest, current) => 
+      current.requestTime > latest.requestTime ? current : latest
+    );
+  }, [pendingRedemptions]);
+
+  // Check if any redemption is ready (for the most recent one for backward compatibility)
   const {
     data: isRedemptionReady,
   } = useReadContract({
     address: ADDRESSES.REDEMPTION_QUEUE,
     abi: RedemptionQueueABI,
     functionName: 'isRedemptionReady',
-    args: userAddress ? [userAddress] : undefined,
+    args: redemptionRequest ? [redemptionRequest.id] : undefined,
     query: {
-      enabled: Boolean(userAddress && redemptionRequest && redemptionRequest.requestTime > 0),
-      refetchInterval: 30000, // Refetch every 30 seconds
+      enabled: Boolean(redemptionRequest),
+      refetchInterval: 30000,
     },
   });
 
-  // Get when redemption will be ready
+  // Get when redemption will be ready (for most recent)
   const {
     data: redemptionReadyTime,
   } = useReadContract({
     address: ADDRESSES.REDEMPTION_QUEUE,
     abi: RedemptionQueueABI,
     functionName: 'getRedemptionReadyTime',
-    args: userAddress ? [userAddress] : undefined,
+    args: redemptionRequest ? [redemptionRequest.id] : undefined,
     query: {
-      enabled: Boolean(userAddress && redemptionRequest && redemptionRequest.requestTime > 0),
+      enabled: Boolean(redemptionRequest),
     },
   });
 
@@ -114,17 +165,17 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     });
   };
 
-  // Execute redemption
+  // Execute redemption (returns redemption ID now)
   const executeRedemption = async (tokenAddress: Address, sovaAmount: bigint) => {
     try {
       setCurrentStep('redeeming');
       
-      console.log('🔄 EXECUTING REDEMPTION:', {
+      console.log('🔄 EXECUTING REDEMPTION (Multi-Redemption API):', {
         contractAddress: ADDRESSES.REDEMPTION_QUEUE,
         function: 'redeem',
         tokenAddress,
         sovaAmount: sovaAmount.toString(),
-        note: 'Burns sovaBTC immediately, queues redemption'
+        note: 'Burns sovaBTC immediately, queues redemption with unique ID'
       });
       
       await redeemToken({
@@ -147,16 +198,18 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     }
   }, [redemptionHash, lastRedemptionHash]);
 
-  // Reset step when redemption confirms
+  // Reset step and refetch when redemption confirms
   useEffect(() => {
     if (isRedemptionConfirmed) {
       setCurrentStep('idle');
-      // Refetch redemption request after confirmation
-      refetchRedemptionRequest();
+      // Refetch all redemption data
+      refetchRedemptionIds();
+      refetchAllRedemptions();
+      refetchPendingRedemptions();
     }
-  }, [isRedemptionConfirmed, refetchRedemptionRequest]);
+  }, [isRedemptionConfirmed, refetchRedemptionIds, refetchAllRedemptions, refetchPendingRedemptions]);
 
-  // Validate redemption parameters
+  // Validate redemption parameters (UPDATED: No longer blocks multiple redemptions)
   const validateRedemption = useMemo(() => {
     return (tokenAddress: Address, sovaAmount: bigint, availableReserve: bigint, tokenDecimals: number) => {
       if (!userAddress) {
@@ -167,13 +220,8 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
         return { isValid: false, error: 'Amount must be greater than 0' };
       }
 
-      // Check if user already has pending redemption
-      if (redemptionRequest && redemptionRequest.requestTime > 0 && !redemptionRequest.fulfilled) {
-        return { 
-          isValid: false, 
-          error: 'You already have a pending redemption. Please wait for it to complete.' 
-        };
-      }
+      // REMOVED: No longer block multiple redemptions!
+      // Users can now have unlimited pending redemptions
       
       // Calculate expected underlying amount
       let expectedUnderlyingAmount: bigint;
@@ -194,7 +242,7 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
       
       return { isValid: true, error: null };
     };
-  }, [userAddress, redemptionRequest]);
+  }, [userAddress]); // Removed redemptionRequest dependency
 
   // Calculate expected underlying amount for preview
   const calculateUnderlyingAmount = (sovaAmount: bigint, tokenDecimals: number): bigint => {
@@ -215,9 +263,9 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     return 'idle';
   };
 
-  // Calculate time remaining for redemption
+  // Calculate time remaining for redemption (for most recent)
   const getTimeRemaining = () => {
-    if (!redemptionReadyTime || !redemptionRequest || !redemptionRequest.requestTime) return null;
+    if (!redemptionReadyTime || !redemptionRequest) return null;
     
     const now = Math.floor(Date.now() / 1000);
     const readyTime = Number(redemptionReadyTime);
@@ -232,9 +280,16 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     validateRedemption,
     calculateUnderlyingAmount,
     useAvailableReserve,
-    refetchRedemptionRequest,
+    refetchRedemptionRequest: refetchAllRedemptions, // Refetch all redemptions
     
-    // Current redemption state
+    // Multi-redemption data (NEW)
+    allRedemptions,
+    pendingRedemptions,
+    userRedemptionIds: userRedemptionIds as bigint[] || [],
+    redemptionCount: allRedemptions.length,
+    pendingCount: pendingRedemptions.length,
+    
+    // Current redemption state (backward compatibility - most recent)
     redemptionRequest,
     isRedemptionReady,
     redemptionReadyTime,
@@ -251,7 +306,8 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     // Transaction hash
     redemptionHash: lastRedemptionHash,
     
-    // Helper flags
-    hasPendingRedemption: Boolean(redemptionRequest && redemptionRequest.requestTime > 0 && !redemptionRequest.fulfilled),
+    // Helper flags (UPDATED)
+    hasPendingRedemption: pendingRedemptions.length > 0, // True if ANY pending redemptions
+    hasMultipleRedemptions: allRedemptions.length > 1, // True if multiple redemptions exist
   };
 } 

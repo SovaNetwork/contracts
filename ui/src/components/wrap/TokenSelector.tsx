@@ -15,6 +15,7 @@ interface TokenSelectorProps {
   userAddress: Address | undefined;
   className?: string;
   showReserves?: boolean; // Show available reserves instead of user balance
+  compact?: boolean; // Compact mode for smaller display
 }
 
 export function TokenSelector({
@@ -23,6 +24,7 @@ export function TokenSelector({
   userAddress,
   className,
   showReserves = false,
+  compact = false,
 }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,25 +33,38 @@ export function TokenSelector({
       {/* Selected Token Display */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 bg-card/50 border border-border/50 rounded-lg hover:bg-card/70 transition-all duration-200"
+        className={cn(
+          "flex items-center justify-between bg-card/50 border border-border/50 rounded-lg hover:bg-card/70 transition-all duration-200",
+          compact ? "px-3 py-2" : "w-full p-4"
+        )}
       >
         {selectedToken ? (
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink flex items-center justify-center text-sm font-bold">
+          <div className={cn("flex items-center", compact ? "space-x-2" : "space-x-3")}>
+            <div className={cn(
+              "rounded-full bg-gradient-to-r from-defi-purple to-defi-pink flex items-center justify-center font-bold",
+              compact ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm"
+            )}>
               {selectedToken.symbol.slice(0, 2)}
             </div>
-            <div className="text-left">
-              <div className="font-medium">{selectedToken.symbol}</div>
-              <div className="text-sm text-foreground/60">{selectedToken.name}</div>
-            </div>
+            {compact ? (
+              <span className="font-medium">{selectedToken.symbol}</span>
+            ) : (
+              <div className="text-left">
+                <div className="font-medium">{selectedToken.symbol}</div>
+                <div className="text-sm text-foreground/60">{selectedToken.name}</div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="text-foreground/60">Select a token to wrap</div>
+          <div className="text-foreground/60">
+            {compact ? "Select token" : "Select a token to wrap"}
+          </div>
         )}
         
         <ChevronDown 
           className={cn(
-            "w-5 h-5 text-foreground/60 transition-transform duration-200",
+            "text-foreground/60 transition-transform duration-200",
+            compact ? "w-4 h-4" : "w-5 h-5",
             isOpen && "transform rotate-180"
           )} 
         />

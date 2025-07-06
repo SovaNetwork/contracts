@@ -14,6 +14,7 @@ import "./TokenWhitelist.sol";
  * @title RedemptionQueue
  * @notice Manages queued redemptions of SovaBTC for underlying BTC-pegged tokens
  * @dev Implements configurable delays, immediate burning, and reserve validation
+ * @dev Supports multiple concurrent redemptions per user
  */
 contract RedemptionQueue is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -22,6 +23,7 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
 
     /**
      * @notice Redemption request structure
+     * @param id Unique redemption identifier
      * @param user Address of the user requesting redemption
      * @param token Address of the token to be redeemed
      * @param sovaAmount Amount of SovaBTC burned (8 decimals)
@@ -30,6 +32,7 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
      * @param fulfilled Whether the redemption has been completed
      */
     struct RedemptionRequest {
+        uint256 id;
         address user;
         address token;
         uint256 sovaAmount;
@@ -49,8 +52,14 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
     /// @notice Redemption delay in seconds (default 10 days)
     uint256 public redemptionDelay;
 
-    /// @notice Mapping from user address to their redemption request
-    mapping(address => RedemptionRequest) public redemptionRequests;
+    /// @notice Auto-incrementing redemption ID counter
+    uint256 public nextRedemptionId;
+
+    /// @notice Mapping from redemption ID to redemption request
+    mapping(uint256 => RedemptionRequest) public redemptionRequests;
+
+    /// @notice Mapping from user address to array of their redemption IDs
+    mapping(address => uint256[]) public userRedemptions;
 
     /// @notice Pause state
     bool private _paused;
@@ -67,15 +76,21 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
     // ============ Events ============
 
     event RedemptionQueued(
-        address indexed user, address indexed token, uint256 sovaAmount, uint256 underlyingAmount, uint256 requestTime
+        uint256 indexed redemptionId,
+        address indexed user, 
+        address indexed token, 
+        uint256 sovaAmount, 
+        uint256 underlyingAmount, 
+        uint256 requestTime
     );
 
     event RedemptionCompleted(
+        uint256 indexed redemptionId,
         address indexed user,
         address indexed token,
         uint256 sovaAmount,
         uint256 underlyingAmount,
-        address indexed custodian
+        address custodian
     );
 
     event RedemptionDelayUpdated(uint256 oldDelay, uint256 newDelay);
@@ -88,10 +103,9 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
     error ZeroAddress();
     error TokenNotAllowed(address token);
     error InsufficientReserve(uint256 requested, uint256 available);
-    error ExistingPendingRedemption(address user);
-    error NoRedemptionRequest(address user);
+    error InvalidRedemptionId(uint256 redemptionId);
     error RedemptionNotReady(uint256 currentTime, uint256 readyTime);
-    error RedemptionAlreadyFulfilled(address user);
+    error RedemptionAlreadyFulfilled(uint256 redemptionId);
     error UnauthorizedCustodian(address caller);
     error InvalidRedemptionDelay(uint256 delay);
     error ContractPaused();
@@ -110,6 +124,13 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
         _;
     }
 
+    modifier validRedemptionId(uint256 redemptionId) {
+        if (redemptionId >= nextRedemptionId || redemptionRequests[redemptionId].id == 0) {
+            revert InvalidRedemptionId(redemptionId);
+        }
+        _;
+    }
+
     // ============ Constructor ============
 
     constructor(address _sovaBTC, address _tokenWhitelist, uint256 _redemptionDelay) {
@@ -124,6 +145,7 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
         sovaBTC = ISovaBTC(_sovaBTC);
         tokenWhitelist = TokenWhitelist(_tokenWhitelist);
         redemptionDelay = _redemptionDelay;
+        nextRedemptionId = 1; // Start IDs at 1
         _paused = false;
     }
 
@@ -133,16 +155,11 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
      * @notice Queue a redemption request
      * @param token Address of the token to redeem
      * @param sovaAmount Amount of SovaBTC to burn (8 decimals)
+     * @return redemptionId The unique ID of the created redemption
      */
-    function redeem(address token, uint256 sovaAmount) external nonReentrant whenNotPaused {
+    function redeem(address token, uint256 sovaAmount) external nonReentrant whenNotPaused returns (uint256 redemptionId) {
         if (sovaAmount == 0) revert ZeroAmount();
         if (!tokenWhitelist.isTokenAllowed(token)) revert TokenNotAllowed(token);
-
-        // Check for existing pending redemption
-        RedemptionRequest storage existingRequest = redemptionRequests[msg.sender];
-        if (existingRequest.requestTime > 0 && !existingRequest.fulfilled) {
-            revert ExistingPendingRedemption(msg.sender);
-        }
 
         // Calculate underlying token amount based on decimals
         uint8 tokenDecimals = tokenWhitelist.getTokenDecimals(token);
@@ -165,8 +182,10 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
         // Burn SovaBTC immediately
         sovaBTC.adminBurn(msg.sender, sovaAmount);
 
-        // Create redemption request
-        redemptionRequests[msg.sender] = RedemptionRequest({
+        // Create redemption request with unique ID
+        redemptionId = nextRedemptionId++;
+        redemptionRequests[redemptionId] = RedemptionRequest({
+            id: redemptionId,
             user: msg.sender,
             token: token,
             sovaAmount: sovaAmount,
@@ -175,27 +194,27 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
             fulfilled: false
         });
 
-        emit RedemptionQueued(msg.sender, token, sovaAmount, underlyingAmount, block.timestamp);
+        // Add to user's redemption list
+        userRedemptions[msg.sender].push(redemptionId);
+
+        emit RedemptionQueued(redemptionId, msg.sender, token, sovaAmount, underlyingAmount, block.timestamp);
     }
 
     /**
      * @notice Fulfill a redemption request after the delay period
-     * @param user Address of the user whose redemption to fulfill
+     * @param redemptionId The ID of the redemption to fulfill
      */
-    function fulfillRedemption(address user) external onlyCustodian nonReentrant whenNotPaused {
-        _fulfillRedemptionInternal(user);
+    function fulfillRedemption(uint256 redemptionId) external onlyCustodian nonReentrant whenNotPaused validRedemptionId(redemptionId) {
+        _fulfillRedemptionInternal(redemptionId);
     }
 
     /**
      * @notice Internal function to fulfill a redemption request
-     * @param user Address of the user whose redemption to fulfill
+     * @param redemptionId The ID of the redemption to fulfill
      */
-    function _fulfillRedemptionInternal(address user) internal {
-        if (user == address(0)) revert ZeroAddress();
-
-        RedemptionRequest storage request = redemptionRequests[user];
-        if (request.requestTime == 0) revert NoRedemptionRequest(user);
-        if (request.fulfilled) revert RedemptionAlreadyFulfilled(user);
+    function _fulfillRedemptionInternal(uint256 redemptionId) internal {
+        RedemptionRequest storage request = redemptionRequests[redemptionId];
+        if (request.fulfilled) revert RedemptionAlreadyFulfilled(redemptionId);
 
         // Check if delay period has passed
         uint256 readyTime = request.requestTime + redemptionDelay;
@@ -213,51 +232,106 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
         request.fulfilled = true;
 
         // Transfer underlying token to user
-        IERC20(request.token).safeTransfer(user, request.underlyingAmount);
+        IERC20(request.token).safeTransfer(request.user, request.underlyingAmount);
 
-        emit RedemptionCompleted(user, request.token, request.sovaAmount, request.underlyingAmount, msg.sender);
+        emit RedemptionCompleted(redemptionId, request.user, request.token, request.sovaAmount, request.underlyingAmount, msg.sender);
     }
 
     /**
      * @notice Batch fulfill multiple redemption requests
-     * @param users Array of user addresses whose redemptions to fulfill
+     * @param redemptionIds Array of redemption IDs to fulfill
      */
-    function batchFulfillRedemptions(address[] calldata users) external onlyCustodian nonReentrant whenNotPaused {
-        for (uint256 i = 0; i < users.length; i++) {
-            _fulfillRedemptionInternal(users[i]);
+    function batchFulfillRedemptions(uint256[] calldata redemptionIds) external onlyCustodian nonReentrant whenNotPaused {
+        for (uint256 i = 0; i < redemptionIds.length; i++) {
+            if (redemptionIds[i] >= nextRedemptionId || redemptionRequests[redemptionIds[i]].id == 0) {
+                continue; // Skip invalid IDs
+            }
+            _fulfillRedemptionInternal(redemptionIds[i]);
         }
     }
 
     // ============ View Functions ============
 
     /**
-     * @notice Get redemption request details for a user
-     * @param user Address of the user
+     * @notice Get redemption request details by ID
+     * @param redemptionId The redemption ID
      * @return The redemption request struct
      */
-    function getRedemptionRequest(address user) external view returns (RedemptionRequest memory) {
-        return redemptionRequests[user];
+    function getRedemptionRequest(uint256 redemptionId) external view validRedemptionId(redemptionId) returns (RedemptionRequest memory) {
+        return redemptionRequests[redemptionId];
+    }
+
+    /**
+     * @notice Get all redemption IDs for a user
+     * @param user Address of the user
+     * @return Array of redemption IDs
+     */
+    function getUserRedemptions(address user) external view returns (uint256[] memory) {
+        return userRedemptions[user];
+    }
+
+    /**
+     * @notice Get all redemption details for a user
+     * @param user Address of the user
+     * @return Array of redemption request structs
+     */
+    function getUserRedemptionDetails(address user) external view returns (RedemptionRequest[] memory) {
+        uint256[] memory redemptionIds = userRedemptions[user];
+        RedemptionRequest[] memory redemptions = new RedemptionRequest[](redemptionIds.length);
+        
+        for (uint256 i = 0; i < redemptionIds.length; i++) {
+            redemptions[i] = redemptionRequests[redemptionIds[i]];
+        }
+        
+        return redemptions;
+    }
+
+    /**
+     * @notice Get pending (unfulfilled) redemptions for a user
+     * @param user Address of the user
+     * @return Array of pending redemption request structs
+     */
+    function getPendingRedemptions(address user) external view returns (RedemptionRequest[] memory) {
+        uint256[] memory redemptionIds = userRedemptions[user];
+        
+        // Count pending redemptions
+        uint256 pendingCount = 0;
+        for (uint256 i = 0; i < redemptionIds.length; i++) {
+            if (!redemptionRequests[redemptionIds[i]].fulfilled) {
+                pendingCount++;
+            }
+        }
+        
+        // Build pending redemptions array
+        RedemptionRequest[] memory pendingRedemptions = new RedemptionRequest[](pendingCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < redemptionIds.length; i++) {
+            if (!redemptionRequests[redemptionIds[i]].fulfilled) {
+                pendingRedemptions[index++] = redemptionRequests[redemptionIds[i]];
+            }
+        }
+        
+        return pendingRedemptions;
     }
 
     /**
      * @notice Check if a redemption is ready to be fulfilled
-     * @param user Address of the user
+     * @param redemptionId The redemption ID
      * @return True if the redemption can be fulfilled
      */
-    function isRedemptionReady(address user) external view returns (bool) {
-        RedemptionRequest storage request = redemptionRequests[user];
-        if (request.requestTime == 0 || request.fulfilled) return false;
+    function isRedemptionReady(uint256 redemptionId) external view validRedemptionId(redemptionId) returns (bool) {
+        RedemptionRequest storage request = redemptionRequests[redemptionId];
+        if (request.fulfilled) return false;
         return block.timestamp >= request.requestTime + redemptionDelay;
     }
 
     /**
      * @notice Get the time when a redemption will be ready
-     * @param user Address of the user
+     * @param redemptionId The redemption ID
      * @return Timestamp when redemption can be fulfilled
      */
-    function getRedemptionReadyTime(address user) external view returns (uint256) {
-        RedemptionRequest storage request = redemptionRequests[user];
-        if (request.requestTime == 0) return 0;
+    function getRedemptionReadyTime(uint256 redemptionId) external view validRedemptionId(redemptionId) returns (uint256) {
+        RedemptionRequest storage request = redemptionRequests[redemptionId];
         return request.requestTime + redemptionDelay;
     }
 
@@ -268,6 +342,23 @@ contract RedemptionQueue is Ownable, ReentrancyGuard {
      */
     function getAvailableReserve(address token) external view returns (uint256) {
         return IERC20(token).balanceOf(address(this));
+    }
+
+    /**
+     * @notice Get total number of redemptions created
+     * @return Total redemption count
+     */
+    function getRedemptionCount() external view returns (uint256) {
+        return nextRedemptionId - 1;
+    }
+
+    /**
+     * @notice Get number of redemptions for a user
+     * @param user Address of the user
+     * @return Number of redemptions
+     */
+    function getUserRedemptionCount(address user) external view returns (uint256) {
+        return userRedemptions[user].length;
     }
 
     // ============ Admin Functions ============

@@ -180,15 +180,48 @@ SendParam memory sendParam = SendParam({
 oft.send{value: nativeFee}(sendParam, MessagingFee(nativeFee, 0), payable(msg.sender));
 ```
 
-#### 4. Queue Redemption
+#### 4. Queue Redemption (Manual Fulfillment Process)
 
 ```solidity
-// Queue redemption (burns SovaBTC immediately)
-IRedemptionQueue(queueAddress).redeem(wbtcAddress, sovaAmount);
+// 1. User queues redemption (burns SovaBTC immediately, creates redemption request)
+uint256 redemptionId = IRedemptionQueue(queueAddress).redeem(wbtcAddress, sovaAmount);
 
-// Wait for delay period, then custodian fulfills
-// (After delay) Custodian calls:
-IRedemptionQueue(queueAddress).fulfillRedemption(userAddress);
+// 2. Wait for 10-day delay period to complete
+// Users can track their redemption status:
+bool isReady = IRedemptionQueue(queueAddress).isRedemptionReady(redemptionId);
+
+// 3. After delay period, authorized custodian manually fulfills redemption
+// (Custodian must call this - tokens are NOT automatically sent!)
+IRedemptionQueue(queueAddress).fulfillRedemption(redemptionId);
+
+// 4. Multiple redemptions can be processed in batches by custodians
+uint256[] memory redemptionIds = [1, 2, 3];
+IRedemptionQueue(queueAddress).batchFulfillRedemptions(redemptionIds);
+```
+
+**⚠️ Important**: Redemptions require **manual fulfillment by authorized custodians** after the delay period. Users do not automatically receive tokens - they must wait for custodians to process their redemption requests.
+
+#### 4a. Custodian Management (Admin Only)
+
+**Adding Custodians**:
+```bash
+# Run the custodian authorization script
+forge script script/SetCustodian.s.sol --fork-url https://sepolia.base.org --broadcast
+
+# Or manually call the contract function (owner only)
+cast send $REDEMPTION_QUEUE "setCustodian(address,bool)" $CUSTODIAN_ADDRESS true --rpc-url https://sepolia.base.org --private-key $PRIVATE_KEY
+```
+
+**Web UI Admin Panel**:
+```bash
+# Start the frontend
+cd ui && npm run dev
+
+# Navigate to admin panel
+open http://localhost:3000/admin
+
+# Connect wallet with authorized custodian address
+# Access full redemption management dashboard
 ```
 
 #### 5. Stake for Rewards
@@ -266,6 +299,101 @@ LZ_ENDPOINT_SOVA=your_sova_endpoint_here
 | Polygon | 🔄 Planned | TBD | TBD |
 | BSC | 🔄 Planned | TBD | TBD |
 
+## 👥 Custodian Management
+
+### Current Authorized Custodians
+
+| Address | Role | Status |
+|---------|------|--------|
+| `0x75BbFf2206b6Ad50786Ee3ce8A81eDb72f3e381b` | Deployer/Admin | ✅ Active |
+
+### Adding New Custodians
+
+**Prerequisites**:
+- You must be the contract owner
+- Have the target wallet address ready
+- Ensure the address is trustworthy (custodians can fulfill redemptions)
+
+**Method 1: Using the Script** (Recommended)
+```bash
+# 1. Edit the script to add your custodian address
+# Edit script/SetCustodian.s.sol, update DEPLOYER_ADDRESS constant
+
+# 2. Run the authorization script
+forge script script/SetCustodian.s.sol --fork-url https://sepolia.base.org --broadcast
+```
+
+**Method 2: Direct Contract Call**
+```bash
+# Set environment variables
+export REDEMPTION_QUEUE="0x6CDD3cD1c677abbc347A0bDe0eAf350311403638"
+export CUSTODIAN_ADDRESS="0xYourCustodianAddressHere"
+
+# Authorize custodian (owner only)
+cast send $REDEMPTION_QUEUE "setCustodian(address,bool)" $CUSTODIAN_ADDRESS true \
+  --rpc-url https://sepolia.base.org \
+  --private-key $PRIVATE_KEY
+
+# Verify authorization
+cast call $REDEMPTION_QUEUE "custodians(address)" $CUSTODIAN_ADDRESS \
+  --rpc-url https://sepolia.base.org
+```
+
+**Method 3: Via Web UI** (Future Enhancement)
+```bash
+# Coming soon: Admin interface for custodian management
+# Navigate to http://localhost:3000/admin
+# Use "Role Management" section to add/remove custodians
+```
+
+### Removing Custodians
+
+```bash
+# Remove custodian access (owner only)
+cast send $REDEMPTION_QUEUE "setCustodian(address,bool)" $CUSTODIAN_ADDRESS false \
+  --rpc-url https://sepolia.base.org \
+  --private-key $PRIVATE_KEY
+```
+
+### Custodian Responsibilities
+
+**Daily Operations**:
+- Monitor pending redemptions at `/admin` dashboard
+- Fulfill ready redemptions (after 10-day delay)
+- Process batch fulfillments efficiently
+- Verify reserve availability before fulfillment
+
+**Security Practices**:
+- Keep custodian wallet secure (hardware wallet recommended)
+- Verify redemption details before fulfillment
+- Monitor for suspicious redemption patterns
+- Report any anomalies to protocol administrators
+
+**Emergency Procedures**:
+- Contact protocol owner if issues arise
+- Emergency pause procedures (owner only)
+- Coordinate with other custodians for coverage
+
+### Web UI Admin Dashboard
+
+**Access Requirements**:
+1. Connected wallet must be authorized custodian
+2. Navigate to `http://localhost:3000/admin`
+3. Dashboard will show access denied if not authorized
+
+**Features Available**:
+- View all pending redemptions across users
+- Batch select multiple redemptions
+- Individual and batch fulfillment actions
+- Real-time status updates and transaction tracking
+- Reserve monitoring for each token type
+
+**Dashboard Sections**:
+- **Overview Stats**: Pending, ready, users, selected counts
+- **Batch Actions**: Select all, batch fulfill operations
+- **Redemption List**: Individual redemption cards with status
+- **Transaction Status**: Real-time feedback and explorer links
+
 ## 📚 API Reference
 
 ### SovaBTCWrapper
@@ -280,11 +408,28 @@ function setRedemptionQueue(address _redemptionQueue) external;
 ### RedemptionQueue
 
 ```solidity
-function redeem(address token, uint256 sovaAmount) external;
-function fulfillRedemption(address user) external;
-function batchFulfillRedemptions(address[] calldata users) external;
-function isRedemptionReady(address user) external view returns (bool);
+// User Functions - Create redemption requests
+function redeem(address token, uint256 sovaAmount) external returns (uint256 redemptionId);
+function getUserRedemptions(address user) external view returns (uint256[] memory);
+function getPendingRedemptions(address user) external view returns (RedemptionRequest[] memory);
+function isRedemptionReady(uint256 redemptionId) external view returns (bool);
+function getRedemptionReadyTime(uint256 redemptionId) external view returns (uint256);
+
+// Custodian Functions - Manual fulfillment (requires authorization)
+function fulfillRedemption(uint256 redemptionId) external; // onlyCustodian
+function batchFulfillRedemptions(uint256[] calldata redemptionIds) external; // onlyCustodian
+
+// View Functions
+function getRedemptionRequest(uint256 redemptionId) external view returns (RedemptionRequest memory);
+function getAvailableReserve(address token) external view returns (uint256);
 ```
+
+**Key Points:**
+- 🔥 `redeem()` **burns sovaBTC immediately** and creates a redemption request with unique ID
+- ⏰ **10-day delay** before redemption can be fulfilled
+- 👥 **Manual fulfillment**: Authorized custodians must call `fulfillRedemption()` 
+- 📊 **Multiple redemptions**: Users can have unlimited concurrent redemption requests
+- 🔍 **Tracking**: Each redemption has a unique ID for status tracking
 
 ### SovaBTCStaking
 
@@ -338,6 +483,42 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## ⚠️ Disclaimer
 
 This software is provided "as is" without warranty. Use at your own risk. Always conduct thorough testing and security audits before deploying to mainnet.
+
+---
+
+## 🔧 Quick Command Reference
+
+### Custodian Management
+```bash
+# Authorize your deployer address (run once)
+forge script script/SetCustodian.s.sol --fork-url https://sepolia.base.org --broadcast
+
+# Check if address is authorized
+cast call 0x6CDD3cD1c677abbc347A0bDe0eAf350311403638 "custodians(address)" YOUR_ADDRESS --rpc-url https://sepolia.base.org
+
+# Access admin dashboard
+cd ui && npm run dev
+open http://localhost:3000/admin
+```
+
+### Development Commands
+```bash
+# Test protocol functionality
+forge script script/TestFullProtocolFlow.s.sol --fork-url https://sepolia.base.org --broadcast
+
+# Run frontend
+cd ui && npm run dev
+
+# Deploy contracts (if needed)
+forge script script/Deploy.s.sol --fork-url https://sepolia.base.org --broadcast
+```
+
+### Contract Addresses (Base Sepolia)
+```bash
+export REDEMPTION_QUEUE="0x6CDD3cD1c677abbc347A0bDe0eAf350311403638"
+export WRAPPER="0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c"
+export SOVABTC="0xF6c09Dc46AA90Ee3BcBE7AD955c5453d7247295F"
+```
 
 ---
 

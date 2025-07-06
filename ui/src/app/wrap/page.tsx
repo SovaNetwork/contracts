@@ -1,10 +1,12 @@
 'use client';
 
 import { BidirectionalWrapInterface } from '@/components/wrap/BidirectionalWrapInterface';
+import { Header } from '@/components/layout/Header';
 
 export default function WrapPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+      <Header />
       {/* Page Header */}
       <div className="container mx-auto px-4 pt-8 pb-16">
         <div className="text-center mb-12">

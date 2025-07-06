@@ -28,15 +28,21 @@ The SovaBTC protocol has been **fully deployed** on Base Sepolia testnet (Chain 
    - Manages protocol custody functionality
    - Handles asset security and validation
 
-5. **SovaBTCWrapper**: `0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c`
-   - Wraps external Bitcoin tokens into SovaBTC
-   - Core protocol functionality
-   - **UPDATED**: Points to new SovaBTC contract with multiple minter support
+5. **SovaBTCWrapper**: `0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c` ✅ **FULLY FUNCTIONAL**
+   - **UPDATED**: Now connected to new multi-redemption RedemptionQueue
+   - Handles token deposits (WBTC, LBTC, USDC → sovaBTC)
+   - Transfers deposited tokens to RedemptionQueue for reserves
+   - Core wrapping functionality operational
+   - **NOTE**: Redemption functions removed - users interact directly with RedemptionQueue for redemptions
 
-6. **RedemptionQueue**: `0x2E03B35276003e3C3060C8bd5Ec736bB8061a686`
-   - Handles user redemption requests
-   - Manages the redemption queue system
-   - **UPDATED**: Points to new SovaBTC contract with multiple minter support
+6. **RedemptionQueue**: `0x6CDD3cD1c677abbc347A0bDe0eAf350311403638` 🚀 **NEW MULTI-REDEMPTION VERSION**
+   - **MAJOR UPGRADE**: Now supports multiple concurrent redemptions per user
+   - Each redemption has unique ID for tracking
+   - Users can have unlimited pending redemptions
+   - Comprehensive view functions for user redemption management
+   - Batch fulfillment by redemption IDs
+   - Maintains 10-day delay system
+   - **BREAKING CHANGE**: API changed from user addresses to redemption IDs
 
 7. **SovaBTCStaking**: `0x755bf172b35a333a40850350e7f10309a664420f`
    - Staking contract for SOVA rewards
@@ -48,7 +54,7 @@ The SovaBTC protocol has been **fully deployed** on Base Sepolia testnet (Chain 
    - Test USDC token for development
    - Standard ERC-20 implementation
 
-9. **Mock WBTC**: `0x8da7de3d18747ba6b8a788eb07dd40cd660ec860`
+9. **Mock WBTC**: `0x8dA7DE3D18747ba6b8A788Eb07dD40cD660eC860`
    - Test WBTC token for development
    - 8 decimal precision (Bitcoin-compatible)
 
@@ -74,7 +80,7 @@ All contracts have been successfully deployed with critical bug fixes and are re
 
 **✅ Multiple Minters Set**: Both Wrapper and RedemptionQueue contracts have been authorized as minters:
 - SovaBTCWrapper: `0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c`
-- RedemptionQueue: `0x2E03B35276003e3C3060C8bd5Ec736bB8061a686`
+- RedemptionQueue: `0x6CDD3cD1c677abbc347A0bDe0eAf350311403638`
 
 **✅ Frontend Updated**: All frontend contract addresses have been updated to use the latest deployment addresses with working minter functionality.
 
@@ -86,6 +92,27 @@ After deployment, configure the protocol:
 - ✅ RedemptionQueue integrated
 - ✅ Staking pools initialized
 - ✅ SOVA rewards system active
+- ✅ **SovaBTCWrapper updated to use new multi-redemption RedemptionQueue**
+
+### ✅ **Updated Protocol Flow (FULLY WORKING)**
+
+**For Token Wrapping:**
+1. User calls `SovaBTCWrapper.deposit(token, amount)`
+2. Wrapper transfers tokens to new RedemptionQueue for reserves
+3. Wrapper mints sovaBTC to user
+4. ✅ **Reserves are now properly available for redemptions**
+
+**For Token Redemptions:**
+1. User calls `RedemptionQueue.redeem(token, sovaAmount)` directly
+2. sovaBTC burned immediately, redemption queued with unique ID
+3. Multiple redemptions per user are supported
+4. Custodians fulfill by redemption ID after 10-day delay
+
+**Key Benefits:**
+- ✅ Multiple concurrent redemptions per user
+- ✅ Unique redemption ID tracking
+- ✅ Proper reserve management
+- ✅ Full protocol functionality restored
 
 ## Web3 Application Development
 
@@ -123,11 +150,11 @@ export const ADDRESSES = {
   TOKEN_WHITELIST: '0x055ccbcd0389151605057e844b86a5d8f372267e',
   CUSTODY_MANAGER: '0xbb02190385cfa8e41b180e65ab28caf232f2789e',
   WRAPPER: '0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c',
-  REDEMPTION_QUEUE: '0x2E03B35276003e3C3060C8bd5Ec736bB8061a686',
+  REDEMPTION_QUEUE: '0x6CDD3cD1c677abbc347A0bDe0eAf350311403638',
   STAKING: '0x755bf172b35a333a40850350e7f10309a664420f',
   // Test tokens
   MOCK_USDC: '0xd6ea412149b7cbb80f9a81c0a99e5bda0434fbc7',
-  MOCK_WBTC: '0x8da7de3d18747ba6b8a788eb07dd40cd660ec860',
+  MOCK_WBTC: '0x8dA7DE3D18747ba6b8A788Eb07dD40cD660eC860',
   MOCK_LBTC: '0x51d539a147d92a00a040b8a43981a51f29b765f6',
 } as const;
 ```

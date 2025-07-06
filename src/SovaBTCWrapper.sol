@@ -124,6 +124,9 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
     }
 
     // ============ Redemption Functions ============
+    // NOTE: Redemption functions have been removed from the wrapper.
+    // Users should interact directly with the RedemptionQueue contract for redemptions.
+    // The wrapper's job is to handle deposits and transfer tokens to the RedemptionQueue.
 
     /**
      * @notice Preview the SovaBTC amount that would be minted for a given token deposit
@@ -152,95 +155,24 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @notice Fulfill a redemption request (custodian function with custody validation)
-     * @param user Address of the user whose redemption to fulfill
-     */
-    function fulfillRedemption(address user) external {
-        if (address(redemptionQueue) == address(0)) revert ZeroAddress();
-
-        // Check if caller is authorized custodian
-        if (!custodyManager.isAuthorizedCustodian(msg.sender)) {
-            revert UnauthorizedCustodian(msg.sender);
-        }
-
-        // Get redemption details to validate custody destination
-        RedemptionQueue.RedemptionRequest memory request = redemptionQueue.getRedemptionRequest(user);
-        if (request.user != address(0)) {
-            // Validate that the redemption can be sent to user (exception for user redemptions)
-            _validateRedemptionDestination(request.token, user);
-        }
-
-        // Delegate to the redemption queue
-        redemptionQueue.fulfillRedemption(user);
-    }
-
-    /**
-     * @notice Batch fulfill multiple redemption requests (custodian function)
-     * @param users Array of user addresses whose redemptions to fulfill
-     */
-    function batchFulfillRedemptions(address[] calldata users) external {
-        if (address(redemptionQueue) == address(0)) revert ZeroAddress();
-
-        // Check if caller is authorized custodian
-        if (!custodyManager.isAuthorizedCustodian(msg.sender)) {
-            revert UnauthorizedCustodian(msg.sender);
-        }
-
-        // Validate custody destinations for all redemptions
-        for (uint256 i = 0; i < users.length; i++) {
-            RedemptionQueue.RedemptionRequest memory request = redemptionQueue.getRedemptionRequest(users[i]);
-            if (request.user != address(0)) {
-                _validateRedemptionDestination(request.token, users[i]);
-            }
-        }
-
-        // Delegate to the redemption queue
-        redemptionQueue.batchFulfillRedemptions(users);
-    }
-
     // ============ View Functions ============
 
     /**
-     * @notice Get redemption request details for a user
-     * @param user Address of the user
-     * @return The redemption request struct
-     */
-    function getRedemptionRequest(address user) external view returns (RedemptionQueue.RedemptionRequest memory) {
-        if (address(redemptionQueue) == address(0)) {
-            return RedemptionQueue.RedemptionRequest(address(0), address(0), 0, 0, 0, false);
-        }
-        return redemptionQueue.getRedemptionRequest(user);
-    }
-
-    /**
-     * @notice Check if a redemption is ready to be fulfilled
-     * @param user Address of the user
-     * @return True if the redemption can be fulfilled
-     */
-    function isRedemptionReady(address user) external view returns (bool) {
-        if (address(redemptionQueue) == address(0)) return false;
-        return redemptionQueue.isRedemptionReady(user);
-    }
-
-    /**
-     * @notice Get the time when a redemption will be ready
-     * @param user Address of the user
-     * @return Timestamp when redemption can be fulfilled
-     */
-    function getRedemptionReadyTime(address user) external view returns (uint256) {
-        if (address(redemptionQueue) == address(0)) return 0;
-        return redemptionQueue.getRedemptionReadyTime(user);
-    }
-
-    /**
-     * @notice Get available reserve for a token
+     * @notice Get available reserve for a token in the RedemptionQueue
      * @param token Address of the token
      * @return Available balance in the redemption queue
      */
     function getAvailableReserve(address token) external view returns (uint256) {
         if (address(redemptionQueue) == address(0)) return 0;
         return redemptionQueue.getAvailableReserve(token);
+    }
+
+    /**
+     * @notice Get the RedemptionQueue contract address
+     * @return Address of the current RedemptionQueue
+     */
+    function getRedemptionQueue() external view returns (address) {
+        return address(redemptionQueue);
     }
 
     // ============ Admin Functions ============
@@ -362,27 +294,5 @@ contract SovaBTCWrapper is Ownable, ReentrancyGuard {
      */
     function getAllCustodyTokens() external view returns (address[] memory) {
         return custodyManager.getAllCustodyTokens();
-    }
-
-    // ============ Internal Helper Functions ============
-
-    /**
-     * @notice Internal function to validate redemption destination (allows user as exception)
-     * @param token The token address
-     * @param user The user address (allowed as exception to custody rules)
-     */
-    function _validateRedemptionDestination(address token, address user) internal view {
-        // User redemptions are always allowed as an exception to custody restrictions
-        // This allows direct-to-user transfers only in fulfillRedemption context
-        (address custody, bool enforced) = custodyManager.getCustodyConfig(token);
-
-        // If custody is not enforced or not set, allow any destination
-        if (!enforced || custody == address(0)) {
-            return;
-        }
-
-        // For redemptions, we allow transfers to users as an exception
-        // This is the key requirement: "Exception for user redemption fulfillment"
-        // The custody validation is bypassed for user redemptions
     }
 }

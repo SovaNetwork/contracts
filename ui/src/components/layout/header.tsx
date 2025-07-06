@@ -15,6 +15,7 @@ export function Header() {
     { name: 'Stake', href: '/stake' },
     { name: 'Redeem', href: '/redeem' },
     { name: 'Analytics', href: '/analytics' },
+    { name: 'Admin', href: '/admin' },
   ];
 
   return (
