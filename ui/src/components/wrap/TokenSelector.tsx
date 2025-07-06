@@ -6,6 +6,7 @@ import { SUPPORTED_TOKENS } from '@/contracts/addresses';
 import { cn } from '@/lib/utils';
 import { formatTokenAmount } from '@/lib/formatters';
 import { useTokenBalance } from '@/hooks/web3/useTokenBalance';
+import { useTokenRedemption } from '@/hooks/web3/useTokenRedemption';
 import { type Address } from 'viem';
 
 interface TokenSelectorProps {
@@ -13,6 +14,7 @@ interface TokenSelectorProps {
   onTokenSelect: (token: typeof SUPPORTED_TOKENS[number]) => void;
   userAddress: Address | undefined;
   className?: string;
+  showReserves?: boolean; // Show available reserves instead of user balance
 }
 
 export function TokenSelector({
@@ -20,6 +22,7 @@ export function TokenSelector({
   onTokenSelect,
   userAddress,
   className,
+  showReserves = false,
 }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -65,6 +68,7 @@ export function TokenSelector({
                 setIsOpen(false);
               }}
               userAddress={userAddress}
+              showReserves={showReserves}
             />
           ))}
         </div>
@@ -86,13 +90,24 @@ interface TokenOptionProps {
   isSelected: boolean;
   onSelect: () => void;
   userAddress: Address | undefined;
+  showReserves?: boolean;
 }
 
-function TokenOption({ token, isSelected, onSelect, userAddress }: TokenOptionProps) {
+function TokenOption({ token, isSelected, onSelect, userAddress, showReserves = false }: TokenOptionProps) {
   const { balance, isLoading } = useTokenBalance({
     tokenAddress: token.address as Address,
     accountAddress: userAddress,
   });
+
+  const { useAvailableReserve } = useTokenRedemption({
+    userAddress: userAddress,
+  });
+
+  const { data: availableReserve, isLoading: isLoadingReserve } = useAvailableReserve(token.address as Address);
+
+  const displayValue = showReserves ? availableReserve : balance;
+  const displayLoading = showReserves ? isLoadingReserve : isLoading;
+  const displayLabel = showReserves ? 'Reserve' : 'Balance';
 
   return (
     <button
@@ -113,13 +128,13 @@ function TokenOption({ token, isSelected, onSelect, userAddress }: TokenOptionPr
         {userAddress && (
           <div className="text-right">
             <div className="text-sm">
-              {isLoading ? (
+              {displayLoading ? (
                 <div className="h-4 w-16 bg-slate-700/50 rounded shimmer" />
               ) : (
-                formatTokenAmount(balance || 0n, token.decimals, 4)
+                formatTokenAmount((displayValue as bigint) || 0n, token.decimals, 4)
               )}
             </div>
-            <div className="text-xs text-foreground/60">Balance</div>
+            <div className="text-xs text-foreground/60">{displayLabel}</div>
           </div>
         )}
         

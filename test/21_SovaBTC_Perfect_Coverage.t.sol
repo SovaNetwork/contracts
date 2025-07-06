@@ -37,7 +37,7 @@ contract SovaBTCPerfectCoverageTest is Test {
 
         // Set owner as minter and give user some tokens for withdrawal testing
         vm.startPrank(owner);
-        sova.setMinter(owner);
+        sova.setMinter(owner, true);
         sova.adminMint(user, 1e8); // 1 BTC worth of tokens
         vm.stopPrank();
     }

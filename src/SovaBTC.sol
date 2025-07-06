@@ -31,8 +31,8 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /// @notice Pause state of the contract
     bool private _paused;
 
-    /// @notice Address authorized to mint tokens (wrapper contract)
-    address public minter;
+    /// @notice Mapping of addresses authorized to mint/burn tokens
+    mapping(address => bool) public minters;
 
     /// @notice Mapping to track Bitcoin txids that have been used for deposits
     mapping(bytes32 => bool) private usedTxids;
@@ -66,7 +66,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     event MaxGasLimitAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event ContractPausedByOwner(address indexed account);
     event ContractUnpausedByOwner(address indexed account);
-    event MinterUpdated(address indexed oldMinter, address indexed newMinter);
+    event MinterUpdated(address indexed minter, bool indexed authorized);
 
     modifier whenNotPaused() {
         if (_paused) {
@@ -83,7 +83,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     }
 
     modifier onlyMinter() {
-        if (msg.sender != minter) revert UnauthorizedMinter(msg.sender);
+        if (!minters[msg.sender]) revert UnauthorizedMinter(msg.sender);
         _;
     }
 
@@ -93,7 +93,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         minDepositAmount = 10_000; // (starts at 10,000 sats)
         maxDepositAmount = 100_000_000_000; // (starts at 1000 BTC = 100 billion sats)
         maxGasLimitAmount = 50_000_000; // (starts at 0.5 BTC = 50,000,000 sats)
-        minter = address(0); // Initialize with no minter, owner can set later
+        // Initialize with no minters, owner can set later
         _paused = false;
     }
 
@@ -289,14 +289,15 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /* ------------------- ADMIN FUNCTIONS -------------------- */
 
     /**
-     * @notice Update minter address
-     * @param _newMinter New minter address
+     * @notice Update minter authorization
+     * @param _minter Minter address
+     * @param _authorized Whether the address is authorized to mint/burn
      */
-    function setMinter(address _newMinter) external onlyOwner {
-        if (_newMinter == address(0)) revert ZeroAddress();
-        address oldMinter = minter;
-        minter = _newMinter;
-        emit MinterUpdated(oldMinter, _newMinter);
+    function setMinter(address _minter, bool _authorized) external onlyOwner {
+        if (_minter == address(0)) revert ZeroAddress();
+        bool oldAuthorization = minters[_minter];
+        minters[_minter] = _authorized;
+        emit MinterUpdated(_minter, _authorized);
     }
 
     /* ------------------- ADMIN MINT/BURN -------------------- */

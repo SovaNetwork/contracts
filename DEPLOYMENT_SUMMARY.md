@@ -8,11 +8,11 @@ The SovaBTC protocol has been **fully deployed** on Base Sepolia testnet (Chain 
 
 **Core Protocol Contracts:**
 
-1. **SovaBTC Token**: `0x81d36279dd48cafc01b025e81953b4fac450c056`
+1. **SovaBTC Token**: `0xF6c09Dc46AA90Ee3BcBE7AD955c5453d7247295F`
    - Main wrapped Bitcoin token contract
    - Supports Bitcoin deposit/withdrawal functionality
    - 8 decimal precision (satoshi-compatible)
-   - **NEW**: Added minter role system for authorized minting
+   - **UPDATED**: Multiple minter support for wrapper and redemption queue
 
 2. **SOVA Token**: `0x8d25f27e41d15e5b26522d4ef2879a2efe2bd954`
    - Protocol reward token
@@ -28,15 +28,15 @@ The SovaBTC protocol has been **fully deployed** on Base Sepolia testnet (Chain 
    - Manages protocol custody functionality
    - Handles asset security and validation
 
-5. **SovaBTCWrapper**: `0xdac0f81bafe105a86435910e67b6d532d6a9df52`
+5. **SovaBTCWrapper**: `0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c`
    - Wraps external Bitcoin tokens into SovaBTC
    - Core protocol functionality
-   - **FIXED**: Uses correct TokenWhitelist function calls
+   - **UPDATED**: Points to new SovaBTC contract with multiple minter support
 
-6. **RedemptionQueue**: `0x174ccc052b36cab2a656ba89691d8a611d72eb64`
+6. **RedemptionQueue**: `0x2E03B35276003e3C3060C8bd5Ec736bB8061a686`
    - Handles user redemption requests
    - Manages the redemption queue system
-   - **FIXED**: Uses correct TokenWhitelist function calls
+   - **UPDATED**: Points to new SovaBTC contract with multiple minter support
 
 7. **SovaBTCStaking**: `0x755bf172b35a333a40850350e7f10309a664420f`
    - Staking contract for SOVA rewards
@@ -72,8 +72,9 @@ All contracts have been successfully deployed with critical bug fixes and are re
 3. ✅ **Updated tests**: Fixed all failing tests to work with new minter pattern
 4. ✅ **Redeployed contracts**: All contracts redeployed to Base Sepolia with fixes
 
-**✅ Minter Role Set**: Wrapper contract has been authorized as minter via transaction hash:
-`0x4d0eb98600f10330e6330bd086e7f3ed29082e04f7e811c6439183b1c15f91f3`
+**✅ Multiple Minters Set**: Both Wrapper and RedemptionQueue contracts have been authorized as minters:
+- SovaBTCWrapper: `0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c`
+- RedemptionQueue: `0x2E03B35276003e3C3060C8bd5Ec736bB8061a686`
 
 **✅ Frontend Updated**: All frontend contract addresses have been updated to use the latest deployment addresses with working minter functionality.
 
@@ -117,12 +118,12 @@ With the comprehensive plan in `ui.md`, you can now start building the frontend 
 ```typescript
 // Contract addresses for Base Sepolia (Updated with fixes)
 export const ADDRESSES = {
-  SOVABTC: '0x81d36279dd48cafc01b025e81953b4fac450c056',
+  SOVABTC: '0xF6c09Dc46AA90Ee3BcBE7AD955c5453d7247295F',
   SOVA_TOKEN: '0x8d25f27e41d15e5b26522d4ef2879a2efe2bd954',
   TOKEN_WHITELIST: '0x055ccbcd0389151605057e844b86a5d8f372267e',
   CUSTODY_MANAGER: '0xbb02190385cfa8e41b180e65ab28caf232f2789e',
-  WRAPPER: '0xdac0f81bafe105a86435910e67b6d532d6a9df52',
-  REDEMPTION_QUEUE: '0x174ccc052b36cab2a656ba89691d8a611d72eb64',
+  WRAPPER: '0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c',
+  REDEMPTION_QUEUE: '0x2E03B35276003e3C3060C8bd5Ec736bB8061a686',
   STAKING: '0x755bf172b35a333a40850350e7f10309a664420f',
   // Test tokens
   MOCK_USDC: '0xd6ea412149b7cbb80f9a81c0a99e5bda0434fbc7',

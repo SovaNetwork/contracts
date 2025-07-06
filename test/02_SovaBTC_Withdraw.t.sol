@@ -22,7 +22,7 @@ contract SovaBTCWithdrawTest is Test {
         vm.etch(address(0x999), address(precompile).code);
 
         // Set test contract as minter and mint uBTC to user for withdrawal tests
-        sova.setMinter(address(this));
+        sova.setMinter(address(this), true);
         sova.adminMint(user, WITHDRAW_AMOUNT + GAS_LIMIT);
     }
 

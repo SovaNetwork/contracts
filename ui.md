@@ -32,14 +32,18 @@
 
 **Current Status**: Full token wrapping functionality available at `/wrap`
 
-### 🚧 Phase 2.5: Bidirectional Wrapping/Unwrapping (IN PROGRESS)
+### ✅ Phase 2.5: Bidirectional Wrapping/Unwrapping COMPLETED ✅
 
-**Priority Enhancement - Convert to bidirectional interface:**
-- 🚧 **Direction Toggle**: Switch between Wrap (Token → sovaBTC) and Unwrap (sovaBTC → Token)
-- 🚧 **Redemption Queue Integration**: Handle sovaBTC unwrapping with 10-day delay queue
-- 🚧 **Queue Status Tracking**: Show redemption status and countdown timers
-- 🚧 **Unified UX**: Single interface for both wrapping and unwrapping flows
-- 🚧 **Real-time Estimates**: Preview unwrap amounts accounting for queue delays
+**Successfully implemented bidirectional interface:**
+- ✅ **Direction Toggle**: Switch between Wrap (Token → sovaBTC) and Unwrap (sovaBTC → Token)
+- ✅ **Redemption Queue Integration**: Handle sovaBTC unwrapping with 10-day delay queue
+- ✅ **Queue Status Tracking**: Show redemption status and countdown timers
+- ✅ **Unified UX**: Single interface for both wrapping and unwrapping flows
+- ✅ **Real-time Estimates**: Preview unwrap amounts accounting for queue delays
+- ✅ **Reserve Display**: Show available reserves when selecting tokens for unwrapping
+- ✅ **Pending Redemption Management**: Handle existing redemptions with proper warnings
+
+**Current Status**: Complete bidirectional wrap/unwrap functionality available at `/wrap`
 
 ### 🚀 Next Steps - Phase 3: Staking System (Ready to Start)
 
@@ -57,15 +61,16 @@
 - **Foundation Complete**: Next.js 14, TypeScript, Tailwind CSS, and Web3 providers setup
 
 ### 🔄 Current Priority Tasks
-1. **Token Wrapping Interface**: Build multi-token support (WBTC, LBTC, USDC → sovaBTC)
-2. **Approval Flow**: Implement token approval flows for wrapping transactions  
-3. **Transaction Tracking**: Add transaction status tracking with loading states and confirmations
-4. **Staking Dashboard**: Create staking pools dashboard with APY calculations
-5. **Stake/Unstake Functions**: Implement stake/unstake functionality with lock periods
-6. **Rewards System**: Build rewards tracking and claiming interface
-7. **Redemption Queue**: Create redemption queue interface with 10-day delay management
-8. **Analytics Dashboard**: Build protocol analytics dashboard with TVL and metrics
-9. **Admin Interface**: Create administrative interface for protocol management
+1. ✅ **Token Wrapping Interface**: Multi-token support (WBTC, LBTC, USDC → sovaBTC) COMPLETED
+2. ✅ **Approval Flow**: Token approval flows for wrapping transactions COMPLETED  
+3. ✅ **Transaction Tracking**: Transaction status tracking with loading states and confirmations COMPLETED
+4. ✅ **Bidirectional Interface**: Unified wrap/unwrap interface with direction toggle COMPLETED
+5. ✅ **Redemption Queue Integration**: Queue interface with 10-day delay management COMPLETED
+6. **Staking Dashboard**: Create staking pools dashboard with APY calculations
+7. **Stake/Unstake Functions**: Implement stake/unstake functionality with lock periods
+8. **Rewards System**: Build rewards tracking and claiming interface
+9. **Analytics Dashboard**: Build protocol analytics dashboard with TVL and metrics
+10. **Admin Interface**: Create administrative interface for protocol management
 
 ---
 

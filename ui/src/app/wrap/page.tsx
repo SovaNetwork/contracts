@@ -1,6 +1,6 @@
 'use client';
 
-import { WrapInterface } from '@/components/wrap/WrapInterface';
+import { BidirectionalWrapInterface } from '@/components/wrap/BidirectionalWrapInterface';
 
 export default function WrapPage() {
   return (
@@ -18,7 +18,7 @@ export default function WrapPage() {
         </div>
 
         {/* Wrap Interface */}
-        <WrapInterface />
+        <BidirectionalWrapInterface />
 
         {/* Information Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-4xl mx-auto">

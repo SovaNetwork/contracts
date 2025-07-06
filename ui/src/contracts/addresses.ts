@@ -4,12 +4,12 @@ export const CHAIN_ID = 84532 as const;
 
 export const ADDRESSES = {
   // Core Protocol Contracts - Updated with fixes and minter role
-  SOVABTC: '0x81d36279dd48cafc01b025e81953b4fac450c056' as const,
+  SOVABTC: '0xF6c09Dc46AA90Ee3BcBE7AD955c5453d7247295F' as const,
   SOVA_TOKEN: '0x8d25f27e41d15e5b26522d4ef2879a2efe2bd954' as const,
   TOKEN_WHITELIST: '0x055ccbcd0389151605057e844b86a5d8f372267e' as const,
   CUSTODY_MANAGER: '0xbb02190385cfa8e41b180e65ab28caf232f2789e' as const,
-  WRAPPER: '0xdac0f81bafe105a86435910e67b6d532d6a9df52' as const,
-  REDEMPTION_QUEUE: '0x174ccc052b36cab2a656ba89691d8a611d72eb64' as const,
+  WRAPPER: '0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c' as const,
+  REDEMPTION_QUEUE: '0x2E03B35276003e3C3060C8bd5Ec736bB8061a686' as const,
   STAKING: '0x755bf172b35a333a40850350e7f10309a664420f' as const,
   
   // Test Tokens
