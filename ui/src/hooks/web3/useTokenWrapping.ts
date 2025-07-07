@@ -1,6 +1,6 @@
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, usePublicClient } from 'wagmi';
 import { SovaBTCWrapperABI } from '@/contracts/abis';
-import { ADDRESSES } from '@/contracts/addresses';
+import { useActiveNetwork } from './useActiveNetwork';
 import { type Address, parseUnits, formatUnits, erc20Abi } from 'viem';
 import { useState, useMemo, useEffect } from 'react';
 
@@ -12,6 +12,11 @@ export function useTokenWrapping({ userAddress }: UseTokenWrappingProps) {
   const [lastApprovalHash, setLastApprovalHash] = useState<Address | undefined>();
   const [lastWrapHash, setLastWrapHash] = useState<Address | undefined>();
   const [currentStep, setCurrentStep] = useState<'idle' | 'approving' | 'wrapping'>('idle');
+
+  // Get network-aware contract addresses
+  const { getContractAddress } = useActiveNetwork();
+  const wrapperAddress = getContractAddress('wrapper');
+  const sovaBTCAddress = getContractAddress('sovaBTC');
 
   // Get public client for manual contract calls
   const publicClient = usePublicClient();
@@ -55,11 +60,11 @@ export function useTokenWrapping({ userAddress }: UseTokenWrappingProps) {
     data: minimumDepositSatoshi,
     isLoading: isLoadingMinDeposit,
   } = useReadContract({
-    address: ADDRESSES.WRAPPER,
+    address: wrapperAddress,
     abi: SovaBTCWrapperABI,
     functionName: 'minDepositSatoshi',
     query: {
-      enabled: true,
+      enabled: Boolean(wrapperAddress),
     },
   });
 
@@ -69,9 +74,9 @@ export function useTokenWrapping({ userAddress }: UseTokenWrappingProps) {
       address: tokenAddress,
       abi: erc20Abi,
       functionName: 'allowance',
-      args: userAddress && tokenAddress ? [userAddress, ADDRESSES.WRAPPER] : undefined,
+      args: userAddress && tokenAddress && wrapperAddress ? [userAddress, wrapperAddress] : undefined,
       query: {
-        enabled: Boolean(userAddress && tokenAddress),
+        enabled: Boolean(userAddress && tokenAddress && wrapperAddress),
         refetchInterval: 5000, // Refetch every 5 seconds
       },
     });
@@ -93,7 +98,7 @@ export function useTokenWrapping({ userAddress }: UseTokenWrappingProps) {
   // Use contract's previewDeposit function for accurate estimation
   const usePreviewDeposit = (tokenAddress: Address | undefined, tokenAmount: bigint) => {
     return useReadContract({
-      address: ADDRESSES.WRAPPER,
+      address: wrapperAddress,
       abi: SovaBTCWrapperABI,
       functionName: 'previewDeposit',
       args: tokenAddress && tokenAmount > 0n ? [tokenAddress, tokenAmount] : undefined,
@@ -135,139 +140,145 @@ export function useTokenWrapping({ userAddress }: UseTokenWrappingProps) {
     return satoshiAmount;
   };
 
+  // Execute approval for a token
   const executeApproval = async (tokenAddress: Address, amount: bigint) => {
     try {
+      if (!wrapperAddress) {
+        throw new Error('Wrapper contract address not found for current network');
+      }
+
       setCurrentStep('approving');
-      console.log('🔐 EXECUTING APPROVAL:', {
+      
+      console.log('🔑 EXECUTING APPROVAL:', {
         tokenAddress,
-        tokenAmount: amount.toString(),
-        note: 'Approving token amount (NOT satoshis)'
+        spenderAddress: wrapperAddress,
+        amount: amount.toString(),
       });
       
       await approve({
         address: tokenAddress,
         abi: erc20Abi,
         functionName: 'approve',
-        args: [ADDRESSES.WRAPPER, amount],
+        args: [wrapperAddress, amount],
       });
     } catch (error) {
       setCurrentStep('idle');
-      console.error('Approval failed:', error);
+      console.error('❌ APPROVAL FAILED:', error);
       throw error;
     }
   };
 
-  const executeWrap = async (tokenAddress: Address, tokenAmount: bigint, tokenDecimals: number) => {
+  // Execute wrap with automatic approval if needed (FIXED DECIMAL HANDLING)
+  const executeWrapWithApproval = async (
+    tokenAddress: Address, 
+    tokenAmount: bigint, 
+    tokenDecimals: number,
+    currentAllowance: bigint
+  ) => {
     try {
-      setCurrentStep('wrapping');
-      
-      // 🎯 KEY FIX: Convert token amount to satoshis for contract
+      if (!wrapperAddress || !sovaBTCAddress) {
+        throw new Error('Contract addresses not found for current network');
+      }
+
       const satoshiAmount = convertToSatoshis(tokenAmount, tokenDecimals);
       
+      console.log('🚀 STARTING WRAP WITH APPROVAL (NETWORK-AWARE):', {
+        network: 'Current Network',
+        wrapperAddress,
+        sovaBTCAddress,
+        tokenAddress,
+        tokenAmount: tokenAmount.toString(),
+        satoshiAmount: satoshiAmount.toString(),
+        currentAllowance: currentAllowance.toString(),
+      });
+      
+      // Check if approval is needed
+      if (currentAllowance < tokenAmount) {
+        console.log('🔑 APPROVAL NEEDED');
+        await executeApproval(tokenAddress, tokenAmount);
+        // Don't proceed to wrap here - wait for user to click wrap again after approval
+        return;
+      }
+      
+      // Proceed with wrap
+      setCurrentStep('wrapping');
+      
       console.log('📡 EXECUTING CONTRACT CALL (FIXED):', {
-        contractAddress: ADDRESSES.WRAPPER,
+        contractAddress: wrapperAddress,
         function: 'deposit',
         tokenAddress,
-        originalTokenAmount: tokenAmount.toString(),
-        convertedSatoshiAmount: satoshiAmount.toString(),
-        tokenDecimals,
-        aboutToCall: `deposit(${tokenAddress}, ${satoshiAmount.toString()}) // SATOSHIS`
+        tokenAmount: tokenAmount.toString(),
+        expectedSatoshis: satoshiAmount.toString(),
       });
       
       await wrapToken({
-        address: ADDRESSES.WRAPPER,
+        address: wrapperAddress,
         abi: SovaBTCWrapperABI,
         functionName: 'deposit',
-        args: [tokenAddress, satoshiAmount], // 🎯 SEND SATOSHIS TO CONTRACT
+        args: [tokenAddress, tokenAmount],
       });
     } catch (error) {
       setCurrentStep('idle');
-      console.error('❌ CONTRACT CALL FAILED:', error);
+      console.error('❌ WRAP WITH APPROVAL FAILED:', error);
       throw error;
     }
   };
 
-  // Combined function to handle approval + wrapping (UPDATED FOR SATOSHIS)
-  const executeWrapWithApproval = async (
+  // Execute wrap with forced approval (for debugging)
+  const executeWrapWithForceApproval = async (
     tokenAddress: Address, 
-    tokenAmount: bigint,
+    tokenAmount: bigint, 
     tokenDecimals: number,
-    currentAllowance: bigint = 0n,
-    forceApproval: boolean = false
+    currentAllowance: bigint
   ) => {
     try {
-      // Check if approval is needed OR if forced (approval is for TOKEN amount, not satoshis)
-      if (currentAllowance < tokenAmount || forceApproval) {
-        if (forceApproval) {
-          console.log('🔄 FORCING FRESH APPROVAL (bypassing allowance check)...', {
-            tokenAddress,
-            tokenAmount: tokenAmount.toString(),
-            currentAllowance: currentAllowance.toString(),
-            reason: 'Force approval requested'
-          });
-        } else {
-          console.log('Insufficient allowance, requesting approval...', {
-            tokenAddress,
-            tokenAmount: tokenAmount.toString(),
-            currentAllowance: currentAllowance.toString(),
-          });
-        }
-        
-        // Approve 2x the TOKEN amount to avoid future issues
-        const approvalAmount = tokenAmount * 2n;
-        await executeApproval(tokenAddress, approvalAmount);
-        // The wrap will be triggered automatically when approval confirms
-      } else {
-        console.log('Sufficient allowance, proceeding to wrap...', {
-          tokenAddress,
-          tokenAmount: tokenAmount.toString(),
-          currentAllowance: currentAllowance.toString(),
+      if (!wrapperAddress || !userAddress) {
+        throw new Error('Required addresses not found for current network');
+      }
+
+      console.log('🚨 FORCE APPROVAL MODE (NETWORK-AWARE):', {
+        wrapperAddress,
+        step1: 'Checking current allowance',
+        step2: 'Forcing new approval',
+        step3: 'Executing wrap'
+      });
+
+      // Step 1: Check current allowance via direct call
+      if (publicClient) {
+        const currentActualAllowance = await publicClient.readContract({
+          address: tokenAddress,
+          abi: erc20Abi,
+          functionName: 'allowance',
+          args: [userAddress!, wrapperAddress],
         });
         
-        // CRITICAL: Double-check allowance right before wrap transaction
-        console.log('🔍 FINAL ALLOWANCE CHECK BEFORE WRAP...');
-        try {
-          // Manual allowance check using the same contract call
-          if (!publicClient) {
-            console.warn('⚠️ Public client not available, skipping final allowance check');
-          } else {
-            const finalAllowanceCheck = await publicClient.readContract({
-              address: tokenAddress,
-              abi: erc20Abi,
-              functionName: 'allowance',
-              args: [userAddress!, ADDRESSES.WRAPPER],
-            });
-            
-            console.log('📊 FINAL ALLOWANCE VERIFICATION:', {
-              userAddress,
-              tokenAddress,
-              spenderAddress: ADDRESSES.WRAPPER,
-              requestedTokenAmount: tokenAmount.toString(),
-              actualAllowance: finalAllowanceCheck.toString(),
-              isAllowanceSufficient: finalAllowanceCheck >= tokenAmount,
-              difference: (finalAllowanceCheck - tokenAmount).toString(),
-            });
-            
-            if (finalAllowanceCheck < tokenAmount) {
-              console.error('❌ ALLOWANCE INSUFFICIENT AT FINAL CHECK!');
-              console.error('This indicates a race condition or stale data issue.');
-              console.error('Attempting emergency approval...');
-              
-              // Emergency approval
-              await executeApproval(tokenAddress, tokenAmount * 2n); // Approve 2x the amount
-              return; // Exit and let the approval flow handle the wrap
-            }
-          }
-          
-        } catch (allowanceCheckError) {
-          console.error('❌ FAILED TO CHECK FINAL ALLOWANCE:', allowanceCheckError);
-          // Proceed anyway but log the issue
-        }
+        console.log('📊 FINAL ALLOWANCE VERIFICATION:', {
+          userAddress,
+          tokenAddress,
+          spenderAddress: wrapperAddress,
+          requestedTokenAmount: tokenAmount.toString(),
+          actualAllowance: currentActualAllowance.toString(),
+          isAllowanceSufficient: currentActualAllowance >= tokenAmount,
+          difference: (currentActualAllowance - tokenAmount).toString(),
+        });
         
-        await executeWrap(tokenAddress, tokenAmount, tokenDecimals);
+        if (currentActualAllowance < tokenAmount) {
+          console.error('❌ ALLOWANCE INSUFFICIENT AT FINAL CHECK!');
+          console.error('This indicates a race condition or stale data issue.');
+          console.error('Attempting emergency approval...');
+          
+          // Emergency approval
+          await executeApproval(tokenAddress, tokenAmount * 2n); // Approve 2x the amount
+          return; // Exit and let the approval flow handle the wrap
+        }
+      } else {
+        console.warn('⚠️ Public client not available, skipping final allowance check');
       }
+      
+      await executeWrapWithApproval(tokenAddress, tokenAmount, tokenDecimals, currentAllowance);
     } catch (error) {
       setCurrentStep('idle');
+      console.error('❌ WRAP WITH FORCE APPROVAL FAILED:', error);
       throw error;
     }
   };
@@ -356,39 +367,33 @@ export function useTokenWrapping({ userAddress }: UseTokenWrappingProps) {
     return 'idle';
   };
 
+  const overallStatus = getOverallStatus();
+  const combinedError = approvalError || wrapError || approvalConfirmError || wrapConfirmError;
+
   return {
-    // Actions
-    executeWrap,
+    // Main functions
     executeApproval,
     executeWrapWithApproval, // Main function to use (UPDATED SIGNATURE)
+    executeWrapWithForceApproval, // Emergency function for troubleshooting (UPDATED SIGNATURE)
     validateWrap,
     estimateOutput,
-    useTokenAllowance, // Hook to check allowance
-    useTokenDecimals, // Hook to get token decimals
-    usePreviewDeposit, // Hook to preview deposit using contract
-    convertToSatoshis, // Utility function
+    convertToSatoshis,
     
     // State
-    minimumDeposit: minimumDepositSatoshi as bigint | undefined,
-    isLoadingMinDeposit,
-    currentStep,
-    
-    // Transaction status
-    overallStatus: getOverallStatus(),
-    isApproving: currentStep === 'approving' || isApproving || isConfirmingApproval,
-    isWrapping: currentStep === 'wrapping' || isWrapping || isConfirmingWrap,
+    overallStatus,
+    isApproving,
+    isWrapping,
     isApprovalConfirmed,
     isWrapConfirmed,
+    error: combinedError,
     
-    // Errors
-    error: approvalError || wrapError || approvalConfirmError || wrapConfirmError,
+    // Hooks
+    useTokenAllowance,
+    usePreviewDeposit,
+    minimumDeposit: minimumDepositSatoshi,
     
-    // Transaction hashes
+    // Raw data for debugging
     approvalHash: lastApprovalHash,
     wrapHash: lastWrapHash,
-    
-    // Emergency function for troubleshooting (UPDATED SIGNATURE)
-    executeWrapWithForceApproval: (tokenAddress: Address, tokenAmount: bigint, tokenDecimals: number, currentAllowance: bigint = 0n) => 
-      executeWrapWithApproval(tokenAddress, tokenAmount, tokenDecimals, currentAllowance, true),
   };
 } 

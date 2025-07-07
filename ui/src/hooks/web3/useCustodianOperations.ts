@@ -1,6 +1,6 @@
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { RedemptionQueueABI } from '@/contracts/abis';
-import { ADDRESSES } from '@/contracts/addresses';
+import { useActiveNetwork } from './useActiveNetwork';
 import { type Address } from 'viem';
 import { useState, useMemo } from 'react';
 
@@ -9,18 +9,22 @@ interface UseCustodianOperationsProps {
 }
 
 // Type for redemption request
-type RedemptionRequest = {
+interface RedemptionRequest {
   id: bigint;
-  user: Address;
-  token: Address;
+  user: string;
+  token: string;
   sovaAmount: bigint;
   underlyingAmount: bigint;
   requestTime: bigint;
   fulfilled: boolean;
-};
+}
 
 export function useCustodianOperations({ userAddress }: UseCustodianOperationsProps) {
   const [lastFulfillmentHash, setLastFulfillmentHash] = useState<Address | undefined>();
+
+  // Get network-aware contract addresses
+  const { getContractAddress } = useActiveNetwork();
+  const redemptionQueueAddress = getContractAddress('redemptionQueue');
 
   // Write contract for single fulfillment
   const {
@@ -52,12 +56,12 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
     data: isCustodian,
     refetch: refetchCustodianStatus,
   } = useReadContract({
-    address: ADDRESSES.REDEMPTION_QUEUE,
+    address: redemptionQueueAddress,
     abi: RedemptionQueueABI,
     functionName: 'custodians',
     args: userAddress ? [userAddress] : undefined,
     query: {
-      enabled: Boolean(userAddress),
+      enabled: Boolean(userAddress && redemptionQueueAddress),
     },
   });
 
@@ -65,10 +69,11 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
   const {
     data: totalRedemptionCount,
   } = useReadContract({
-    address: ADDRESSES.REDEMPTION_QUEUE,
+    address: redemptionQueueAddress,
     abi: RedemptionQueueABI,
     functionName: 'getRedemptionCount',
     query: {
+      enabled: Boolean(redemptionQueueAddress),
       refetchInterval: 30000, // Refetch every 30 seconds
     },
   });
@@ -76,12 +81,12 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
   // Function to get a specific redemption by ID
   const useRedemptionById = (redemptionId: bigint | undefined) => {
     return useReadContract({
-      address: ADDRESSES.REDEMPTION_QUEUE,
+      address: redemptionQueueAddress,
       abi: RedemptionQueueABI,
       functionName: 'getRedemptionRequest',
       args: redemptionId ? [redemptionId] : undefined,
       query: {
-        enabled: Boolean(redemptionId),
+        enabled: Boolean(redemptionId && redemptionQueueAddress),
       },
     });
   };
@@ -89,12 +94,12 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
   // Function to check if redemption is ready
   const useIsRedemptionReady = (redemptionId: bigint | undefined) => {
     return useReadContract({
-      address: ADDRESSES.REDEMPTION_QUEUE,
+      address: redemptionQueueAddress,
       abi: RedemptionQueueABI,
       functionName: 'isRedemptionReady',
       args: redemptionId ? [redemptionId] : undefined,
       query: {
-        enabled: Boolean(redemptionId),
+        enabled: Boolean(redemptionId && redemptionQueueAddress),
         refetchInterval: 30000,
       },
     });
@@ -103,12 +108,12 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
   // Get available reserve for a token
   const useAvailableReserve = (tokenAddress: Address | undefined) => {
     return useReadContract({
-      address: ADDRESSES.REDEMPTION_QUEUE,
+      address: redemptionQueueAddress,
       abi: RedemptionQueueABI,
       functionName: 'getAvailableReserve',
       args: tokenAddress ? [tokenAddress] : undefined,
       query: {
-        enabled: Boolean(tokenAddress),
+        enabled: Boolean(tokenAddress && redemptionQueueAddress),
         refetchInterval: 30000,
       },
     });
@@ -117,14 +122,18 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
   // Execute single redemption fulfillment
   const executeFulfillment = async (redemptionId: bigint) => {
     try {
-      console.log('🔄 FULFILLING REDEMPTION:', {
+      if (!redemptionQueueAddress) {
+        throw new Error('Redemption queue contract address not found for current network');
+      }
+
+      console.log('🚀 FULFILLING REDEMPTION:', {
         redemptionId: redemptionId.toString(),
         custodian: userAddress,
-        contract: ADDRESSES.REDEMPTION_QUEUE,
+        contract: redemptionQueueAddress,
       });
 
       await fulfillRedemption({
-        address: ADDRESSES.REDEMPTION_QUEUE,
+        address: redemptionQueueAddress,
         abi: RedemptionQueueABI,
         functionName: 'fulfillRedemption',
         args: [redemptionId],
@@ -134,7 +143,7 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
         setLastFulfillmentHash(fulfillmentHash);
       }
     } catch (error) {
-      console.error('❌ FULFILLMENT FAILED:', error);
+      console.error('❌ REDEMPTION FULFILLMENT FAILED:', error);
       throw error;
     }
   };
@@ -142,14 +151,18 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
   // Execute batch redemption fulfillment
   const executeBatchFulfillment = async (redemptionIds: bigint[]) => {
     try {
-      console.log('🔄 BATCH FULFILLING REDEMPTIONS:', {
-        count: redemptionIds.length,
+      if (!redemptionQueueAddress) {
+        throw new Error('Redemption queue contract address not found for current network');
+      }
+
+      console.log('🚀 BATCH FULFILLING REDEMPTIONS:', {
         redemptionIds: redemptionIds.map(id => id.toString()),
+        count: redemptionIds.length,
         custodian: userAddress,
       });
 
       await batchFulfillRedemptions({
-        address: ADDRESSES.REDEMPTION_QUEUE,
+        address: redemptionQueueAddress,
         abi: RedemptionQueueABI,
         functionName: 'batchFulfillRedemptions',
         args: [redemptionIds],
@@ -159,7 +172,7 @@ export function useCustodianOperations({ userAddress }: UseCustodianOperationsPr
         setLastFulfillmentHash(batchFulfillmentHash);
       }
     } catch (error) {
-      console.error('❌ BATCH FULFILLMENT FAILED:', error);
+      console.error('❌ BATCH REDEMPTION FULFILLMENT FAILED:', error);
       throw error;
     }
   };

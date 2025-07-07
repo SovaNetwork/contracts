@@ -10,7 +10,8 @@ import { motion } from 'framer-motion';
 import { TokenSelector } from './TokenSelector';
 import { AmountInput } from './AmountInput';
 import { CountdownTimer } from './CountdownTimer';
-import { SUPPORTED_TOKENS, ADDRESSES, getExplorerUrl, getTokenByAddress } from '@/contracts/addresses';
+import { useNetworkTokens, useActiveNetwork } from '@/hooks/web3/useActiveNetwork';
+import { getExplorerUrl, getTokenByAddress } from '@/contracts/addresses';
 import { useTokenBalance } from '@/hooks/web3/useTokenBalance';
 import { useTokenWrapping } from '@/hooks/web3/useTokenWrapping';
 import { useTokenRedemption } from '@/hooks/web3/useTokenRedemption';
@@ -22,9 +23,14 @@ type WrapDirection = 'wrap' | 'unwrap';
 export function BidirectionalWrapInterface() {
   const { address, isConnected } = useAccount();
   
+  // Get network-aware tokens and contract addresses
+  const { tokens } = useNetworkTokens();
+  const { getContractAddress, activeChainId } = useActiveNetwork();
+  const sovaBTCAddress = getContractAddress('sovaBTC');
+  
   // Component state
   const [direction, setDirection] = useState<WrapDirection>('wrap');
-  const [selectedToken, setSelectedToken] = useState<typeof SUPPORTED_TOKENS[number] | null>(null);
+  const [selectedToken, setSelectedToken] = useState<typeof tokens[number] | null>(null);
   const [amount, setAmount] = useState('');
   const [lastSuccessDirection, setLastSuccessDirection] = useState<WrapDirection | null>(null);
 
@@ -35,8 +41,9 @@ export function BidirectionalWrapInterface() {
   });
 
   const { balance: sovaBTCBalance } = useTokenBalance({
-    tokenAddress: ADDRESSES.SOVABTC,
+    tokenAddress: (sovaBTCAddress || '0x0000000000000000000000000000000000000000') as Address,
     accountAddress: address,
+    enabled: Boolean(sovaBTCAddress),
   });
 
   // Get wrapping hook
@@ -84,13 +91,15 @@ export function BidirectionalWrapInterface() {
   const { data: availableReserve } = useAvailableReserve(selectedToken?.address as Address);
 
   // Parse amount to bigint for calculations
-  const amountWei = useMemo(() => {
+  const amountWei = useMemo((): bigint => {
     if (!amount) return 0n;
     try {
       if (direction === 'wrap' && selectedToken) {
-        return parseTokenAmount(amount, selectedToken.decimals);
+        const parsed = parseTokenAmount(amount, selectedToken.decimals);
+        return parsed || 0n;
       } else if (direction === 'unwrap') {
-        return parseTokenAmount(amount, 8); // sovaBTC has 8 decimals
+        const parsed = parseTokenAmount(amount, 8); // sovaBTC has 8 decimals
+        return parsed || 0n;
       }
       return 0n;
     } catch (error) {
@@ -101,17 +110,20 @@ export function BidirectionalWrapInterface() {
 
   // Validation logic
   const validation = useMemo(() => {
-    if (!selectedToken || !amountWei) {
+    if (!selectedToken || !amountWei || amountWei === 0n) {
       return { isValid: false, error: 'Please enter an amount' };
     }
 
+    const tokenAddress = selectedToken.address as Address;
+    const reserveAmount = availableReserve || 0n;
+
     if (direction === 'wrap') {
-      return validateWrap(selectedToken.address as Address, amountWei, selectedToken.decimals);
+      return validateWrap(tokenAddress, amountWei, selectedToken.decimals);
     } else {
       return validateRedemption(
-        selectedToken.address as Address,
+        tokenAddress,
         amountWei,
-        availableReserve || 0n,
+        reserveAmount,
         selectedToken.decimals
       );
     }
@@ -432,7 +444,7 @@ export function BidirectionalWrapInterface() {
                   ✅ {direction === 'wrap' ? 'Wrap' : 'Redemption'} Successful!
                 </div>
                 <a
-                  href={getExplorerUrl(currentHash, 'tx')}
+                  href={getExplorerUrl(activeChainId, currentHash, 'tx')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-1 text-sm text-defi-purple hover:text-defi-pink transition-colors"

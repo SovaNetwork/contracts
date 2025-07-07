@@ -1,12 +1,38 @@
 # SovaBTC Protocol Deployment Summary
 
-## Current Deployment Status (Base Sepolia)
+## ✅ MULTI-CHAIN DEPLOYMENT COMPLETE - LayerZero OFT Protocol
 
-The SovaBTC protocol has been **fully deployed** on Base Sepolia testnet (Chain ID: 84532).
+**Latest Update**: January 7, 2025  
+**Status**: **LayerZero OFT Infrastructure Deployed and Operational**  
+**Networks**: Ethereum Sepolia, Base Sepolia, Optimism Sepolia with Cross-Chain Functionality
 
-### ✅ Successfully Deployed Contracts
+The SovaBTC protocol has been **fully deployed as a LayerZero Omnichain Fungible Token (OFT)** across multiple testnets with true cross-chain functionality.
 
-**Core Protocol Contracts:**
+### 🌐 LayerZero OFT Deployment Summary
+
+**✅ DEPLOYED NETWORKS**:
+
+1. **Ethereum Sepolia (Chain ID: 11155111, LayerZero EID: 40161)**
+   - **SovaBTC OFT**: `0xf059C386BA88DA3C3919eDe0E6209B66C4D3DeE1` 🚀 **CROSS-CHAIN ENABLED (UPDATED)**
+   - **LayerZero Endpoint**: `0x1a44076050125825900e736c501f859c50fE728c`
+
+2. **Base Sepolia (Chain ID: 84532, LayerZero EID: 40245)**
+   - **SovaBTC OFT**: `0x802Ea91b5aAf53D067b0bB72bAD4Cc714e1855Be` 🚀 **CROSS-CHAIN ENABLED (UPDATED)**
+   - **LayerZero Endpoint**: `0x1a44076050125825900e736c501f859c50fE728c`
+
+3. **Optimism Sepolia (Chain ID: 11155420, LayerZero EID: 40232)**
+   - **SovaBTC OFT**: `0x00626Ed5FE6Bf77Ae13BEa79e304CF6A5554903b` 🚀 **CROSS-CHAIN ENABLED (UPDATED)**
+   - **LayerZero Endpoint**: `0x1a44076050125825900e736c501f859c50fE728c`
+
+**🔗 Cross-Chain Features**:
+- ✅ **Burn/Mint Mechanism**: True omnichain token with unified supply
+- ✅ **Peer Relationships**: Bidirectional trust configured between all networks
+- ✅ **LayerZero V2 Protocol**: Secure cross-chain messaging infrastructure
+- ✅ **No Liquidity Required**: Direct bridging without liquidity pools
+
+### ✅ Successfully Deployed Contracts (All Networks)
+
+**Core Protocol Contracts** (deployed on all 3 networks):
 
 1. **SovaBTC Token**: `0xF6c09Dc46AA90Ee3BcBE7AD955c5453d7247295F`
    - Main wrapped Bitcoin token contract

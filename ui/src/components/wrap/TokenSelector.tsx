@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { SUPPORTED_TOKENS } from '@/contracts/addresses';
+import { useNetworkTokens } from '@/hooks/web3/useActiveNetwork';
 import { cn } from '@/lib/utils';
 import { formatTokenAmount } from '@/lib/formatters';
 import { useTokenBalance } from '@/hooks/web3/useTokenBalance';
@@ -10,8 +10,8 @@ import { useTokenRedemption } from '@/hooks/web3/useTokenRedemption';
 import { type Address } from 'viem';
 
 interface TokenSelectorProps {
-  selectedToken: typeof SUPPORTED_TOKENS[number] | null;
-  onTokenSelect: (token: typeof SUPPORTED_TOKENS[number]) => void;
+  selectedToken: ReturnType<typeof useNetworkTokens>['tokens'][number] | null;
+  onTokenSelect: (token: ReturnType<typeof useNetworkTokens>['tokens'][number]) => void;
   userAddress: Address | undefined;
   className?: string;
   showReserves?: boolean; // Show available reserves instead of user balance
@@ -28,52 +28,42 @@ export function TokenSelector({
 }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Get network-aware tokens
+  const { tokens } = useNetworkTokens();
+
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn('relative', className)}>
       {/* Selected Token Display */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center justify-between bg-card/50 border border-border/50 rounded-lg hover:bg-card/70 transition-all duration-200",
-          compact ? "px-3 py-2" : "w-full p-4"
+          'w-full flex items-center justify-between p-4 bg-card border border-border/50 rounded-lg hover:border-border transition-colors',
+          compact && 'p-3'
         )}
       >
         {selectedToken ? (
-          <div className={cn("flex items-center", compact ? "space-x-2" : "space-x-3")}>
-            <div className={cn(
-              "rounded-full bg-gradient-to-r from-defi-purple to-defi-pink flex items-center justify-center font-bold",
-              compact ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm"
-            )}>
-              {selectedToken.symbol.slice(0, 2)}
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center text-sm font-bold">
+              {selectedToken.symbol.charAt(0)}
             </div>
-            {compact ? (
-              <span className="font-medium">{selectedToken.symbol}</span>
-            ) : (
-              <div className="text-left">
-                <div className="font-medium">{selectedToken.symbol}</div>
+            <div className="text-left">
+              <div className="font-medium">{selectedToken.symbol}</div>
+              {!compact && (
                 <div className="text-sm text-foreground/60">{selectedToken.name}</div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         ) : (
-          <div className="text-foreground/60">
-            {compact ? "Select token" : "Select a token to wrap"}
-          </div>
+          <div className="text-foreground/60">Select a token</div>
         )}
-        
-        <ChevronDown 
-          className={cn(
-            "text-foreground/60 transition-transform duration-200",
-            compact ? "w-4 h-4" : "w-5 h-5",
-            isOpen && "transform rotate-180"
-          )} 
-        />
+        <ChevronDown className={cn('w-5 h-5 transition-transform', isOpen && 'rotate-180')} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border/50 rounded-lg shadow-xl z-50 overflow-hidden">
-          {SUPPORTED_TOKENS.map((token) => (
+          {tokens.map((token) => (
             <TokenOption
               key={token.address}
               token={token}
@@ -101,7 +91,7 @@ export function TokenSelector({
 }
 
 interface TokenOptionProps {
-  token: typeof SUPPORTED_TOKENS[number];
+  token: ReturnType<typeof useNetworkTokens>['tokens'][number];
   isSelected: boolean;
   onSelect: () => void;
   userAddress: Address | undefined;

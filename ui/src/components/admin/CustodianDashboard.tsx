@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { 
@@ -18,6 +18,7 @@ import { motion } from 'framer-motion';
 
 import { useCustodianOperations } from '@/hooks/web3/useCustodianOperations';
 import { getExplorerUrl, getTokenByAddress } from '@/contracts/addresses';
+import { useActiveNetwork } from '@/hooks/web3/useActiveNetwork';
 import { formatTokenAmount } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 
@@ -37,6 +38,7 @@ type RedemptionWithStatus = {
 
 export function CustodianDashboard() {
   const { address, isConnected } = useAccount();
+  const { activeChainId } = useActiveNetwork();
   const [selectedRedemptions, setSelectedRedemptions] = useState<Set<string>>(new Set());
   const [allRedemptions, setAllRedemptions] = useState<RedemptionWithStatus[]>([]);
   const [isLoadingRedemptions, setIsLoadingRedemptions] = useState(false);
@@ -46,18 +48,14 @@ export function CustodianDashboard() {
     totalRedemptionCount,
     executeFulfillment,
     executeBatchFulfillment,
-    useRedemptionById,
-    useIsRedemptionReady,
-    useAvailableReserve,
     overallStatus,
     isFulfilling,
-    isFulfillmentConfirmed,
     error,
     fulfillmentHash,
   } = useCustodianOperations({ userAddress: address });
 
   // Function to load all redemptions
-  const loadAllRedemptions = async () => {
+  const loadAllRedemptions = useCallback(async () => {
     if (!totalRedemptionCount || totalRedemptionCount === 0) {
       setAllRedemptions([]);
       return;
@@ -102,14 +100,14 @@ export function CustodianDashboard() {
 
     setAllRedemptions(redemptions);
     setIsLoadingRedemptions(false);
-  };
+  }, [totalRedemptionCount]);
 
   // Load redemptions when component mounts or count changes
   useEffect(() => {
     if (isCustodian && totalRedemptionCount > 0) {
       loadAllRedemptions();
     }
-  }, [isCustodian, totalRedemptionCount]);
+  }, [isCustodian, totalRedemptionCount, loadAllRedemptions]);
 
   // Filter pending and ready redemptions
   const pendingRedemptions = useMemo(() => {
@@ -395,7 +393,7 @@ export function CustodianDashboard() {
               <span className="text-green-400 font-medium">Fulfillment Successful!</span>
             </div>
             <a
-              href={getExplorerUrl(fulfillmentHash, 'tx')}
+              href={getExplorerUrl(activeChainId, fulfillmentHash, 'tx')}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center space-x-1 text-defi-purple hover:text-defi-pink transition-colors"

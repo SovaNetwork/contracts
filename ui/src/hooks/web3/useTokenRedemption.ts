@@ -1,6 +1,6 @@
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { RedemptionQueueABI } from '@/contracts/abis';
-import { ADDRESSES } from '@/contracts/addresses';
+import { useActiveNetwork } from './useActiveNetwork';
 import { type Address, formatUnits } from 'viem';
 import { useState, useMemo, useEffect } from 'react';
 
@@ -22,6 +22,10 @@ type RedemptionRequest = {
 export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
   const [lastRedemptionHash, setLastRedemptionHash] = useState<Address | undefined>();
   const [currentStep, setCurrentStep] = useState<'idle' | 'redeeming'>('idle');
+
+  // Get network-aware contract addresses
+  const { getContractAddress } = useActiveNetwork();
+  const redemptionQueueAddress = getContractAddress('redemptionQueue');
 
   // Write contract for redemption
   const {
@@ -45,12 +49,12 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     data: userRedemptionIds,
     refetch: refetchRedemptionIds,
   } = useReadContract({
-    address: ADDRESSES.REDEMPTION_QUEUE,
+    address: redemptionQueueAddress,
     abi: RedemptionQueueABI,
     functionName: 'getUserRedemptions',
     args: userAddress ? [userAddress] : undefined,
     query: {
-      enabled: Boolean(userAddress),
+      enabled: Boolean(userAddress && redemptionQueueAddress),
       refetchInterval: 10000, // Refetch every 10 seconds
     },
   });
@@ -60,12 +64,12 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     data: allRedemptionsRaw,
     refetch: refetchAllRedemptions,
   } = useReadContract({
-    address: ADDRESSES.REDEMPTION_QUEUE,
+    address: redemptionQueueAddress,
     abi: RedemptionQueueABI,
     functionName: 'getUserRedemptionDetails',
     args: userAddress ? [userAddress] : undefined,
     query: {
-      enabled: Boolean(userAddress),
+      enabled: Boolean(userAddress && redemptionQueueAddress),
       refetchInterval: 10000,
     },
   });
@@ -75,12 +79,12 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
     data: pendingRedemptionsRaw,
     refetch: refetchPendingRedemptions,
   } = useReadContract({
-    address: ADDRESSES.REDEMPTION_QUEUE,
+    address: redemptionQueueAddress,
     abi: RedemptionQueueABI,
     functionName: 'getPendingRedemptions',
     args: userAddress ? [userAddress] : undefined,
     query: {
-      enabled: Boolean(userAddress),
+      enabled: Boolean(userAddress && redemptionQueueAddress),
       refetchInterval: 10000,
     },
   });
@@ -128,7 +132,7 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
   const {
     data: isRedemptionReady,
   } = useReadContract({
-    address: ADDRESSES.REDEMPTION_QUEUE,
+    address: redemptionQueueAddress,
     abi: RedemptionQueueABI,
     functionName: 'isRedemptionReady',
     args: redemptionRequest ? [redemptionRequest.id] : undefined,
@@ -142,7 +146,7 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
   const {
     data: redemptionReadyTime,
   } = useReadContract({
-    address: ADDRESSES.REDEMPTION_QUEUE,
+    address: redemptionQueueAddress,
     abi: RedemptionQueueABI,
     functionName: 'getRedemptionReadyTime',
     args: redemptionRequest ? [redemptionRequest.id] : undefined,
@@ -154,12 +158,12 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
   // Get available reserve for a token
   const useAvailableReserve = (tokenAddress: Address | undefined) => {
     return useReadContract({
-      address: ADDRESSES.REDEMPTION_QUEUE,
+      address: redemptionQueueAddress,
       abi: RedemptionQueueABI,
       functionName: 'getAvailableReserve',
       args: tokenAddress ? [tokenAddress] : undefined,
       query: {
-        enabled: Boolean(tokenAddress),
+        enabled: Boolean(tokenAddress && redemptionQueueAddress),
         refetchInterval: 30000,
       },
     });
@@ -168,10 +172,14 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
   // Execute redemption (returns redemption ID now)
   const executeRedemption = async (tokenAddress: Address, sovaAmount: bigint) => {
     try {
+      if (!redemptionQueueAddress) {
+        throw new Error('Redemption queue contract address not found for current network');
+      }
+
       setCurrentStep('redeeming');
       
       console.log('🔄 EXECUTING REDEMPTION (Multi-Redemption API):', {
-        contractAddress: ADDRESSES.REDEMPTION_QUEUE,
+        contractAddress: redemptionQueueAddress,
         function: 'redeem',
         tokenAddress,
         sovaAmount: sovaAmount.toString(),
@@ -179,7 +187,7 @@ export function useTokenRedemption({ userAddress }: UseTokenRedemptionProps) {
       });
       
       await redeemToken({
-        address: ADDRESSES.REDEMPTION_QUEUE,
+        address: redemptionQueueAddress,
         abi: RedemptionQueueABI,
         functionName: 'redeem',
         args: [tokenAddress, sovaAmount],

@@ -199,7 +199,7 @@ contract SovaBTCOFT is ERC20, Ownable, ReentrancyGuard, ISovaBTC {
      * @param _to Recipient address
      * @param _amountLD Amount in local decimals
      */
-    function simulateReceive(uint32 _srcEid, address _to, uint256 _amountLD) external onlyEndpoint whenNotPaused {
+    function simulateReceive(uint32 _srcEid, address _to, uint256 _amountLD) external onlyOwner whenNotPaused {
         if (_amountLD == 0) revert ZeroAmount();
         if (_to == address(0)) revert ZeroAddress();
 

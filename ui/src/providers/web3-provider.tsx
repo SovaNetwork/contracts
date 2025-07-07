@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { baseSepolia } from 'wagmi/chains';
+import { baseSepolia, sepolia, optimismSepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { connectorsForWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import {
@@ -14,7 +14,7 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 
 import '@rainbow-me/rainbowkit/styles.css';
-import { CHAIN_ID, NETWORK_CONFIG } from '@/contracts/addresses';
+import { CHAIN_ID, NETWORK_CONFIG, getChainConfig } from '@/contracts/addresses';
 
 // Configure supported wallets
 const connectors = connectorsForWallets(
@@ -41,12 +41,14 @@ const connectors = connectorsForWallets(
   }
 );
 
-// Create Wagmi configuration
+// Create Wagmi configuration with multi-chain support
 const config = createConfig({
   connectors,
-  chains: [baseSepolia],
+  chains: [baseSepolia, sepolia, optimismSepolia],
   transports: {
-    [baseSepolia.id]: http(NETWORK_CONFIG.rpcUrl),
+    [baseSepolia.id]: http(getChainConfig(baseSepolia.id)?.rpcUrls[0] || 'https://sepolia.base.org'),
+    [sepolia.id]: http(getChainConfig(sepolia.id)?.rpcUrls[0] || 'https://rpc.sepolia.org'),
+    [optimismSepolia.id]: http(getChainConfig(optimismSepolia.id)?.rpcUrls[0] || 'https://sepolia.optimism.io'),
   },
   ssr: true,
 });

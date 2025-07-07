@@ -14,7 +14,21 @@ remappings = [
 ]
 
 [rpc_endpoints]
+# Current Base Sepolia (backwards compatibility)
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
 
+# Multi-chain OFT deployment networks
+eth_sepolia = "${ETH_SEPOLIA_RPC}"
+op_sepolia = "${OP_SEPOLIA_RPC}"
+base_sepolia_new = "${BASE_SEPOLIA_RPC}"
+arb_sepolia = "${ARB_SEPOLIA_RPC}"
+
 [etherscan]
+# Current Base Sepolia (backwards compatibility)
 base_sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
+
+# Multi-chain verification endpoints
+eth_sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.etherscan.io/api" }
+op_sepolia = { key = "${OPSCAN_API_KEY}", url = "https://api-sepolia-optimistic.etherscan.io/api" }
+base_sepolia_new = { key = "${BASESCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
+arb_sepolia = { key = "${ARBISCAN_API_KEY}", url = "https://api-sepolia.arbiscan.io/api" }

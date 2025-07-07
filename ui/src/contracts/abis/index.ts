@@ -1,6 +1,7 @@
 // Contract ABIs Export - SovaBTC Protocol
 
 import SovaBTCABI from './SovaBTC.abi.json';
+import SovaBTCOFTABI from './SovaBTCOFT.abi.json';
 import SovaBTCWrapperABI from './SovaBTCWrapper.abi.json';
 import SovaBTCStakingABI from './SovaBTCStaking.abi.json';
 import SOVATokenABI from './SOVAToken.abi.json';
@@ -13,6 +14,7 @@ import ISovaBTCABI from './ISovaBTC.abi.json';
 // Core Protocol ABIs
 export {
   SovaBTCABI,
+  SovaBTCOFTABI,
   SovaBTCWrapperABI,
   SovaBTCStakingABI,
   SOVATokenABI,
@@ -150,6 +152,7 @@ export const ERC20_ABI = [
 // ABI Collections for different contract types
 export const CONTRACT_ABIS = {
   SOVABTC: SovaBTCABI,
+  SOVABTC_OFT: SovaBTCOFTABI, // LayerZero OFT ABI
   WRAPPER: SovaBTCWrapperABI,
   STAKING: SovaBTCStakingABI,
   SOVA_TOKEN: SOVATokenABI,

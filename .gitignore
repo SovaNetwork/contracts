@@ -10,8 +10,6 @@ out/
 # Docs
 docs/
 
-# Dotenv file
-.env
 
 # Workspace settings
 .vscode

@@ -8,7 +8,8 @@ import { type Address } from 'viem';
 
 import { TokenSelector } from './TokenSelector';
 import { AmountInput } from './AmountInput';
-import { SUPPORTED_TOKENS, ADDRESSES, getExplorerUrl } from '@/contracts/addresses';
+import { useNetworkTokens, useActiveNetwork } from '@/hooks/web3/useActiveNetwork';
+import { getExplorerUrl } from '@/contracts/addresses';
 import { useTokenBalance } from '@/hooks/web3/useTokenBalance';
 import { useTokenWrapping } from '@/hooks/web3/useTokenWrapping';
 import { formatTokenAmount, parseTokenAmount } from '@/lib/formatters';
@@ -18,9 +19,79 @@ import { RealTimeAllowanceChecker } from './RealTimeAllowanceChecker';
 export function WrapInterface() {
   const { address, isConnected } = useAccount();
   
+  // Get network-aware tokens and contract addresses
+  const { tokens } = useNetworkTokens();
+  const { getContractAddress, activeChainId, walletChainId, isNetworkMismatch } = useActiveNetwork();
+  const wrapperAddress = getContractAddress('wrapper');
+  
+  // EMERGENCY NETWORK DEBUG - Add this at the top of component
+  useEffect(() => {
+    const checkActualNetwork = async () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          const networkName = chainId === '0x1b59c' ? 'OP Sepolia' : 
+                             chainId === '0x14a34' ? 'Base Sepolia' :
+                             chainId === '0xaa36a7' ? 'Ethereum Sepolia' : 
+                             'Unknown';
+          
+          console.log('🚨 EMERGENCY NETWORK DEBUG:', {
+            rawChainId: chainId,
+            decimalChainId: parseInt(chainId, 16),
+            networkName,
+            expectedOPSepolia: 11155420,
+            expectedBaseSepolia: 84532,
+            actuallyOn: parseInt(chainId, 16) === 11155420 ? 'OP Sepolia ✅' : 
+                        parseInt(chainId, 16) === 84532 ? 'Base Sepolia ⚠️' : 'Other',
+            wrapperBeingUsed: wrapperAddress,
+            expectedOPWrapper: '0xd2A7029baCCd24799ba497174859580Cd25e4E7F',
+            expectedBaseWrapper: '0x30cc05366CC687c0ab75e3908Fe2b2C5BB679db8',
+            isUsingCorrectWrapper: wrapperAddress?.toLowerCase() === 
+              (parseInt(chainId, 16) === 11155420 ? '0xd2A7029baCCd24799ba497174859580Cd25e4E7F' : '0x30cc05366CC687c0ab75e3908Fe2b2C5BB679db8').toLowerCase()
+          });
+        } catch (error) {
+          console.error('Failed to check network:', error);
+        }
+      }
+    };
+    
+    checkActualNetwork();
+  }, [wrapperAddress]);
+
+  // Debug logging for network state
+  useEffect(() => {
+    console.log('🌐 NETWORK DEBUG (WrapInterface):', {
+      activeChainId,
+      walletChainId,
+      wrapperAddress,
+      isNetworkMismatch,
+      expectedOPWrapper: '0xd2A7029baCCd24799ba497174859580Cd25e4E7F',
+      expectedBaseWrapper: '0x30cc05366CC687c0ab75e3908Fe2b2C5BB679db8',
+      isUsingCorrectWrapper: wrapperAddress?.toLowerCase() !== '0x30cc05366cc687c0ab75e3908fe2b2c5bb679db8'.toLowerCase()
+    });
+  }, [activeChainId, walletChainId, wrapperAddress, isNetworkMismatch]);
+
   // Component state
-  const [selectedToken, setSelectedToken] = useState<typeof SUPPORTED_TOKENS[number] | null>(null);
+  const [selectedToken, setSelectedToken] = useState<typeof tokens[number] | null>(null);
   const [amount, setAmount] = useState('');
+
+  // Debug logging for token selection
+  useEffect(() => {
+    if (selectedToken) {
+      console.log('🪙 TOKEN SELECTED:', {
+        symbol: selectedToken.symbol,
+        address: selectedToken.address,
+        decimals: selectedToken.decimals,
+        expectedOPWBTC: '0x412Bd95e843b7982702F12b8De0a5d414B482653',
+        expectedBaseWBTC: '0x0a3745b48f350949Ef5D024A01eE143741EA2CE0',
+        isCorrectForNetwork: activeChainId === 11155420 ? 
+          selectedToken.address.toLowerCase() === '0x412Bd95e843b7982702F12b8De0a5d414B482653'.toLowerCase() :
+          activeChainId === 84532 ?
+          selectedToken.address.toLowerCase() === '0x0a3745b48f350949Ef5D024A01eE143741EA2CE0'.toLowerCase() :
+          'Unknown network'
+      });
+    }
+  }, [selectedToken, activeChainId]);
 
   // Get user's token balance
   const { balance: tokenBalance, refetch: refetchBalance } = useTokenBalance({
@@ -54,7 +125,7 @@ export function WrapInterface() {
   const amountWei = useMemo(() => {
     if (!amount || !selectedToken) return 0n;
     try {
-      console.log('🔍 AMOUNT PARSING DEBUG:', {
+      console.log('🔍 AMOUNT PARSING DEBUG (ENHANCED):', {
         userInput: amount,
         tokenSymbol: selectedToken.symbol,
         tokenDecimals: selectedToken.decimals,
@@ -63,13 +134,20 @@ export function WrapInterface() {
       
       const parsed = parseTokenAmount(amount, selectedToken.decimals);
       
-      console.log('✅ AMOUNT PARSING RESULT:', {
+      // Enhanced verification
+      const expectedForWBTC = amount === '5' && selectedToken.decimals === 8 ? 500000000n : null;
+      const actuallyGot = parsed;
+      const isExpectedAmount = expectedForWBTC ? actuallyGot === expectedForWBTC : 'N/A';
+      
+      console.log('✅ AMOUNT PARSING RESULT (ENHANCED):', {
         userInput: amount,
         tokenSymbol: selectedToken.symbol,
         tokenDecimals: selectedToken.decimals,
         parsedAmount: parsed.toString(),
-        expectedFormat: `${amount} ${selectedToken.symbol} should be ${parsed.toString()} wei`,
-        verification: `${parseFloat(amount)} * 10^${selectedToken.decimals} = ${parsed.toString()}`
+        expectedForWBTC_5: expectedForWBTC?.toString() || 'N/A',
+        isCorrectAmount: isExpectedAmount,
+        multiplierTest: amount === '5' ? `5 * 10^${selectedToken.decimals} = ${5 * Math.pow(10, selectedToken.decimals)}` : 'N/A',
+        actualVsExpected: expectedForWBTC ? `Got ${parsed.toString()} vs Expected ${expectedForWBTC.toString()}` : 'N/A'
       });
       
       return parsed;
@@ -106,18 +184,65 @@ export function WrapInterface() {
     try {
       const satoshiAmount = convertToSatoshis(amountWei, Number(selectedToken.decimals));
       
-      console.log('🚀 STARTING WRAP TRANSACTION (FIXED):', {
-        token: selectedToken.symbol,
+      console.log('🚀 WRAP EXECUTION DEBUG (COMPREHENSIVE):', {
+        // Network info
+        activeChainId,
+        walletChainId,
+        networkName: activeChainId === 11155420 ? 'OP Sepolia' : activeChainId === 84532 ? 'Base Sepolia' : 'Unknown',
+        
+        // Contract addresses
+        wrapperAddress,
+        expectedOPWrapper: '0xd2A7029baCCd24799ba497174859580Cd25e4E7F',
+        expectedBaseWrapper: '0x30cc05366CC687c0ab75e3908Fe2b2C5BB679db8',
+        isUsingRightWrapper: activeChainId === 11155420 ? 
+          wrapperAddress?.toLowerCase() === '0xd2A7029baCCd24799ba497174859580Cd25e4E7F'.toLowerCase() :
+          activeChainId === 84532 ?
+          wrapperAddress?.toLowerCase() === '0x30cc05366CC687c0ab75e3908Fe2b2C5BB679db8'.toLowerCase() :
+          'Unknown network',
+        
+        // Token info
+        tokenSymbol: selectedToken.symbol,
         tokenAddress: selectedToken.address,
         tokenDecimals: selectedToken.decimals,
+        expectedOPWBTC: '0x412Bd95e843b7982702F12b8De0a5d414B482653',
+        expectedBaseWBTC: '0x0a3745b48f350949Ef5D024A01eE143741EA2CE0',
+        isUsingRightToken: activeChainId === 11155420 ? 
+          selectedToken.address.toLowerCase() === '0x412Bd95e843b7982702F12b8De0a5d414B482653'.toLowerCase() :
+          activeChainId === 84532 ?
+          selectedToken.address.toLowerCase() === '0x0a3745b48f350949Ef5D024A01eE143741EA2CE0'.toLowerCase() :
+          'Unknown network',
+        
+        // Amount info
         userInputAmount: amount,
         parsedTokenAmount: amountWei.toString(),
         convertedSatoshiAmount: satoshiAmount.toString(),
+        expectedFor5WBTC: '500000000',
+        isAmountCorrect: amount === '5' && selectedToken.decimals === 8 ? amountWei.toString() === '500000000' : 'N/A',
+        
+        // Approval info
         currentAllowance: currentAllowance?.toString() || '0',
         needsApproval,
-        contractExpects: `Satoshi amount (converted from ${selectedToken.decimals}-decimal format)`,
-        sending: `${satoshiAmount.toString()} satoshis (converted from ${amountWei.toString()} ${selectedToken.symbol} wei)`
+        
+        // Critical validation
+        willFailDueToWrongWrapper: activeChainId === 11155420 && wrapperAddress?.toLowerCase() === '0x30cc05366CC687c0ab75e3908Fe2b2C5BB679db8'.toLowerCase(),
+        willFailDueToWrongAmount: amount === '5' && selectedToken.decimals === 8 && amountWei.toString() !== '500000000'
       });
+      
+      // CRITICAL: Stop execution if we detect wrong wrapper
+      if (activeChainId === 11155420 && wrapperAddress?.toLowerCase() === '0x30cc05366CC687c0ab75e3908Fe2b2C5BB679db8'.toLowerCase()) {
+        console.error('🚨 CRITICAL: Using Base Sepolia wrapper on OP Sepolia! Stopping execution.');
+        alert('CRITICAL ERROR: Wrong wrapper contract detected. Please refresh the page and try again.');
+        return;
+      }
+      
+      // CRITICAL: Stop execution if we detect wrong amount
+      if (amount === '5' && selectedToken.decimals === 8 && amountWei.toString() !== '500000000') {
+        console.error('🚨 CRITICAL: Amount conversion bug detected! Expected 500000000, got ' + amountWei.toString());
+        alert('CRITICAL ERROR: Amount conversion bug detected. Please refresh the page and try again.');
+        return;
+      }
+      
+      console.log('✅ VALIDATION PASSED - Proceeding with wrap...');
       
       await executeWrapWithApproval(
         selectedToken.address as Address, 
@@ -212,7 +337,7 @@ export function WrapInterface() {
         overallStatus,
         isTransactionPending,
         validationError: wrapValidation.error,
-        spenderAddress: ADDRESSES.WRAPPER,
+        spenderAddress: wrapperAddress,
         tokenAddress: selectedToken.address,
       });
     }
@@ -254,7 +379,7 @@ export function WrapInterface() {
                 onChange={setAmount}
                 selectedToken={selectedToken}
                 balance={tokenBalance}
-                minimumAmount={minimumDeposit}
+                minimumAmount={minimumDeposit as bigint | undefined}
                 disabled={isTransactionPending}
               />
             )}
@@ -295,12 +420,12 @@ export function WrapInterface() {
             )}
 
             {/* Real-time Allowance Debugging */}
-            {selectedToken && address && (
+            {selectedToken && address && wrapperAddress && (
               <div className="mt-4 p-4 bg-red-900/20 border border-red-600 rounded-lg">
                 <div className="text-red-300 font-bold text-lg mb-2">🔍 REAL-TIME ALLOWANCE DEBUG</div>
                 <RealTimeAllowanceChecker 
                   tokenAddress={selectedToken.address as Address}
-                  spenderAddress={ADDRESSES.WRAPPER}
+                  spenderAddress={wrapperAddress}
                   userAddress={address}
                   requiredAmount={amountWei}
                   tokenSymbol={selectedToken.symbol}
@@ -317,7 +442,7 @@ export function WrapInterface() {
                 <div className="mb-2">
                   <div className="text-purple-300 font-bold">Token: {selectedToken.symbol}</div>
                   <div>({selectedToken.address})</div>
-                  <div>Spender: {ADDRESSES.WRAPPER}</div>
+                  <div>Spender: {wrapperAddress}</div>
                 </div>
                 
                 <div className="mb-2">
@@ -378,29 +503,46 @@ export function WrapInterface() {
               </div>
             )}
 
-            {/* Action Button */}
+            {/* Action Buttons - Two-Step Flow */}
             {selectedToken && amount && (
-              <div className="pt-4">
-                <button
-                  onClick={handleWrap}
-                  disabled={isTransactionPending || !wrapValidation.isValid}
-                  className={cn(
-                    "w-full py-4 px-6 rounded-lg font-medium transition-all duration-200",
-                    isTransactionPending || !wrapValidation.isValid
-                      ? "bg-gray-600 text-gray-300 cursor-not-allowed"
-                      : "btn-defi text-white hover:scale-105"
-                  )}
-                >
-                  {overallStatus === 'approving' && `Approving ${selectedToken.symbol}...`}
-                  {overallStatus === 'wrapping' && 'Wrapping to sovaBTC...'}
-                  {overallStatus === 'confirmed' && 'Wrap Successful!'}
-                  {overallStatus === 'error' && 'Transaction Failed - Retry'}
-                  {overallStatus === 'idle' && (
-                    needsApproval 
-                      ? `Approve & Wrap ${selectedToken.symbol}` 
-                      : 'Wrap to sovaBTC'
-                  )}
-                </button>
+              <div className="pt-4 space-y-3">
+                {/* Step 1: Approval Button (if needed) */}
+                {needsApproval && overallStatus !== 'approving' && overallStatus !== 'wrapping' && (
+                  <button
+                    onClick={handleWrap}
+                    disabled={isTransactionPending || !wrapValidation.isValid}
+                    className={cn(
+                      "w-full py-4 px-6 rounded-lg font-medium transition-all duration-200",
+                      isTransactionPending || !wrapValidation.isValid
+                        ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                        : "bg-yellow-600 hover:bg-yellow-700 text-white hover:scale-105"
+                    )}
+                  >
+                    🔓 Approve {selectedToken.symbol} Spending
+                  </button>
+                )}
+
+                {/* Step 2: Wrap Button (after approval or if no approval needed) */}
+                {(!needsApproval || overallStatus === 'approving' || overallStatus === 'wrapping') && (
+                  <button
+                    onClick={handleWrap}
+                    disabled={isTransactionPending || !wrapValidation.isValid || (needsApproval && overallStatus !== 'approving' && overallStatus !== 'wrapping')}
+                    className={cn(
+                      "w-full py-4 px-6 rounded-lg font-medium transition-all duration-200",
+                      isTransactionPending || !wrapValidation.isValid || (needsApproval && overallStatus !== 'approving' && overallStatus !== 'wrapping')
+                        ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                        : "btn-defi text-white hover:scale-105"
+                    )}
+                  >
+                    {overallStatus === 'approving' && `⏳ Approving ${selectedToken.symbol}...`}
+                    {overallStatus === 'wrapping' && '🔄 Wrapping to sovaBTC...'}
+                    {overallStatus === 'confirmed' && '✅ Wrap Successful!'}
+                    {overallStatus === 'error' && '❌ Transaction Failed - Retry'}
+                    {overallStatus === 'idle' && !needsApproval && '🎯 Wrap to sovaBTC'}
+                  </button>
+                )}
+              </div>
+            )}
 
                 {/* Status Messages */}
                 {overallStatus === 'approving' && (
@@ -421,29 +563,46 @@ export function WrapInterface() {
                   </div>
                 )}
 
-                {/* Validation Error */}
-                {!wrapValidation.isValid && wrapValidation.error && (
-                  <div className="mt-2 text-sm text-red-400 text-center">
-                    {wrapValidation.error}
-                  </div>
-                )}
+            {/* Status Messages */}
+            {overallStatus === 'approving' && (
+              <div className="mt-2 text-sm text-yellow-400 text-center">
+                ⏳ Approving token spend permissions...
+              </div>
+            )}
+
+            {overallStatus === 'wrapping' && (
+              <div className="mt-2 text-sm text-blue-400 text-center">
+                🔄 Wrapping tokens to sovaBTC...
+              </div>
+            )}
+
+            {overallStatus === 'confirmed' && (
+              <div className="mt-2 text-sm text-green-400 text-center">
+                ✅ Tokens successfully wrapped to sovaBTC!
+              </div>
+            )}
+
+            {/* Validation Error */}
+            {!wrapValidation.isValid && wrapValidation.error && (
+              <div className="mt-2 text-sm text-red-400 text-center">
+                {wrapValidation.error}
               </div>
             )}
 
             {/* Transaction Success */}
-            {overallStatus === 'confirmed' && wrapHash && (
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <div className="text-green-400 text-sm font-medium mb-2">
-                  ✅ Wrap Successful!
+            {isWrapConfirmed && wrapHash && (
+              <div className="mt-4 p-4 bg-green-900/20 border border-green-600 rounded-lg">
+                <div className="text-green-300 font-bold text-lg mb-2">✅ WRAP SUCCESSFUL!</div>
+                <div className="text-green-200 text-sm">
+                  Transaction confirmed! Your tokens have been wrapped to sovaBTC.
                 </div>
                 <a
-                  href={getExplorerUrl(wrapHash, 'tx')}
+                  href={getExplorerUrl(activeChainId, wrapHash as string, 'tx')}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-1 text-sm text-defi-purple hover:text-defi-pink transition-colors"
+                  className="inline-flex items-center mt-2 text-green-400 hover:text-green-300 text-sm"
                 >
-                  <span>View on Explorer</span>
-                  <ExternalLink className="w-4 h-4" />
+                  View Transaction <ExternalLink className="w-3 h-3 ml-1" />
                 </a>
               </div>
             )}
