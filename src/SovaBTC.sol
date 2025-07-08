@@ -193,10 +193,9 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         _setPendingWithdrawal(msg.sender, totalRequired);
 
         // Call Bitcoin precompile to construct the BTC tx and lock the slot
-        bytes memory inputData =
-            abi.encode(SovaBitcoin.UBTC_SIGN_TX_BYTES, msg.sender, amount, btcGasLimit, btcBlockHeight, dest);
+        bytes memory inputData = abi.encode(msg.sender, amount, btcGasLimit, btcBlockHeight, dest);
 
-        (bool success, bytes memory returndata) = SovaBitcoin.BTC_PRECOMPILE.call(inputData);
+        (bool success, bytes memory returndata) = SovaBitcoin.VAULT_SPEND_PRECOMPILE_ADDRESS.call(inputData);
         if (!success) revert SovaBitcoin.PrecompileCallFailed();
 
         bytes32 btcTxid = bytes32(returndata);

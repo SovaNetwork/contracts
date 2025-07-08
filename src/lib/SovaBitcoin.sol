@@ -9,18 +9,15 @@ pragma solidity 0.8.15;
  */
 library SovaBitcoin {
     /// @notice Bitcoin precompile address
-    address public constant BTC_PRECOMPILE = address(0x999);
+    address public constant BROADCAST_TRANSACTION_PRECOMPILE_ADDRESS = address(0x999);
+    address public constant DECODE_TRANSACTION_PRECOMPILE_ADDRESS = address(0x998);
+    address public constant CONVERT_ADDRESS_PRECOMPILE_ADDRESS = address(0x997);
+    address public constant VAULT_SPEND_PRECOMPILE_ADDRESS = address(0x996);
 
     /// @notice Bitcoin context contract address
     address public constant SOVA_L1_BLOCK_ADDRESS = 0x2100000000000000000000000000000000000015;
     /// @notice Native Bitcoin wrapper address
     address public constant UBTC_ADDRESS = 0x2100000000000000000000000000000000000020;
-
-    /// @notice Bitcoin precompile selectors
-    bytes4 public constant BROADCAST_BYTES = 0x00000001;
-    bytes4 public constant DECODE_BYTES = 0x00000002;
-    bytes4 public constant ADDRESS_CONVERT_LEADING_BYTES = 0x00000003;
-    bytes4 public constant UBTC_SIGN_TX_BYTES = 0x00000004;
 
     struct Output {
         string addr;
@@ -62,7 +59,8 @@ library SovaBitcoin {
      * @return BitcoinTx        Object containing the decoded transaction data
      */
     function decodeBitcoinTx(bytes memory signedTx) internal view returns (BitcoinTx memory) {
-        (bool success, bytes memory returndata) = BTC_PRECOMPILE.staticcall(abi.encodePacked(DECODE_BYTES, signedTx));
+        (bool success, bytes memory returndata) =
+            DECODE_TRANSACTION_PRECOMPILE_ADDRESS.staticcall(abi.encodePacked(signedTx));
         if (!success) revert PrecompileCallFailed();
         return abi.decode(returndata, (BitcoinTx));
     }
@@ -75,8 +73,7 @@ library SovaBitcoin {
      * @return returnData      The Bitcoin deposit address in bytes format
      */
     function convertToBtcAddress(address addr) internal returns (bytes memory) {
-        (bool success, bytes memory returnData) =
-            BTC_PRECOMPILE.call(abi.encodePacked(ADDRESS_CONVERT_LEADING_BYTES, addr));
+        (bool success, bytes memory returnData) = CONVERT_ADDRESS_PRECOMPILE_ADDRESS.call(abi.encodePacked(addr));
         if (!success) revert PrecompileCallFailed();
         return returnData;
     }
@@ -87,7 +84,7 @@ library SovaBitcoin {
      * @param signedTx         The raw signed Bitcoin transaction to broadcast
      */
     function broadcastBitcoinTx(bytes memory signedTx) internal {
-        (bool success,) = BTC_PRECOMPILE.call(abi.encodePacked(BROADCAST_BYTES, signedTx));
+        (bool success,) = BROADCAST_TRANSACTION_PRECOMPILE_ADDRESS.call(abi.encodePacked(signedTx));
         if (!success) revert PrecompileCallFailed();
     }
 
