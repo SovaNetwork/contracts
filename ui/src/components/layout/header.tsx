@@ -20,49 +20,56 @@ export function Header() {
   ];
 
   return (
-    <header className="border-b border-border/40 bg-background/50 backdrop-blur-sm sticky top-0 z-50">
+    <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink"></div>
+          <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-all duration-200 group">
+            <div className="h-8 w-8 rounded-full bg-sova-gradient shadow-sova-glow group-hover:shadow-sova-glow-lg transition-all duration-200"></div>
             <h1 className="text-xl font-bold gradient-text">{APP_NAME}</h1>
           </Link>
           
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-1">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "text-foreground/80 hover:text-foreground transition-colors relative py-2",
-                  pathname === item.href && "text-foreground"
+                  "nav-link",
+                  pathname === item.href && "active"
                 )}
               >
                 {item.name}
-                {pathname === item.href && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-defi-purple to-defi-pink rounded-full" />
-                )}
               </Link>
             ))}
           </nav>
           
           {/* Wallet Connection */}
           <div className="flex items-center space-x-4">
-            <ConnectButton />
+            <ConnectButton 
+              showBalance={false}
+              chainStatus="icon"
+              accountStatus={{
+                smallScreen: 'avatar',
+                largeScreen: 'full',
+              }}
+            />
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        <nav className="md:hidden mt-4 flex flex-wrap gap-4">
+        <nav className="md:hidden mt-4 flex flex-wrap gap-2">
           {navigation.map((item) => (
             <Link
               key={item.name}
               href={item.href}
               className={cn(
-                "text-sm text-foreground/80 hover:text-foreground transition-colors px-3 py-1 rounded-md",
-                pathname === item.href && "text-foreground bg-card/50"
+                "text-sm px-3 py-2 rounded-lg transition-all duration-200",
+                "hover:bg-card/50 hover:text-foreground",
+                pathname === item.href 
+                  ? "text-sova-mint-400 bg-card/40 border border-sova-mint-500/30" 
+                  : "text-foreground/70"
               )}
             >
               {item.name}

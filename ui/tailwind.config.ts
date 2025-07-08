@@ -9,9 +9,36 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Sova Brand Colors
+        'sova-black': {
+          50: '#e8e8e8',
+          100: '#b8b9b8',
+          200: '#959795',
+          300: '#656765',
+          400: '#474947',
+          500: '#191c19',
+          600: '#171917',
+          700: '#121412',
+          800: '#0e0f0e',
+          900: '#0b0c0b',
+        },
+        'sova-mint': {
+          50: '#f3fef5',
+          100: '#d9fbe0',
+          200: '#c6f9d1',
+          300: '#adf6bc',
+          400: '#9df5af',
+          500: '#84f29b',
+          600: '#78dc8d',
+          700: '#5eac6e',
+          800: '#498555',
+          900: '#376641',
+        },
+        // Keep some DeFi colors for gradients and accents
         'defi-purple': '#8B5CF6',
         'defi-pink': '#EC4899',
         'defi-blue': '#3B82F6',
+        // Updated shadcn/ui colors with Sova palette
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -62,6 +89,7 @@ const config: Config = {
         'shimmer': 'shimmer 1.5s infinite',
         'slide-in': 'slide-in 0.3s ease-out',
         'fade-in': 'fade-in 0.3s ease-out',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
         shimmer: {
@@ -92,6 +120,8 @@ const config: Config = {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic':
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+        'sova-gradient': 'linear-gradient(135deg, #84f29b, #5eac6e, #376641)',
+        'sova-dark-gradient': 'linear-gradient(135deg, #0b0c0b, #191c19, #474947)',
         'defi-gradient': 'linear-gradient(135deg, #8B5CF6, #EC4899, #3B82F6)',
       },
       backdropBlur: {
@@ -100,6 +130,10 @@ const config: Config = {
         md: '8px',
         lg: '16px',
         xl: '24px',
+      },
+      boxShadow: {
+        'sova-glow': '0 0 20px rgba(132, 242, 155, 0.15)',
+        'sova-glow-lg': '0 0 40px rgba(132, 242, 155, 0.2)',
       },
     },
   },

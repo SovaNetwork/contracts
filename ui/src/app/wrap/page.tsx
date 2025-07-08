@@ -5,7 +5,7 @@ import { Header } from '@/components/layout/Header';
 
 export default function WrapPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-sova-black-900 via-sova-black-800 to-sova-black-900">
       <Header />
       {/* Page Header */}
       <div className="container mx-auto px-4 pt-8 pb-16">
@@ -25,8 +25,8 @@ export default function WrapPage() {
         {/* Information Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-4xl mx-auto">
           <div className="defi-card p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink mx-auto mb-4 flex items-center justify-center">
-              <span className="text-lg font-bold">1</span>
+            <div className="w-12 h-12 rounded-full bg-sova-gradient mx-auto mb-4 flex items-center justify-center shadow-sova-glow">
+              <span className="text-lg font-bold text-sova-black-900">1</span>
             </div>
             <h3 className="text-lg font-semibold mb-2">Select Token</h3>
             <p className="text-foreground/70 text-sm">
@@ -35,8 +35,8 @@ export default function WrapPage() {
           </div>
 
           <div className="defi-card p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-defi-pink to-defi-blue mx-auto mb-4 flex items-center justify-center">
-              <span className="text-lg font-bold">2</span>
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-sova-mint-400 to-sova-mint-600 mx-auto mb-4 flex items-center justify-center shadow-sova-glow">
+              <span className="text-lg font-bold text-sova-black-900">2</span>
             </div>
             <h3 className="text-lg font-semibold mb-2">Approve & Wrap</h3>
             <p className="text-foreground/70 text-sm">
@@ -45,8 +45,8 @@ export default function WrapPage() {
           </div>
 
           <div className="defi-card p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-defi-blue to-defi-purple mx-auto mb-4 flex items-center justify-center">
-              <span className="text-lg font-bold">3</span>
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-sova-mint-600 to-sova-mint-800 mx-auto mb-4 flex items-center justify-center shadow-sova-glow">
+              <span className="text-lg font-bold text-sova-black-900">3</span>
             </div>
             <h3 className="text-lg font-semibold mb-2">Receive sovaBTC</h3>
             <p className="text-foreground/70 text-sm">

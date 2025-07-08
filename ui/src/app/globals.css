@@ -3,37 +3,57 @@
 @tailwind utilities;
 
 :root {
-  /* DeFi Gradient Colors */
+  /* Sova Brand Colors */
+  --sova-mint-500: #84f29b;
+  --sova-mint-600: #78dc8d;
+  --sova-mint-700: #5eac6e;
+  --sova-black-900: #0b0c0b;
+  --sova-black-800: #0e0f0e;
+  --sova-black-700: #121412;
+  --sova-black-500: #191c19;
+  --sova-black-300: #656765;
+  
+  /* DeFi Gradient Colors (for accents) */
   --defi-purple: #8B5CF6;
   --defi-pink: #EC4899;
   --defi-blue: #3B82F6;
   
-  /* Background Colors */
-  --background: 0 0% 3.9%;
-  --card: 0 0% 6%;
-  --popover: 0 0% 6%;
+  /* Updated Background Colors with Sova palette */
+  --background: 210 11% 2%;  /* Very dark, almost black */
+  --card: 210 6% 6%;         /* Slightly lighter dark */
+  --popover: 210 6% 6%;
   
-  /* Text Colors */
-  --foreground: 0 0% 98%;
-  --muted-foreground: 0 0% 63.9%;
+  /* Text Colors optimized for dark theme */
+  --foreground: 0 0% 98%;           /* Near white */
+  --muted-foreground: 0 0% 65%;     /* Medium gray */
   
-  /* Accent Colors */
-  --primary: 224 71% 4%;
-  --secondary: 215 27.9% 16.9%;
-  --accent: 216 34% 17%;
+  /* Primary colors using Sova Mint */
+  --primary: 142 70% 45%;           /* Sova mint-ish */
+  --primary-foreground: 210 11% 2%; /* Dark text for mint backgrounds */
+  
+  /* Secondary colors using Sova Black shades */
+  --secondary: 210 6% 16%;          /* Darker gray */
+  --secondary-foreground: 0 0% 98%; /* Light text */
+  
+  /* Accent using Sova Mint */
+  --accent: 142 60% 50%;            /* Brighter mint for accents */
+  --accent-foreground: 210 11% 2%; /* Dark text */
+  
+  /* Muted using Sova Black */
+  --muted: 210 6% 10%;              /* Very dark gray */
   
   /* State Colors */
-  --success: 142 70% 45%;
-  --warning: 45 93% 47%;
-  --error: 0 93% 64%;
+  --success: 142 70% 45%;           /* Sova mint for success */
+  --warning: 45 93% 47%;            /* Keep warning orange */
+  --error: 0 84% 60%;               /* Slightly muted red */
   
   /* Border Colors */
-  --border: 215 27.9% 16.9%;
-  --input: 215 27.9% 16.9%;
-  --ring: 216 34% 17%;
+  --border: 210 6% 16%;             /* Dark gray borders */
+  --input: 210 6% 16%;              /* Same as border */
+  --ring: 142 60% 50%;              /* Sova mint for focus rings */
   
   /* Radius */
-  --radius: 0.5rem;
+  --radius: 0.75rem;                /* Slightly more rounded for modern look */
 }
 
 * {
@@ -44,6 +64,11 @@ body {
   color: hsl(var(--foreground));
   background: hsl(var(--background));
   font-feature-settings: "rlig" 1, "calt" 1;
+  /* Uniswap-style background gradient */
+  background-image: 
+    radial-gradient(50% 50% at 50% 50%, rgba(132, 242, 155, 0.05) 0%, transparent 100%),
+    radial-gradient(70% 70% at 80% 20%, rgba(139, 92, 246, 0.03) 0%, transparent 100%);
+  background-attachment: fixed;
 }
 
 @layer base {
@@ -55,21 +80,49 @@ body {
   h6 {
     scroll-margin-top: 80px;
   }
+  
+  /* Better focus styles */
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
-  /* DeFi Card Glassmorphism Effect */
+  /* Enhanced DeFi Card with Uniswap-style glassmorphism */
   .defi-card {
-    @apply backdrop-blur-sm bg-card/50 border border-border/50 shadow-lg;
-    background: linear-gradient(135deg, hsl(var(--card))/0.6, hsl(var(--card))/0.3);
+    @apply backdrop-blur-md bg-card/60 border border-border/60 shadow-xl rounded-xl;
+    background: linear-gradient(
+      135deg, 
+      hsl(var(--card))/0.8, 
+      hsl(var(--card))/0.4,
+      hsl(var(--card))/0.6
+    );
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  /* Gradient Text */
+  .defi-card:hover {
+    @apply scale-[1.02] shadow-sova-glow;
+    border-color: rgba(132, 242, 155, 0.3);
+  }
+  
+  /* Sova Gradient Text */
   .gradient-text {
+    @apply bg-gradient-to-r from-sova-mint-400 via-sova-mint-500 to-sova-mint-600 bg-clip-text text-transparent;
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease-in-out infinite;
+  }
+  
+  /* Alternative DeFi gradient for variety */
+  .gradient-text-defi {
     @apply bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent;
   }
   
-  /* Shimmer Animation for Loading */
+  /* Enhanced Shimmer Animation */
   .shimmer {
     @apply relative overflow-hidden;
   }
@@ -77,27 +130,79 @@ body {
   .shimmer::before {
     @apply absolute inset-0 -translate-x-full;
     content: '';
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    animation: shimmer 1.5s infinite;
+    background: linear-gradient(
+      90deg, 
+      transparent, 
+      rgba(132, 242, 155, 0.2), 
+      transparent
+    );
+    animation: shimmer 2s infinite;
   }
   
-  /* Button Hover Effects */
+  /* Modern Button Styles */
+  .btn-sova {
+    @apply bg-gradient-to-r from-sova-mint-500 to-sova-mint-600 hover:from-sova-mint-400 hover:to-sova-mint-500;
+    @apply text-sova-black-900 font-semibold;
+    @apply transition-all duration-300 ease-out;
+    @apply shadow-lg hover:shadow-sova-glow-lg hover:scale-105;
+    @apply border border-sova-mint-600/50;
+  }
+  
   .btn-defi {
-    @apply bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600;
+    @apply bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400;
     @apply transition-all duration-300 ease-out;
-    @apply shadow-lg hover:shadow-xl;
+    @apply shadow-lg hover:shadow-xl hover:scale-105;
   }
   
-  /* Input Styles */
+  /* Enhanced Input Styles */
   .input-defi {
-    @apply bg-background/50 border-border/50 focus:border-purple-500/50;
+    @apply bg-background/70 border-border/60 focus:border-sova-mint-500/60;
+    @apply backdrop-blur-sm;
     @apply transition-all duration-300 ease-out;
+    @apply hover:border-border focus:ring-2 focus:ring-sova-mint-500/20;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
   }
   
-  /* Card Hover Effects */
+  /* Card Hover Effects with Uniswap-style motion */
   .card-hover {
     @apply transition-all duration-300 ease-out;
-    @apply hover:scale-105 hover:shadow-xl;
+    @apply hover:scale-[1.02] hover:shadow-sova-glow;
+    @apply hover:border-sova-mint-500/30;
+  }
+  
+  /* Navigation styles */
+  .nav-link {
+    @apply relative px-3 py-2 text-foreground/70 hover:text-foreground transition-colors duration-200;
+    @apply hover:bg-card/30 rounded-lg;
+  }
+  
+  .nav-link.active {
+    @apply text-sova-mint-400;
+  }
+  
+  .nav-link.active::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 transform -translate-x-1/2;
+    @apply w-1 h-1 bg-sova-mint-400 rounded-full;
+  }
+  
+  /* Modern scrollbar styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent));
   }
 }
 
@@ -107,20 +212,63 @@ body {
   }
 }
 
-/* Custom scrollbar */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Enhanced scrollbar for all elements */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: hsl(var(--background));
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
   border-radius: 4px;
+  border: 1px solid hsl(var(--background));
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--accent));
+}
+
+::-webkit-scrollbar-corner {
+  background: hsl(var(--background));
+}
+
+/* Firefox scrollbar styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) hsl(var(--background));
+}
+
+/* Selection styles */
+::selection {
+  background: rgba(132, 242, 155, 0.2);
+  color: hsl(var(--foreground));
+}
+
+/* Loading states */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Error states */
+.error-glow {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+/* Success states */
+.success-glow {
+  box-shadow: 0 0 20px rgba(132, 242, 155, 0.3);
 }
