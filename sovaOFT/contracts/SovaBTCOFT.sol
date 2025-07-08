@@ -3,16 +3,13 @@ pragma solidity ^0.8.22;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { OFT } from "@layerzerolabs/oft-evm/contracts/OFT.sol";
-import { SendParam, MessagingFee, MessagingReceipt, OFTReceipt } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
-import "./interfaces/ISovaBTC.sol";
 
 /**
  * @title SovaBTCOFT
- * @notice LayerZero Omnichain Fungible Token (OFT) implementation for SovaBTC
- * @dev LayerZero V2 integration with cross-chain burn/mint mechanism
- * @dev Compatible with existing wrapper contracts via ISovaBTC interface
+ * @notice LayerZero V2 Omnichain Fungible Token for SovaBTC
+ * @dev Combines LayerZero OFT with ISovaBTC interface compatibility
  */
-contract SovaBTCOFT is OFT, ISovaBTC {
+contract SovaBTCOFT is OFT {
     
     // ============ State Variables ============
     
@@ -66,14 +63,14 @@ contract SovaBTCOFT is OFT, ISovaBTC {
      * @param _name Token name
      * @param _symbol Token symbol  
      * @param _lzEndpoint LayerZero endpoint address
-     * @param _owner Initial owner and delegate address
+     * @param _delegate Initial delegate address
      */
     constructor(
         string memory _name,
         string memory _symbol,
         address _lzEndpoint,
-        address _owner
-    ) OFT(_name, _symbol, _lzEndpoint, _owner) Ownable() {
+        address _delegate
+    ) OFT(_name, _symbol, _lzEndpoint, _delegate) Ownable(_delegate) {
         // Set deployer as initial minter
         minters[msg.sender] = true;
         emit MinterAdded(msg.sender);
@@ -244,7 +241,7 @@ contract SovaBTCOFT is OFT, ISovaBTC {
         return super._credit(_to, _amountLD, _srcEid);
     }
     
-    // ============ ETH Management ============
+    // ============ ETH Management for LayerZero Gas ============
     
     /**
      * @notice Receive function to accept ETH for LayerZero execution gas

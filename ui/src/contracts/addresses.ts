@@ -131,11 +131,11 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
       },
     ],
     contracts: {
-      sovaBTC: '0x43a8a1FF7b7bC32aCbcCA638b2b40CADf45CD82d', // REAL OFT Contract (DEPLOYED)
+      sovaBTC: '0xAD36450E98E3AEa8d79FBc6D55C47C85eBCbb807', // UPDATED OFT Contract with receive() function ✅
       sovaToken: '0x69041baA897687Cb16bCD57368110FfA2C8B3E63', // DEPLOYED
       tokenWhitelist: '0x3793FaA1bD71258336c877427b105B2E74e8C030', // DEPLOYED
       custodyManager: '0xe9781E85F6A55E76624fed62530AB75c53Db10C6', // DEPLOYED
-      wrapper: '0x3a0E701323156753bC0AD2979263F3D782Dfd81c', // FIXED WRAPPER (CORRECT WHITELIST) ✅
+      wrapper: '0x220B36C7F0007c069150306Bf31bf7e092807b0f', // NEW WRAPPER pointing to new OFT ✅
       redemptionQueue: '0xdD4284D33fFf9cBbe4c852664cB0496830ca46Ab', // DEPLOYED
       staking: '0x5646F20B47a6E969c735c0592D002fe3067235fc', // DEPLOYED
     },
@@ -192,11 +192,11 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
       },
     ],
     contracts: {
-      sovaBTC: '0x1b7227A7A6BcAe6c64907b1B51dD0801C3E8ba30', // REAL OFT Contract (DEPLOYED)
+      sovaBTC: '0x4ffDe609b6655e66299d97D347A8dc7Fb26aE062', // UPDATED OFT Contract with receive() function ✅
       sovaToken: '0xfd3CD6323c7c10d7d533D6ce86249A0c21a3A7fD', // DEPLOYED
       tokenWhitelist: '0xb386ef9D4C9FeF67058DBc00b31126AFE8D7600d', // DEPLOYED
       custodyManager: '0x56b1F2664E5AceaBe31F64021bFF7744b7d391c7', // DEPLOYED
-      wrapper: '0x43a8a1FF7b7bC32aCbcCA638b2b40CADf45CD82d', // DEPLOYED
+      wrapper: '0x97642633Ab65e17C39FA6170D93A81dA3A1C6A43', // NEW WRAPPER pointing to new OFT ✅
       redemptionQueue: '0x3793FaA1bD71258336c877427b105B2E74e8C030', // DEPLOYED
       staking: '0xe9781E85F6A55E76624fed62530AB75c53Db10C6', // DEPLOYED
     },

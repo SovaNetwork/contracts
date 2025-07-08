@@ -114,10 +114,10 @@ contract MintTestTokens is Script {
             lbtc = address(0); // TODO: Update with deployed address
             usdc = address(0); // TODO: Update with deployed address
         } else if (chainId == 11155420) {
-            // Optimism Sepolia - UPDATE THESE AFTER DEPLOYMENT
-            wbtc = address(0); // TODO: Update with deployed address
-            lbtc = address(0); // TODO: Update with deployed address
-            usdc = address(0); // TODO: Update with deployed address
+            // Optimism Sepolia - CURRENT DEPLOYED ADDRESSES (Updated 1/7/25)
+            wbtc = 0x6f5249F8507445F1F0178eD162097bc4a262404E;
+            lbtc = 0xBc2945fa12bF06fC292dac00BbbaF1e52eFD5A22;
+            usdc = 0xA57484Ac87b23668A19f388eB5812cCc5A8D1EEe;
         }
         // Add more networks as needed
     }
