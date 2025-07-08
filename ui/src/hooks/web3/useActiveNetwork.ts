@@ -93,15 +93,49 @@ export function useActiveNetwork(): NetworkState {
     }
   };
 
-  // Get contract address for active chain
+  // Get contract address for active chain - PRIORITIZE WALLET NETWORK
   const getContractAddress = (contract: keyof ChainConfig['contracts']): `0x${string}` | undefined => {
-    return activeChainConfig?.contracts[contract];
+    // ALWAYS use wallet network if available, regardless of connection status
+    // The wallet chain ID is the source of truth for where transactions will execute
+    const chainToUse = walletChainId || activeChainId;
+    const configToUse = getChainConfig(chainToUse);
+    
+    // Debug logging for network address resolution
+    console.log('🔍 getContractAddress DEBUG (FIXED):', {
+      contract,
+      isConnected,
+      walletChainId,
+      activeChainId,
+      chainToUse,
+      address: configToUse?.contracts[contract],
+      networkName: configToUse?.name,
+      prioritizeWallet: walletChainId ? 'Using wallet network' : 'Using app network',
+      expectedBaseSepoliaWrapper: '0x7a08aF83566724F59D81413f3bD572E58711dE7b',
+      expectedOPSepoliaWrapper: '0x43a8a1FF7b7bC32aCbcCA638b2b40CADf45CD82d',
+      actualAddress: configToUse?.contracts[contract]
+    });
+    
+    return configToUse?.contracts[contract];
   };
 
-  // Get supported tokens for active chain
+  // Get supported tokens for active chain - PRIORITIZE WALLET NETWORK
   const getSupportedTokensForChain = (): ChainConfig['supportedTokens'][string][] => {
-    if (!activeChainConfig) return [];
-    return Object.values(activeChainConfig.supportedTokens);
+    // ALWAYS use wallet network if available - this ensures tokens match the wallet's network
+    const chainToUse = walletChainId || activeChainId;
+    const configToUse = getChainConfig(chainToUse);
+    
+    console.log('🔍 getSupportedTokens DEBUG (FIXED):', {
+      isConnected,
+      walletChainId,
+      activeChainId,
+      chainToUse,
+      networkName: configToUse?.name,
+      tokenCount: configToUse ? Object.keys(configToUse.supportedTokens).length : 0,
+      prioritizeWallet: walletChainId ? 'Using wallet network' : 'Using app network'
+    });
+    
+    if (!configToUse) return [];
+    return Object.values(configToUse.supportedTokens);
   };
 
   // Handle automatic network switching suggestions
@@ -122,11 +156,18 @@ export function useActiveNetwork(): NetworkState {
 
   // Auto-sync app network with wallet on first connection
   useEffect(() => {
+    console.log('🔍 Auto-sync Effect DEBUG:', {
+      isConnected,
+      walletChainId,
+      activeChainId,
+      isChainSupported: walletChainId ? isChainSupported(walletChainId) : 'N/A',
+      willAutoSync: isConnected && walletChainId && isChainSupported(walletChainId) && activeChainId === DEFAULT_CHAIN_ID
+    });
+
     if (isConnected && walletChainId && isChainSupported(walletChainId)) {
-      // Only auto-sync if we're on the default network (haven't manually switched)
-      if (activeChainId === DEFAULT_CHAIN_ID) {
-        setActiveChainIdState(walletChainId);
-      }
+      // ALWAYS auto-sync with wallet network - the wallet is the source of truth
+      console.log(`🔄 Auto-syncing app network from ${activeChainId} to wallet network ${walletChainId}`);
+      setActiveChainIdState(walletChainId);
     }
   }, [isConnected, walletChainId, activeChainId]);
 

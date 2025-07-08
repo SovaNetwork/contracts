@@ -43,6 +43,10 @@ contract MintTestTokens is Script {
         // Mint tokens to deployer
         mintTokensToAddress(wbtc, lbtc, usdc, deployer, "deployer");
 
+        // Mint to specific test address
+        address targetUser = 0x6182051f545E673b54119800126d8802E3Da034b;
+        mintTokensToAddress(wbtc, lbtc, usdc, targetUser, "target test user");
+
         // Optional: Mint to additional test addresses
         // Uncomment and modify as needed for testing
         /*
@@ -100,10 +104,10 @@ contract MintTestTokens is Script {
         address usdc
     ) {
         if (chainId == 84532) {
-            // Base Sepolia - UPDATE THESE WITH YOUR DEPLOYED ADDRESSES
-            wbtc = 0x8dA7DE3D18747ba6b8A788Eb07dD40cD660eC860;
-            lbtc = 0x51d539a147D92A00A040b8a43981A51F29b765F6;
-            usdc = 0xd6ea412149B7cbb80f9A81c0a99e5BDa0434fBC7;
+            // Base Sepolia - CURRENT DEPLOYED ADDRESSES (Updated 1/7/25)
+            wbtc = 0x10E8116eBA84981A7959a1158e03eE19c0Ad41f2;
+            lbtc = 0xf6E78618CA4bAA67259970039F49e215f15820FE;
+            usdc = 0x0C19b539bc7C323Bec14C0A153B21D1295A42e38;
         } else if (chainId == 11155111) {
             // Ethereum Sepolia - UPDATE THESE AFTER DEPLOYMENT
             wbtc = address(0); // TODO: Update with deployed address

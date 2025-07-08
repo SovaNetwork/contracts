@@ -131,37 +131,37 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
       },
     ],
     contracts: {
-      sovaBTC: '0x802Ea91b5aAf53D067b0bB72bAD4Cc714e1855Be', // OFT Contract (UPDATED)
-      sovaToken: '0xF370D61586B03A72c90C26e24a219332183A05b7', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
-      tokenWhitelist: '0x94F983EB3Fd547b68E1760E2fe2193811f8f7c4e', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
-      custodyManager: '0x78Ea93068bF847fF1703Dde09a772FC339CA4433', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
-      wrapper: '0xA73550548804cFf5dD23F1C67e360C3a22433f53', // FIXED: New wrapper that points to OFT contract
-      redemptionQueue: '0xBb95e1e4DbaaB783264947c19fA4e7398621af23', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
-      staking: '0x119878F441C4300033e07f1B3cE66462519a005c', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
+      sovaBTC: '0x43a8a1FF7b7bC32aCbcCA638b2b40CADf45CD82d', // REAL OFT Contract (DEPLOYED)
+      sovaToken: '0x69041baA897687Cb16bCD57368110FfA2C8B3E63', // DEPLOYED
+      tokenWhitelist: '0x3793FaA1bD71258336c877427b105B2E74e8C030', // DEPLOYED
+      custodyManager: '0xe9781E85F6A55E76624fed62530AB75c53Db10C6', // DEPLOYED
+      wrapper: '0x3a0E701323156753bC0AD2979263F3D782Dfd81c', // FIXED WRAPPER (CORRECT WHITELIST) ✅
+      redemptionQueue: '0xdD4284D33fFf9cBbe4c852664cB0496830ca46Ab', // DEPLOYED
+      staking: '0x5646F20B47a6E969c735c0592D002fe3067235fc', // DEPLOYED
     },
     layerZero: {
-      endpoint: '0x1a44076050125825900e736c501f859c50fE728c',
+      endpoint: '0x6EDCE65403992e310A62460808c4b910D972f10f',
       eid: 40245, // Base Sepolia EID
     },
     supportedTokens: {
       WBTC: {
         name: 'Mock Wrapped Bitcoin',
         symbol: 'WBTC',
-        address: '0x0a3745b48f350949Ef5D024A01eE143741EA2CE0', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
+        address: '0x10E8116eBA84981A7959a1158e03eE19c0Ad41f2', // DEPLOYED
         decimals: 8,
         icon: '/icons/wbtc.svg',
       },
       LBTC: {
         name: 'Mock Liquid Bitcoin',
         symbol: 'LBTC',
-        address: '0x7087Eb81f647448F1bd76e936A9F9A39775bC4Dc', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
+        address: '0xf6E78618CA4bAA67259970039F49e215f15820FE', // DEPLOYED
         decimals: 8,
         icon: '/icons/lbtc.svg',
       },
       USDC: {
         name: 'Mock USDC',
         symbol: 'USDC',
-        address: '0x52BA51f41713270e8071218058C3E37E1c2D4f20', // LATEST: From OFT_DEPLOYMENT_COMPLETE.md
+        address: '0x0C19b539bc7C323Bec14C0A153B21D1295A42e38', // DEPLOYED
         decimals: 6,
         icon: '/icons/usdc.svg',
       },
@@ -192,37 +192,37 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
       },
     ],
     contracts: {
-      sovaBTC: '0x00626Ed5FE6Bf77Ae13BEa79e304CF6A5554903b', // OFT Contract (UPDATED)
-      sovaToken: '0xb21dD6c1E73288C03f8f2Ec0A896F2cCC5590cBa',
-      tokenWhitelist: '0x319501B1da942abA28854Dd573cd088CBd0bDF4C',
-      custodyManager: '0xCdBFaB2F5760d320C7c4024A5e676248ba956c7D',
-      wrapper: '0xd6ea412149B7cbb80f9A81c0a99e5BDa0434fBC7', // FIXED: New wrapper that points to OFT contract
-      redemptionQueue: '0x205B8115068801576901A544e96E4C051834FBe4',
-      staking: '0xeA52f7F6a12199bc112a2E00CEB1ddDB26aB3fe2',
+      sovaBTC: '0x1b7227A7A6BcAe6c64907b1B51dD0801C3E8ba30', // REAL OFT Contract (DEPLOYED)
+      sovaToken: '0xfd3CD6323c7c10d7d533D6ce86249A0c21a3A7fD', // DEPLOYED
+      tokenWhitelist: '0xb386ef9D4C9FeF67058DBc00b31126AFE8D7600d', // DEPLOYED
+      custodyManager: '0x56b1F2664E5AceaBe31F64021bFF7744b7d391c7', // DEPLOYED
+      wrapper: '0x43a8a1FF7b7bC32aCbcCA638b2b40CADf45CD82d', // DEPLOYED
+      redemptionQueue: '0x3793FaA1bD71258336c877427b105B2E74e8C030', // DEPLOYED
+      staking: '0xe9781E85F6A55E76624fed62530AB75c53Db10C6', // DEPLOYED
     },
     layerZero: {
-      endpoint: '0x1a44076050125825900e736c501f859c50fE728c',
+      endpoint: '0x6EDCE65403992e310A62460808c4b910D972f10f',
       eid: 40232, // Optimism Sepolia EID
     },
     supportedTokens: {
       WBTC: {
         name: 'Test Wrapped Bitcoin',
         symbol: 'WBTC',
-        address: '0x412Bd95e843b7982702F12b8De0a5d414B482653',
+        address: '0x6f5249F8507445F1F0178eD162097bc4a262404E', // DEPLOYED
         decimals: 8,
         icon: '/icons/wbtc.svg',
       },
       LBTC: {
         name: 'Test Liquid Bitcoin',
         symbol: 'LBTC',
-        address: '0xf059C386BA88DA3C3919eDe0E6209B66C4D3DeE1',
+        address: '0xBc2945fa12bF06fC292dac00BbbaF1e52eFD5A22', // DEPLOYED
         decimals: 8,
         icon: '/icons/lbtc.svg',
       },
       USDC: {
         name: 'Test USD Coin', 
         symbol: 'USDC',
-        address: '0x576BDBf8fE1a11c097c3FBba20162522Cd84cDA6',
+        address: '0xA57484Ac87b23668A19f388eB5812cCc5A8D1EEe', // DEPLOYED
         decimals: 6,
         icon: '/icons/usdc.svg',
       },
@@ -434,8 +434,8 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
   },
 } as const;
 
-// Default Configuration - Updated to use Ethereum Sepolia
-export const DEFAULT_CHAIN_ID = 11155111; // Ethereum Sepolia as default
+// Default Configuration - Use Base Sepolia (matches production readiness)
+export const DEFAULT_CHAIN_ID = 84532; // Base Sepolia as default
 export const SUPPORTED_CHAIN_IDS = Object.keys(CHAIN_CONFIGS).map(Number);
 
 // Cross-chain helper functions

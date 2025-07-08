@@ -2,17 +2,77 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+solc = "0.8.22"
+optimizer = true
+optimizer_runs = 1000000
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
-
-remappings = [
-  '@solady/=lib/solady/src/',
-  '@solady-v0.0.245/=lib/solady-v0.0.245/src/',
-  "@openzeppelin/=lib/openzeppelin-contracts/",
-  "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-  "@layerzerolabs/=lib/LayerZero-v2/"
+# Exclude archive directories from compilation using glob patterns
+ignored_paths = [
+    "script/archive/**",
+    "test/archive/**", 
+    "src/archive/**",
+    "temp_excluded/**",
+    "temp_excluded_2/**"
 ]
 
+# Updated remappings for LayerZero V2 OFT and OpenZeppelin compatibility
+remappings = [
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    
+    # LayerZero V2 OFT remappings (FIXED - correct standard LayerZero format)
+    "@layerzerolabs/oft-evm/contracts/=lib/LayerZero-v2/packages/layerzero-v2/evm/oapp/contracts/oft/",
+    "@layerzerolabs/lz-evm-oapp-v2/contracts/=lib/LayerZero-v2/packages/layerzero-v2/evm/oapp/contracts/",
+    "@layerzerolabs/lz-evm-protocol-v2/contracts/=lib/LayerZero-v2/packages/layerzero-v2/evm/protocol/contracts/",
+    "@layerzerolabs/lz-evm-messagelib-v2/contracts/=lib/LayerZero-v2/packages/layerzero-v2/evm/messagelib/contracts/",
+    
+    # Solady and Forge remappings
+    "@solady/=lib/solady/src/",
+    "solady/=lib/solady/src/",
+    "forge-std/=lib/forge-std/src/",
+    "ds-test/=lib/forge-std/lib/ds-test/src/"
+]
+
+# Contract size optimization settings
+[profile.size]
+optimizer = true
+optimizer_runs = 10000000  # Maximum optimization for size
+via_ir = true  # Enable intermediate representation for better optimization
+
+[profile.ci]
+fuzz = { runs = 10_000 }
+invariant = { runs = 1_000 }
+
+[fmt]
+bracket_spacing = true
+int_types = "long"
+line_length = 120
+multiline_func_header = "all"
+number_underscore = "thousands"
+quote_style = "double"
+tab_width = 4
+wrap_comments = true
+
+[fuzz]
+runs = 1000
+max_test_rejects = 65536
+seed = '0x3e8'
+dictionary_weight = 40
+include_storage = true
+include_push_bytes = true
+
+[invariant]
+runs = 256
+depth = 15
+fail_on_revert = false
+
+# Dependencies (compatible versions for LayerZero)
+[dependencies]
+forge-std = { version = "1.8.2" }
+openzeppelin-contracts = { version = "5.0.1" }  # LayerZero V2 compatible
+openzeppelin-contracts-upgradeable = { version = "5.0.1" }
+
+# RPC endpoints for multi-chain deployment
 [rpc_endpoints]
 # Current Base Sepolia (backwards compatibility)
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
@@ -22,6 +82,12 @@ eth_sepolia = "${ETH_SEPOLIA_RPC}"
 op_sepolia = "${OP_SEPOLIA_RPC}"
 base_sepolia_new = "${BASE_SEPOLIA_RPC}"
 arb_sepolia = "${ARB_SEPOLIA_RPC}"
+
+# Custom RPC aliases for easier deployment
+ethereum_sepolia = "https://ethereum-sepolia.publicnode.com"
+base_sepolia_public = "https://sepolia.base.org"
+optimism_sepolia_public = "https://sepolia.optimism.io"
+arbitrum_sepolia_public = "https://sepolia.arbitrum.io/rpc"
 
 [etherscan]
 # Current Base Sepolia (backwards compatibility)

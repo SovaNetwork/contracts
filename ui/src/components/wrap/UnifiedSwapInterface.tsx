@@ -173,9 +173,11 @@ export function UnifiedSwapInterface() {
 
   // Check if approval needed
   const needsApproval = useMemo(() => {
-    if (swapType !== 'wrap' || !fromToken?.address || !amountWei || !currentAllowance) {
+    if (swapType !== 'wrap' || !fromToken?.address || !amountWei) {
       return false;
     }
+    // If allowance is still loading, assume approval is needed to be safe
+    if (currentAllowance === undefined) return true;
     return currentAllowance < amountWei;
   }, [swapType, fromToken, amountWei, currentAllowance]);
 

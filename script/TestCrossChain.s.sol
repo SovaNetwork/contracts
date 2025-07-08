@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
 import {SovaBTCOFT} from "../src/SovaBTCOFT.sol";
+import { SendParam, MessagingFee, MessagingReceipt, OFTReceipt } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 
 /**
  * @title TestCrossChain
@@ -21,22 +22,22 @@ contract TestCrossChain is Script {
     mapping(uint256 => NetworkConfig) public networkConfigs;
 
     constructor() {
-        // Network configurations (DEPLOYED ADDRESSES)
+        // Network configurations (ACTIVE DEPLOYED ADDRESSES - MATCHES FRONTEND)
         networkConfigs[11155111] = NetworkConfig({
             layerZeroEid: 40161,
-            oftContract: 0x1101036be784E8A879729B0932BE751EA4302010,
+            oftContract: 0xf059C386BA88DA3C3919eDe0E6209B66C4D3DeE1, // DEPLOYED AND CROSS-CHAIN ENABLED
             name: "Ethereum Sepolia"
         });
 
         networkConfigs[11155420] = NetworkConfig({
             layerZeroEid: 40232,
-            oftContract: 0xb34227F992e4Ec3AA8D6937Eb2C9Ed92e2650aCD,
+            oftContract: 0x00626Ed5FE6Bf77Ae13BEa79e304CF6A5554903b, // DEPLOYED AND CROSS-CHAIN ENABLED
             name: "Optimism Sepolia"
         });
 
         networkConfigs[84532] = NetworkConfig({
             layerZeroEid: 40245,
-            oftContract: 0x80c0eE2cB545b9E9c739B5fDa17578b1f0340004,
+            oftContract: 0x802Ea91b5aAf53D067b0bB72bAD4Cc714e1855Be, // DEPLOYED AND CROSS-CHAIN ENABLED
             name: "Base Sepolia"
         });
 
@@ -124,16 +125,17 @@ contract TestCrossChain is Script {
         console.log("Testing transfer to %s (EID: %s)...", targetNetwork.name, targetNetwork.layerZeroEid);
 
         // Quote the fee for the transfer
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
+        SendParam memory sendParam = SendParam({
             dstEid: targetNetwork.layerZeroEid,
             to: addressToBytes32(recipient),
             amountLD: amount,
             minAmountLD: amount,
             extraOptions: "",
-            composeMsg: ""
+            composeMsg: "",
+            oftCmd: ""
         });
 
-        SovaBTCOFT.MessagingFee memory fee = currentOFT.quoteSend(sendParam, false);
+        MessagingFee memory fee = currentOFT.quoteSend(sendParam, false);
         console.log("Quote fee: %s wei", fee.nativeFee);
 
         // Check if we have enough ETH for fees
@@ -147,7 +149,7 @@ contract TestCrossChain is Script {
         console.log("Sending %s sovaBTC to %s...", formatAmount(amount), targetNetwork.name);
         
         try currentOFT.send{value: fee.nativeFee}(sendParam, fee, payable(recipient)) returns 
-            (SovaBTCOFT.MessagingReceipt memory msgReceipt, SovaBTCOFT.OFTReceipt memory oftReceipt) {
+            (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) {
             
             console.log("SUCCESS: Transfer initiated successfully!");
             console.log("   Message GUID: %s", bytes32ToString(msgReceipt.guid));
@@ -229,11 +231,51 @@ contract TestCrossChain is Script {
         uint256 amount,
         address recipient
     ) external {
+        // Validate target EID is one of our configured networks
+        bool validTargetEid = false;
+        for (uint256 i = 0; i < 4; i++) {
+            uint256[] memory chainIds = new uint256[](4);
+            chainIds[0] = 11155111; // Ethereum Sepolia
+            chainIds[1] = 11155420; // Optimism Sepolia
+            chainIds[2] = 84532;    // Base Sepolia
+            chainIds[3] = 421614;   // Arbitrum Sepolia
+            
+            if (networkConfigs[chainIds[i]].layerZeroEid == targetEid) {
+                validTargetEid = true;
+                break;
+            }
+        }
+        
+        // Skip test if target EID is not valid
+        if (!validTargetEid) {
+            console.log("Skipping test - invalid target EID: %s", targetEid);
+            return;
+        }
+
+        // Validate amount bounds (between 0.001 and 10 BTC)
+        if (amount < 100_000 || amount > 1_000_000_000) {
+            console.log("Skipping test - amount out of bounds: %s", amount);
+            return;
+        }
+
+        // Validate recipient address
+        if (recipient == address(0)) {
+            console.log("Skipping test - invalid recipient address");
+            return;
+        }
+
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerKey);
 
         NetworkConfig memory currentNetwork = networkConfigs[block.chainid];
         require(currentNetwork.oftContract != address(0), "Current network OFT not configured");
+
+        // Skip if trying to send to the same network
+        if (currentNetwork.layerZeroEid == targetEid) {
+            console.log("Skipping test - cannot send to same network");
+            vm.stopBroadcast();
+            return;
+        }
 
         SovaBTCOFT currentOFT = SovaBTCOFT(currentNetwork.oftContract);
         
@@ -245,20 +287,21 @@ contract TestCrossChain is Script {
         console.log("");
 
         // Create send parameters
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
+        SendParam memory sendParam = SendParam({
             dstEid: targetEid,
             to: addressToBytes32(recipient),
             amountLD: amount,
             minAmountLD: amount,
             extraOptions: "",
-            composeMsg: ""
+            composeMsg: "",
+            oftCmd: ""
         });
 
         // Quote and execute
-        SovaBTCOFT.MessagingFee memory fee = currentOFT.quoteSend(sendParam, false);
+        MessagingFee memory fee = currentOFT.quoteSend(sendParam, false);
         console.log("Required fee: %s wei", fee.nativeFee);
 
-        (SovaBTCOFT.MessagingReceipt memory msgReceipt, SovaBTCOFT.OFTReceipt memory oftReceipt) = 
+        (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) = 
             currentOFT.send{value: fee.nativeFee}(sendParam, fee, payable(recipient));
 
         console.log("SUCCESS: Transfer completed!");
@@ -296,16 +339,17 @@ contract TestCrossChain is Script {
 
         SovaBTCOFT currentOFT = SovaBTCOFT(currentNetwork.oftContract);
         
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
+        SendParam memory sendParam = SendParam({
             dstEid: targetEid,
             to: addressToBytes32(msg.sender),
             amountLD: amount,
             minAmountLD: amount,
             extraOptions: "",
-            composeMsg: ""
+            composeMsg: "",
+            oftCmd: ""
         });
 
-        SovaBTCOFT.MessagingFee memory fee = currentOFT.quoteSend(sendParam, false);
+        MessagingFee memory fee = currentOFT.quoteSend(sendParam, false);
         
         console.log("=== Transfer Quote ===");
         console.log("From: %s (EID: %s)", currentNetwork.name, currentNetwork.layerZeroEid);

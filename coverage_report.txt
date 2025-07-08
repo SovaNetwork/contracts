@@ -1,0 +1,500 @@
+Warning: optimizer settings and `viaIR` have been disabled for accurate coverage reports.
+If you encounter "stack too deep" errors, consider using `--ir-minimum` which enables `viaIR` with minimum optimization resolving most of the errors
+Compiling 104 files with Solc 0.8.22
+Solc 0.8.22 finished in 6.97s
+Compiler run successful with warnings:
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+  --> script/ConfigurePeers.s.sol:92:9:
+   |
+92 |         NetworkConfig memory currentNetwork
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+  --> script/DeployNewWrapper.s.sol:49:32:
+   |
+49 |     function deployBaseWrapper(address deployer) internal {
+   |                                ^^^^^^^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+  --> script/DeployNewWrapper.s.sol:69:36:
+   |
+69 |     function deployEthereumWrapper(address deployer) internal {
+   |                                    ^^^^^^^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+  --> script/DeployNewWrapper.s.sol:89:36:
+   |
+89 |     function deployOptimismWrapper(address deployer) internal {
+   |                                    ^^^^^^^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/mocks/MockSovaBTC.sol:147:32:
+    |
+147 |     function isTransactionUsed(bytes32 txid) external view returns (bool) {
+    |                                ^^^^^^^^^^^^
+
+Warning (2072): Unused local variable.
+   --> test/SovaBTCStaking_Coverage.t.sol:516:9:
+    |
+516 |         uint256 expectedRewards = stakingContract.pendingRewards(0, user1);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^
+
+Warning (2072): Unused local variable.
+   --> test/script/DeploymentScripts_Coverage.t.sol:379:9:
+    |
+379 |         TestFullProtocolFlow script = new TestFullProtocolFlow();
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/CustodyManager_Coverage.t.sol:285:5:
+    |
+285 |     function test_ValidateDestination_NoCustodySet() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/CustodyManager_Coverage.t.sol:339:5:
+    |
+339 |     function test_IsAuthorizedCustodian_False() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/CustodyManager_Coverage.t.sol:350:5:
+    |
+350 |     function test_IsCustodyEnforced_False() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/CustodyManager_Coverage.t.sol:354:5:
+    |
+354 |     function test_GetCustodyConfig_Default() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to pure
+   --> test/mocks/MockSovaBTC.sol:147:5:
+    |
+147 |     function isTransactionUsed(bytes32 txid) external view returns (bool) {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to pure
+   --> test/mocks/MockSovaBTC.sol:152:5:
+    |
+152 |     function isPaused() external view returns (bool) {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/MockSovaBTC_Coverage.t.sol:28:5:
+   |
+28 |     function test_BasicERC20Functions() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/MockSovaBTC_Coverage.t.sol:274:5:
+    |
+274 |     function test_IsTransactionUsed_Stub() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/MockSovaBTC_Coverage.t.sol:280:5:
+    |
+280 |     function test_IsPaused_Stub() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/SOVAToken_Coverage.t.sol:320:5:
+    |
+320 |     function test_CanMint() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/SOVAToken_Coverage.t.sol:381:5:
+    |
+381 |     function test_Constants() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/SovaBTCOFT_Coverage.t.sol:57:5:
+   |
+57 |     function test_Constructor_Success() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/SovaBTCOFT_Coverage.t.sol:69:5:
+   |
+69 |     function test_Constructor_InitialMinter() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/SovaBTCOFT_Coverage.t.sol:314:5:
+    |
+314 |     function test_IsTransactionUsed_AlwaysFalse() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/SovaBTCOFT_Coverage.t.sol:386:5:
+    |
+386 |     function test_Decimals_Returns8() public {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/SovaBTCOFT_Simple_Coverage.t.sol:67:5:
+   |
+67 |     function test_Constructor_Basic() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/SovaBTCOFT_Simple_Coverage.t.sol:76:5:
+   |
+76 |     function test_InitialState() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/Task4_Simple_RedemptionQueue.t.sol:76:5:
+   |
+76 |     function test_BasicSetup() public {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Analysing contracts...
+Running tests...
+
+Ran 25 tests for test/MockBTCPrecompile.t.sol:MockBTCPrecompileTest
+[PASS] test_AddressConvertDirectCalldata() (gas: 27695)
+[PASS] test_AddressConvertPath() (gas: 18404)
+[PASS] test_AllBranchesCombined() (gas: 43023)
+[PASS] test_AllSelectorsSystematic() (gas: 89843)
+[PASS] test_BroadcastBytesPath() (gas: 14921)
+[PASS] test_BroadcastDirectCalldata() (gas: 22814)
+[PASS] test_DebugSelectorExtraction() (gas: 40294)
+[PASS] test_DecodeBytesPath() (gas: 42635)
+[PASS] test_DecodeWithCustomAddressEmpty() (gas: 41027)
+[PASS] test_DecodeWithForcedMockValue() (gas: 60295)
+[PASS] test_DecodeWithMockValueZero() (gas: 39739)
+[PASS] test_EmptyCallData() (gas: 13934)
+[PASS] test_InitialState() (gas: 34863)
+[PASS] test_ManualSelectorExtraction() (gas: 16164)
+[PASS] test_MinimalDirectCalldata() (gas: 39593)
+[PASS] test_MockInputsGreaterThanZero() (gas: 51800)
+[PASS] test_MockInputsZero() (gas: 33679)
+[PASS] test_MockOutputsGreaterThanZero() (gas: 92920)
+[PASS] test_MockOutputsZero() (gas: 31440)
+[PASS] test_PrecompileFailsTrue() (gas: 33253)
+[PASS] test_ResetFunction() (gas: 101066)
+[PASS] test_SetterFunctions() (gas: 129786)
+[PASS] test_ShortCallData() (gas: 14047)
+[PASS] test_UBTCSignTxPath() (gas: 15497)
+[PASS] test_UnknownSelector() (gas: 15151)
+Suite result: ok. 25 passed; 0 failed; 0 skipped; finished in 5.11ms (2.91ms CPU time)
+
+Ran 9 tests for test/MockERC20BTC_Coverage.t.sol:MockERC20BTCCoverageTest
+[PASS] test_AllFunctionsSuccessPath() (gas: 172122)
+[PASS] test_AllowanceFunctionCoverage() (gas: 53489)
+[PASS] test_TransferExactlyInsufficientBalance() (gas: 72423)
+[PASS] test_TransferFromExactAllowance() (gas: 94282)
+[PASS] test_TransferFromExactBalance() (gas: 94349)
+[PASS] test_TransferFromInsufficientAllowanceBranch() (gas: 106161)
+[PASS] test_TransferFromInsufficientBalanceBranch() (gas: 61522)
+[PASS] test_TransferFromZeroAllowance() (gas: 82863)
+[PASS] test_TransferInsufficientBalanceBranch() (gas: 28042)
+Suite result: ok. 9 passed; 0 failed; 0 skipped; finished in 6.10ms (1.89ms CPU time)
+
+Ran 31 tests for test/SOVAToken_Coverage.t.sol:SOVATokenCoverageTest
+[PASS] test_AddMinter_AlreadyMinter() (gas: 45995)
+[PASS] test_AddMinter_OnlyOwner() (gas: 15763)
+[PASS] test_AddMinter_Success() (gas: 43741)
+[PASS] test_AddMinter_ZeroAddress() (gas: 13927)
+[PASS] test_BatchMintToMaxSupply() (gas: 115775)
+[PASS] test_BatchMint_ArrayLengthMismatch() (gas: 21404)
+[PASS] test_BatchMint_EmptyArrays() (gas: 19851)
+[PASS] test_BatchMint_ExceedsMaxSupply() (gas: 25730)
+[PASS] test_BatchMint_OnlyMinter() (gas: 15919)
+[PASS] test_BatchMint_Success() (gas: 117598)
+[PASS] test_BatchMint_WithZeroAddressAndAmount() (gas: 99975)
+[PASS] test_BurnFrom_Success() (gas: 68641)
+[PASS] test_Burn_Success() (gas: 55997)
+[PASS] test_CanMint() (gas: 20602)
+[PASS] test_CanMint_WhenAtMaxSupply() (gas: 52041)
+[PASS] test_Constants() (gas: 10618)
+[PASS] test_Constructor_ExceedsMaxSupply() (gas: 114020)
+[PASS] test_Constructor_MaxInitialSupply() (gas: 2124138)
+[PASS] test_Constructor_WithInitialSupply() (gas: 2134284)
+[PASS] test_Constructor_ZeroInitialSupply() (gas: 2083870)
+[PASS] test_FullLifecycle() (gas: 102732)
+[PASS] test_IsMinter() (gas: 52599)
+[PASS] test_Mint_ExactRemainingSupply() (gas: 52043)
+[PASS] test_Mint_ExceedsMaxSupply() (gas: 20262)
+[PASS] test_Mint_OnlyMinter() (gas: 14521)
+[PASS] test_Mint_Success() (gas: 51402)
+[PASS] test_OwnershipFunctionality() (gas: 52953)
+[PASS] test_RemainingSupply() (gas: 52566)
+[PASS] test_RemoveMinter_NotMinter() (gas: 22102)
+[PASS] test_RemoveMinter_OnlyOwner() (gas: 15718)
+[PASS] test_RemoveMinter_Success() (gas: 33926)
+Suite result: ok. 31 passed; 0 failed; 0 skipped; finished in 6.17ms (4.36ms CPU time)
+
+Ran 26 tests for test/script/DeploymentScripts_Coverage.t.sol:DeploymentScriptsCoverageTest
+[PASS] test_ApproveNewWrapper_Initialization() (gas: 606353)
+[PASS] test_ApproveNewWrapper_RequiresPrivateKey() (gas: 607619)
+[PASS] test_ApproveNewWrapper_WithValidKey() (gas: 615334)
+[PASS] test_ApproveTokens_Initialization() (gas: 750099)
+[PASS] test_ApproveTokens_NetworkHandling() (gas: 762273)
+[PASS] test_ApproveTokens_RequiresPrivateKey() (gas: 751367)
+[PASS] test_ApproveTokens_WithValidKey() (gas: 759058)
+[PASS] test_MintTestTokens_Initialization() (gas: 1414667)
+[PASS] test_MintTestTokens_NetworkCheck() (gas: 1440465)
+[PASS] test_MintTestTokens_RequiresPrivateKey() (gas: 1415999)
+[PASS] test_MintTestTokens_WithValidKey() (gas: 1427389)
+[PASS] test_Scripts_AddressDerivation() (gas: 964973)
+[PASS] test_Scripts_EmptyPrivateKey() (gas: 3133388)
+[PASS] test_Scripts_ErrorHandling() (gas: 2395838)
+[PASS] test_Scripts_ExecutionOrder() (gas: 2120731)
+[PASS] test_Scripts_GasUsage() (gas: 974469)
+[PASS] test_Scripts_PrivateKeyHandling() (gas: 2373164)
+[PASS] test_Scripts_StateConsistency() (gas: 974997)
+[PASS] test_Scripts_SupportedNetworks() (gas: 1456404)
+[PASS] test_Scripts_UnsupportedNetworks() (gas: 1428018)
+[PASS] test_Scripts_ValidPrivateKeyFormat() (gas: 4511728)
+[PASS] test_TestFullProtocolFlow_Initialization() (gas: 959840)
+[PASS] test_TestFullProtocolFlow_Run() (gas: 962203)
+[PASS] test_UpdateWrapperToNewQueue_Initialization() (gas: 762931)
+[PASS] test_UpdateWrapperToNewQueue_RequiresPrivateKey() (gas: 764197)
+[PASS] test_UpdateWrapperToNewQueue_WithValidKey() (gas: 781052)
+Suite result: ok. 26 passed; 0 failed; 0 skipped; finished in 10.72ms (8.88ms CPU time)
+
+Ran 22 tests for test/Task1_WhitelistSystem.t.sol:Task1WhitelistSystemTest
+[PASS] test_AddAllowedToken_DifferentDecimals() (gas: 139815)
+[PASS] test_AddAllowedToken_RevertIfAlreadyAllowed() (gas: 71370)
+[PASS] test_AddAllowedToken_RevertIfNotOwner() (gas: 16232)
+[PASS] test_AddAllowedToken_RevertIfZeroAddress() (gas: 14171)
+[PASS] test_AddAllowedToken_Success() (gas: 80962)
+[PASS] test_AddAllowedTokensBatch_Success() (gas: 196081)
+[PASS] test_DecimalConversion_Precision() (gas: 98848)
+[PASS] test_Deposit_RevertIfBelowMinimum() (gas: 134721)
+[PASS] test_Deposit_RevertIfFractionalSatoshi_18Decimals() (gas: 133123)
+[PASS] test_Deposit_RevertIfTokenNotAllowed() (gas: 74621)
+[PASS] test_Deposit_RevertIfZeroAmount() (gas: 101748)
+[PASS] test_Deposit_RevertWhenPaused() (gas: 152749)
+[PASS] test_Deposit_USDC_6Decimals() (gas: 220393)
+[PASS] test_Deposit_WBTC_8Decimals() (gas: 218480)
+[PASS] test_Deposit_WETH_18Decimals() (gas: 220635)
+[PASS] test_GetTokenBalance() (gas: 206151)
+[PASS] test_PauseUnpause() (gas: 31082)
+[PASS] test_RemoveAllowedToken_RevertIfNotInAllowlist() (gas: 19588)
+[PASS] test_RemoveAllowedToken_RevertIfNotOwner() (gas: 72989)
+[PASS] test_RemoveAllowedToken_Success() (gas: 62885)
+[PASS] test_SetMinDepositSatoshi() (gas: 21522)
+[PASS] test_SetMinDepositSatoshi_RevertIfNotOwner() (gas: 14097)
+Suite result: ok. 22 passed; 0 failed; 0 skipped; finished in 5.78ms (4.31ms CPU time)
+
+Ran 1 test for test/SovaBTCOFT_Coverage.t.sol:SovaBTCOFTCoverageTest
+[FAIL: EvmError: Revert] setUp() (gas: 0)
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 6.96ms (0.00ns CPU time)
+
+Ran 38 tests for test/CustodyManager_Coverage.t.sol:CustodyManagerCoverageTest
+[PASS] testCustodyManager() (gas: 2794)
+[PASS] test_AddCustodian_OnlyAdmin() (gas: 52207)
+[PASS] test_AddCustodian_ZeroAddress() (gas: 14187)
+[PASS] test_BatchAddCustodians_EmptyArray() (gas: 13978)
+[PASS] test_BatchAddCustodians_OnlyAdmin() (gas: 51010)
+[PASS] test_BatchAddCustodians_OnlyZeroAddresses() (gas: 15688)
+[PASS] test_BatchAddCustodians_WithZeroAddresses() (gas: 179475)
+[PASS] test_Constructor_ZeroAddress() (gas: 42577)
+[PASS] test_EmergencyPause_OnlyEmergencyRole() (gas: 49566)
+[PASS] test_EmergencySweep_CustodyNotSet() (gas: 22565)
+[PASS] test_EmergencySweep_OnlyEmergencyRole() (gas: 154264)
+[PASS] test_EmergencySweep_ZeroAmount() (gas: 19291)
+[PASS] test_EmergencySweep_ZeroFromAddress() (gas: 17111)
+[PASS] test_EmergencySweep_ZeroTokenAddress() (gas: 17078)
+[PASS] test_EmergencyUnpause_OnlyEmergencyRole() (gas: 79497)
+[PASS] test_FullWorkflow_MultipleCustodyTokens() (gas: 495000)
+[PASS] test_GetCustodianAtIndex_ValidIndex() (gas: 95470)
+[PASS] test_GetCustodyConfig_Default() (gas: 17068)
+[PASS] test_IsAuthorizedCustodian_False() (gas: 13885)
+[PASS] test_IsAuthorizedCustodian_True() (gas: 94641)
+[PASS] test_IsCustodyEnforced_False() (gas: 13688)
+[PASS] test_OnlyValidDestination_ModifierCoverage() (gas: 148058)
+[PASS] test_OnlyValidDestination_ModifierNotEnforced() (gas: 120914)
+[PASS] test_RemoveCustodian_OnlyAdmin() (gas: 52253)
+[PASS] test_RemoveCustodian_ZeroAddress() (gas: 14188)
+[PASS] test_RemoveCustodyAddress_FirstToken() (gas: 155080)
+[PASS] test_RemoveCustodyAddress_LastToken() (gas: 155472)
+[PASS] test_RemoveCustodyAddress_MultipleTokens() (gas: 220186)
+[PASS] test_RemoveCustodyAddress_NonExistentToken() (gas: 19554)
+[PASS] test_RemoveCustodyAddress_OnlyAdmin() (gas: 153261)
+[PASS] test_SetCustodyAddress_OnlyAdmin() (gas: 54638)
+[PASS] test_SetCustodyAddress_OverwriteExisting() (gas: 126053)
+[PASS] test_SetCustodyEnforcement_CustodyNotSet() (gas: 19854)
+[PASS] test_SetCustodyEnforcement_OnlyAdmin() (gas: 153540)
+[PASS] test_ValidateDestination_EnforcedCorrectAddress() (gas: 139571)
+[PASS] test_ValidateDestination_EnforcedWrongAddress() (gas: 144428)
+[PASS] test_ValidateDestination_NoCustodySet() (gas: 14934)
+[PASS] test_ValidateDestination_NotEnforced() (gas: 118973)
+Suite result: ok. 38 passed; 0 failed; 0 skipped; finished in 13.52ms (12.84ms CPU time)
+
+Ran 23 tests for test/SovaBTCOFT_Simple_Coverage.t.sol:SovaBTCOFTSimpleCoverageTest
+[FAIL: Error != expected error: UnauthorizedMinter(0x29E3b139f4393aDda86303fcdAa35F60Bb7092bF) != custom error 0xa4f39665] test_AdminBurn_OnlyMinter() (gas: 69311)
+[PASS] test_AdminBurn_Success() (gas: 57450)
+[PASS] test_AdminBurn_ZeroAmount() (gas: 16190)
+[FAIL: Error != expected error: UnauthorizedMinter(0x29E3b139f4393aDda86303fcdAa35F60Bb7092bF) != custom error 0xa4f39665] test_AdminMint_OnlyMinter() (gas: 15000)
+[PASS] test_AdminMint_Success() (gas: 70693)
+[PASS] test_AdminMint_ZeroAmount() (gas: 16276)
+[PASS] test_BitcoinFunctions_NotSupported() (gas: 17561)
+[PASS] test_Configuration() (gas: 34506)
+[PASS] test_Configuration_OnlyOwner() (gas: 23865)
+[PASS] test_Constructor_Basic() (gas: 27732)
+[PASS] test_Decimals_BitcoinCompatible() (gas: 103032)
+[PASS] test_ERC20_BasicFunctionality() (gas: 125964)
+[FAIL: next call did not revert as expected] test_EmergencyScenario() (gas: 150856)
+[PASS] test_InitialState() (gas: 29034)
+[PASS] test_LargeAmounts() (gas: 101479)
+[PASS] test_MinterManagement() (gas: 40831)
+[PASS] test_MinterManagement_OnlyOwner() (gas: 23318)
+[PASS] test_MinterManagement_ZeroAddress() (gas: 11580)
+[FAIL: Error != expected error: UnauthorizedMinter(0xb7a5f626F7Ac0ac89B6B4d17eC39705c530fad3E) != custom error 0xa4f39665] test_MultipleMintersWorkflow() (gas: 175549)
+[PASS] test_PauseUnpause() (gas: 34246)
+[PASS] test_PauseUnpause_OnlyOwner() (gas: 42499)
+[PASS] test_PauseUnpause_States() (gas: 28071)
+[FAIL: next call did not revert as expected] test_WhenPaused_Functionality() (gas: 123340)
+Suite result: FAILED. 18 passed; 5 failed; 0 skipped; finished in 4.34ms (3.59ms CPU time)
+
+Ran 37 tests for test/MockSovaBTC_Coverage.t.sol:MockSovaBTCCoverageTest
+[PASS] test_AdminBurn_InsufficientBalance() (gas: 19035)
+[PASS] test_AdminBurn_OnlyBurner() (gas: 14742)
+[PASS] test_AdminBurn_Success() (gas: 52248)
+[PASS] test_AdminBurn_ZeroAddress() (gas: 14659)
+[PASS] test_AdminMint_OnlyMinter() (gas: 14761)
+[PASS] test_AdminMint_Success() (gas: 64969)
+[PASS] test_AdminMint_ZeroAddress() (gas: 14634)
+[PASS] test_Approve_Success() (gas: 39977)
+[PASS] test_Approve_ZeroAddressOwner() (gas: 12639)
+[PASS] test_Approve_ZeroAddressSpender() (gas: 12715)
+[PASS] test_BasicERC20Functions() (gas: 33402)
+[PASS] test_DepositBTC_Stub() (gas: 6755)
+[PASS] test_IsPaused_Stub() (gas: 8873)
+[PASS] test_IsTransactionUsed_Stub() (gas: 9296)
+[PASS] test_MinterBurnerRoleChanges() (gas: 95296)
+[PASS] test_MultipleUsersInteractions() (gas: 108774)
+[PASS] test_OwnershipTransferAffectsRoles() (gas: 120486)
+[PASS] test_Pause_Stub() (gas: 5487)
+[PASS] test_SetBurner_OnlyOwner() (gas: 16645)
+[PASS] test_SetBurner_Success() (gas: 32326)
+[PASS] test_SetMaxDepositAmount_Stub() (gas: 6039)
+[PASS] test_SetMaxGasLimitAmount_Stub() (gas: 6013)
+[PASS] test_SetMinDepositAmount_Stub() (gas: 6081)
+[PASS] test_SetMinter_OnlyOwner() (gas: 16534)
+[PASS] test_SetMinter_Success() (gas: 32340)
+[PASS] test_TransferFrom_ExactAllowance() (gas: 90582)
+[PASS] test_TransferFrom_InsufficientAllowance() (gas: 68680)
+[PASS] test_TransferFrom_Success() (gas: 103986)
+[PASS] test_TransferOwnership_OnlyOwner() (gas: 16296)
+[PASS] test_TransferOwnership_Success() (gas: 20633)
+[PASS] test_Transfer_FromZeroAddress() (gas: 12651)
+[PASS] test_Transfer_InsufficientBalance() (gas: 17066)
+[PASS] test_Transfer_Success() (gas: 94456)
+[PASS] test_Transfer_ToZeroAddress() (gas: 63828)
+[PASS] test_Unpause_Stub() (gas: 5487)
+[PASS] test_Withdraw_Stub() (gas: 7269)
+[PASS] test_ZeroAmountOperations() (gas: 95212)
+Suite result: ok. 37 passed; 0 failed; 0 skipped; finished in 4.04ms (8.03ms CPU time)
+
+Ran 63 tests for test/SovaBTCStaking_Coverage.t.sol:SovaBTCStakingCoverageTest
+[PASS] test_AddPool_InvalidLockPeriod() (gas: 19459)
+[PASS] test_AddPool_InvalidMultiplier() (gas: 19507)
+[PASS] test_AddPool_OnlyOwner() (gas: 19075)
+[PASS] test_AddPool_Success() (gas: 196395)
+[PASS] test_AddPool_ZeroRewardToken() (gas: 17150)
+[PASS] test_AddPool_ZeroStakingToken() (gas: 17194)
+[PASS] test_ClaimRewards_InvalidPoolId() (gas: 13849)
+[PASS] test_ClaimRewards_NoRewards() (gas: 215037)
+[PASS] test_ClaimRewards_WhenEmergencyMode() (gas: 353876)
+[PASS] test_ClaimRewards_WithRewards() (gas: 454256)
+[PASS] test_Constructor_Success() (gas: 2855977)
+[PASS] test_Constructor_ZeroFeeRecipient() (gas: 88064)
+[PASS] test_EmergencyFunctions_OnlyOwner() (gas: 17055)
+[PASS] test_EmergencyPause_Success() (gas: 46836)
+[PASS] test_EmergencyUnpause_Success() (gas: 35865)
+[PASS] test_EmergencyUnstake_InsufficientAmount() (gas: 210145)
+[PASS] test_EmergencyUnstake_InvalidPoolId() (gas: 13870)
+[PASS] test_EmergencyUnstake_WithLock() (gas: 287664)
+[PASS] test_EmergencyUnstake_WithoutLock() (gas: 289572)
+[PASS] test_EmergencyUnstake_WorksInEmergencyMode() (gas: 302328)
+[PASS] test_FullStakingLifecycle() (gas: 418258)
+[PASS] test_FundRewardPool_InvalidPoolId() (gas: 11583)
+[PASS] test_FundRewardPool_Success() (gas: 220756)
+[PASS] test_FundRewardPool_ZeroAmount() (gas: 183194)
+[PASS] test_GetActualStakedAmount_InvalidPoolId() (gas: 13892)
+[PASS] test_GetActualStakedAmount_WithMultiplier() (gas: 351978)
+[PASS] test_GetActualStakedAmount_WithoutMultiplier() (gas: 330149)
+[PASS] test_MassUpdatePools() (gas: 326144)
+[PASS] test_MassUpdatePools_EmptyPools() (gas: 7584)
+[PASS] test_MultipleUsersStaking() (gas: 416921)
+[PASS] test_PendingRewards_InvalidPoolId() (gas: 13934)
+[PASS] test_PendingRewards_NoStake() (gas: 191185)
+[PASS] test_PendingRewards_WithStake() (gas: 330991)
+[PASS] test_PendingRewards_ZeroTotalStaked() (gas: 192034)
+[PASS] test_SafeRewardTransfer_InsufficientBalance() (gas: 440931)
+[PASS] test_SafeRewardTransfer_WithProtocolFee() (gas: 452139)
+[PASS] test_SafeRewardTransfer_ZeroProtocolFee() (gas: 421440)
+[PASS] test_SetFeeRecipient_OnlyOwner() (gas: 13582)
+[PASS] test_SetFeeRecipient_Success() (gas: 20532)
+[PASS] test_SetFeeRecipient_ZeroAddress() (gas: 13838)
+[PASS] test_SetProtocolFee_InvalidFeeRate() (gas: 13973)
+[PASS] test_SetProtocolFee_OnlyOwner() (gas: 13724)
+[PASS] test_SetProtocolFee_Success() (gas: 20206)
+[PASS] test_Stake_ExistingStakeClaimsPendingRewards() (gas: 460859)
+[PASS] test_Stake_InvalidPoolId() (gas: 14587)
+[PASS] test_Stake_WhenEmergencyMode() (gas: 238471)
+[PASS] test_Stake_WhenPaused() (gas: 238493)
+[PASS] test_Stake_WithLock() (gas: 364231)
+[PASS] test_Stake_WithLockZeroLockPeriod() (gas: 312526)
+[PASS] test_Stake_WithoutLock() (gas: 342335)
+[PASS] test_Stake_ZeroAmount() (gas: 212716)
+[PASS] test_Unstake_InsufficientAmount() (gas: 212641)
+[PASS] test_Unstake_InvalidPoolId() (gas: 14263)
+[PASS] test_Unstake_StillLocked() (gas: 352065)
+[PASS] test_Unstake_WhenEmergencyMode() (gas: 354314)
+[PASS] test_Unstake_WithLockAfterPeriod() (gas: 393406)
+[PASS] test_Unstake_WithoutLock() (gas: 383489)
+[PASS] test_Unstake_ZeroAmount() (gas: 210225)
+[PASS] test_UpdatePool_InvalidLockPeriod() (gas: 184233)
+[PASS] test_UpdatePool_InvalidMultiplier() (gas: 184345)
+[PASS] test_UpdatePool_InvalidPoolId() (gas: 16848)
+[PASS] test_UpdatePool_OnlyOwner() (gas: 186098)
+[PASS] test_UpdatePool_Success() (gas: 197629)
+Suite result: ok. 63 passed; 0 failed; 0 skipped; finished in 17.07ms (13.37ms CPU time)
+
+Ran 12 tests for test/Task4_Simple_RedemptionQueue.t.sol:Task4SimpleRedemptionQueueTest
+[PASS] test_AdminFunctions() (gas: 60653)
+[PASS] test_BasicSetup() (gas: 49815)
+[PASS] test_BatchFulfillRedemptions() (gas: 792585)
+[PASS] test_ErrorConditions() (gas: 983154)
+[PASS] test_FulfillMultipleRedemptions() (gas: 600996)
+[PASS] test_FulfillRedemption_SuccessAfterDelay() (gas: 381374)
+[PASS] test_InsufficientReserve() (gas: 85821)
+[PASS] test_MultipleRedemptions_SameUser() (gas: 489610)
+[PASS] test_OnlyAuthorizedCustodian() (gas: 362761)
+[PASS] test_PauseFunctionality() (gas: 321116)
+[PASS] test_QueueRedemption_Success() (gas: 316296)
+[PASS] test_ViewFunctions() (gas: 307975)
+Suite result: ok. 12 passed; 0 failed; 0 skipped; finished in 17.08ms (10.54ms CPU time)
+
+Ran 1 test for test/mocks/MockSovaBTC.sol:MockSovaBTC
+[PASS] testMint(address,uint256) (runs: 1001, μ: 45003, ~: 45501)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 28.56ms (27.32ms CPU time)
+
+Ran 1 test for script/TestCrossChain.s.sol:TestCrossChain
+[PASS] testTransferToNetwork(uint32,uint256,address) (runs: 1001, μ: 15718, ~: 15718)
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 43.52ms (43.33ms CPU time)
+
+Ran 13 test suites in 374.42ms (168.98ms CPU time): 283 tests passed, 6 failed, 0 skipped (289 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/SovaBTCOFT_Coverage.t.sol:SovaBTCOFTCoverageTest
+[FAIL: EvmError: Revert] setUp() (gas: 0)
+
+Encountered 5 failing tests in test/SovaBTCOFT_Simple_Coverage.t.sol:SovaBTCOFTSimpleCoverageTest
+[FAIL: Error != expected error: UnauthorizedMinter(0x29E3b139f4393aDda86303fcdAa35F60Bb7092bF) != custom error 0xa4f39665] test_AdminBurn_OnlyMinter() (gas: 69311)
+[FAIL: Error != expected error: UnauthorizedMinter(0x29E3b139f4393aDda86303fcdAa35F60Bb7092bF) != custom error 0xa4f39665] test_AdminMint_OnlyMinter() (gas: 15000)
+[FAIL: next call did not revert as expected] test_EmergencyScenario() (gas: 150856)
+[FAIL: Error != expected error: UnauthorizedMinter(0xb7a5f626F7Ac0ac89B6B4d17eC39705c530fad3E) != custom error 0xa4f39665] test_MultipleMintersWorkflow() (gas: 175549)
+[FAIL: next call did not revert as expected] test_WhenPaused_Functionality() (gas: 123340)
+
+Encountered a total of 6 failing tests, 283 tests succeeded

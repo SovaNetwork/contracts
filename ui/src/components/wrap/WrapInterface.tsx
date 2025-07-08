@@ -15,6 +15,7 @@ import { useTokenWrapping } from '@/hooks/web3/useTokenWrapping';
 import { formatTokenAmount, parseTokenAmount } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
 import { RealTimeAllowanceChecker } from './RealTimeAllowanceChecker';
+import { ApprovalDebugger } from './ApprovalDebugger';
 
 export function WrapInterface() {
   const { address, isConnected } = useAccount();
@@ -159,7 +160,9 @@ export function WrapInterface() {
 
   // Check if approval is needed for current amount
   const needsApproval = useMemo(() => {
-    if (!selectedToken || !amountWei || amountWei === 0n || !currentAllowance) return false;
+    if (!selectedToken || !amountWei || amountWei === 0n) return false;
+    // If allowance is still loading, assume approval is needed to be safe
+    if (currentAllowance === undefined) return true;
     return currentAllowance < amountWei;
   }, [selectedToken, amountWei, currentAllowance]);
 
@@ -433,6 +436,12 @@ export function WrapInterface() {
                 />
               </div>
             )}
+
+            {/* Approval Logic Debugger */}
+            <ApprovalDebugger 
+              selectedToken={selectedToken}
+              amount={amount}
+            />
 
             {/* Debug Panel (Enhanced) */}
             {selectedToken && amountWei > 0n && (

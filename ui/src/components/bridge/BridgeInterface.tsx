@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { ExternalLink, Zap, AlertTriangle } from 'lucide-react';
+import { ExternalLink, Zap, AlertTriangle, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { NetworkBridge } from './NetworkBridge';
@@ -34,16 +34,30 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
   const [sourceChainId, setSourceChainId] = useState<number>(initialSourceChain);
   const [destinationChainId, setDestinationChainId] = useState<number>();
   const [isReversed, setIsReversed] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [lastBridgeTime, setLastBridgeTime] = useState<number | null>(null);
 
   // Get sovaBTC address for the SOURCE chain (independent of global state)
   const sourceChainConfig = getChainConfig(sourceChainId);
   const sovaBTCAddress = sourceChainConfig?.contracts.sovaBTC;
 
-  // Get sovaBTC balance on source chain
-  const { balance: sourceBalance, refetch: refetchBalance } = useTokenBalance({
+  // Get sovaBTC balance on source chain with enhanced polling after bridge
+  const shouldEnhancePoll = lastBridgeTime && (Date.now() - lastBridgeTime) < 10 * 60 * 1000; // 10 minutes
+  const { balance: sourceBalance, refetch: refetchSourceBalance } = useTokenBalance({
     tokenAddress: sovaBTCAddress || '0x0000000000000000000000000000000000000000',
     accountAddress: address,
     enabled: Boolean(sovaBTCAddress && address),
+    refetchInterval: shouldEnhancePoll ? 3000 : 5000, // Faster polling after bridge
+  });
+
+  // Get sovaBTC balance on destination chain with enhanced polling
+  const destinationChainConfig = getChainConfig(destinationChainId || 0);
+  const destinationSovaBTCAddress = destinationChainConfig?.contracts.sovaBTC;
+  const { balance: destinationBalance, refetch: refetchDestinationBalance } = useTokenBalance({
+    tokenAddress: destinationSovaBTCAddress || '0x0000000000000000000000000000000000000000',
+    accountAddress: address,
+    enabled: Boolean(destinationSovaBTCAddress && address && destinationChainId),
+    refetchInterval: shouldEnhancePoll ? 2000 : 5000, // Very fast polling after bridge
   });
 
   // Bridge transaction management
@@ -68,6 +82,58 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
     }
   }, [amount]);
 
+  // Manual refresh function for all balances
+  const handleManualRefresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await Promise.all([
+        refetchSourceBalance(),
+        destinationChainId ? refetchDestinationBalance() : Promise.resolve(),
+      ]);
+    } catch (error) {
+      console.error('Manual refresh failed:', error);
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [refetchSourceBalance, refetchDestinationBalance, destinationChainId]);
+
+  // CRITICAL: Balance refresh after bridge completion
+  useEffect(() => {
+    if (isConfirmed && bridgeHash) {
+      console.log('🔄 Bridge confirmed! Refreshing balances...');
+      
+      // Set bridge time for enhanced polling
+      setLastBridgeTime(Date.now());
+      
+      // Immediate refresh of source chain (burn should be visible immediately)
+      setTimeout(() => {
+        console.log('🔄 Refreshing source chain balance...');
+        refetchSourceBalance();
+      }, 2000);
+      
+      // Enhanced destination polling (LayerZero takes time)
+      if (destinationChainId) {
+        const pollDestination = () => {
+          console.log('🔄 Refreshing destination chain balance...');
+          refetchDestinationBalance();
+        };
+        
+        // Staggered refreshes for destination chain
+        setTimeout(pollDestination, 5000);   // 5 seconds
+        setTimeout(pollDestination, 15000);  // 15 seconds  
+        setTimeout(pollDestination, 30000);  // 30 seconds
+        setTimeout(pollDestination, 60000);  // 1 minute
+        setTimeout(pollDestination, 120000); // 2 minutes
+        setTimeout(pollDestination, 300000); // 5 minutes
+      }
+      
+      // Reset form
+      setTimeout(() => {
+        setAmount('');
+      }, 5000);
+    }
+  }, [isConfirmed, bridgeHash, destinationChainId, refetchSourceBalance, refetchDestinationBalance]);
+
   // Validation
   const validation = useMemo(() => {
     if (!amount || Number(amount) <= 0) {
@@ -88,16 +154,6 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
     return { isValid: true, error: null };
   }, [amount, destinationChainId, sourceChainId, walletChainId, sourceBalance, amountWei]);
 
-  // Reset on successful bridge
-  useEffect(() => {
-    if (isConfirmed) {
-      const timer = setTimeout(() => {
-        setAmount('');
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [isConfirmed]);
-
   // Handle network switching when user changes source
   const handleSourceChange = (newSourceChainId: number) => {
     setSourceChainId(newSourceChainId);
@@ -113,9 +169,9 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
   useEffect(() => {
     if (sovaBTCAddress && address && walletChainId === sourceChainId) {
       console.log(`Wallet on correct network (${sourceChainId}), refetching balance...`);
-      refetchBalance();
+      refetchSourceBalance();
     }
-  }, [walletChainId, sourceChainId, sovaBTCAddress, address, refetchBalance]);
+  }, [walletChainId, sourceChainId, sovaBTCAddress, address, refetchSourceBalance]);
 
   const handleReverse = () => {
     if (destinationChainId) {
@@ -194,8 +250,19 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
               Transfer sovaBTC across different networks
             </p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+          <div className="flex items-center space-x-2">
+            {/* Manual Refresh Button */}
+            <button
+              onClick={handleManualRefresh}
+              disabled={isManualRefreshing}
+              className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors disabled:opacity-50"
+              title="Refresh balances"
+            >
+              <RefreshCw className={cn("w-4 h-4", isManualRefreshing && "animate-spin")} />
+            </button>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-defi-purple to-defi-pink flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
           </div>
         </div>
 
@@ -229,6 +296,9 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
             <div className="text-sm font-medium">Amount</div>
             <div className="text-xs text-muted-foreground">
               Balance: {formatTokenAmount(sourceBalance || 0n, 8)} sovaBTC
+              {shouldEnhancePoll && (
+                <span className="ml-1 text-green-400">↻</span>
+              )}
             </div>
           </div>
           
@@ -281,10 +351,18 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
           </div>
         )}
 
-        {/* Debug Section - Balance Checker */}
+        {/* Enhanced Debug Section - Real-time Balance Tracking */}
         {destinationChainId && (
           <div className="mt-4 p-4 bg-slate-800/50 border border-slate-600 rounded-lg">
-            <div className="text-sm font-medium text-slate-300 mb-3">🔍 Debug: Chain Balances</div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-medium text-slate-300">🔍 Real-time Balances</div>
+              {shouldEnhancePoll && (
+                <div className="text-xs text-green-400 flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  <span>Enhanced monitoring</span>
+                </div>
+              )}
+            </div>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-400">
@@ -299,18 +377,12 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
                   {getChainConfig(destinationChainId)?.name}:
                 </span>
                 <span className="text-slate-200">
-                  <DestinationBalance destinationChainId={destinationChainId} address={address} />
+                  {formatTokenAmount(destinationBalance || 0n, 8)} sovaBTC
                 </span>
               </div>
               <div className="mt-2 pt-2 border-t border-slate-600">
                 <div className="text-xs text-slate-400">
-                  Contract addresses:
-                </div>
-                <div className="text-xs text-slate-500 break-all">
-                  Source: {sovaBTCAddress}
-                </div>
-                <div className="text-xs text-slate-500 break-all">
-                  Dest: {getChainConfig(destinationChainId)?.contracts.sovaBTC}
+                  Last bridge: {lastBridgeTime ? new Date(lastBridgeTime).toLocaleTimeString() : 'None'}
                 </div>
               </div>
             </div>
@@ -352,7 +424,7 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
               </div>
               <div className="text-sm text-blue-200">
-                <span className="font-medium">How it works:</span> LayerZero will automatically burn your sovaBTC on {getChainConfig(sourceChainId)?.name} and mint the same amount on {getChainConfig(destinationChainId)?.name}. No manual claiming required.
+                <span className="font-medium">How it works:</span> LayerZero will automatically burn your sovaBTC on {getChainConfig(sourceChainId)?.name} and mint the same amount on {getChainConfig(destinationChainId)?.name}. Balances will refresh automatically.
               </div>
             </div>
           </div>
@@ -372,8 +444,9 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
               <span className="font-medium text-green-300">Bridge Transaction Submitted!</span>
             </div>
             <p className="text-sm text-green-200 mb-3">
-              Your sovaBTC will automatically appear on {getChainConfig(destinationChainId!)?.name} in 5-10 minutes. 
-              No manual redemption required - LayerZero handles the cross-chain transfer automatically.
+              ✅ Source balance updated immediately<br/>
+              ⏳ Destination tokens arriving in 1-5 minutes<br/>
+              🔄 Balances refreshing automatically every 2-3 seconds
             </p>
             <a
               href={`${getChainConfig(sourceChainId)?.blockExplorers[0]?.url}/tx/${bridgeHash}`}
@@ -399,7 +472,6 @@ export function BridgeInterface({ className }: BridgeInterfaceProps) {
           tokenSymbol="sovaBTC"
         />
       )}
-
 
     </div>
   );

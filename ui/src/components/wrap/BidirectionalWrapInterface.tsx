@@ -17,6 +17,7 @@ import { useTokenWrapping } from '@/hooks/web3/useTokenWrapping';
 import { useTokenRedemption } from '@/hooks/web3/useTokenRedemption';
 import { formatTokenAmount, parseTokenAmount } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
+import { ApprovalDebugger } from './ApprovalDebugger';
 
 type WrapDirection = 'wrap' | 'unwrap';
 
@@ -142,9 +143,11 @@ export function BidirectionalWrapInterface() {
 
   // Check if approval is needed for wrapping
   const needsApproval = useMemo(() => {
-    if (direction !== 'wrap' || !selectedToken || !amountWei || amountWei === 0n || !currentAllowance) {
+    if (direction !== 'wrap' || !selectedToken || !amountWei || amountWei === 0n) {
       return false;
     }
+    // If allowance is still loading, assume approval is needed to be safe
+    if (currentAllowance === undefined) return true;
     return currentAllowance < amountWei;
   }, [direction, selectedToken, amountWei, currentAllowance]);
 
@@ -382,6 +385,14 @@ export function BidirectionalWrapInterface() {
                 )}
               </div>
             </div>
+
+            {/* Approval Debugger - Only show for wrap direction */}
+            {direction === 'wrap' && (
+              <ApprovalDebugger
+                selectedToken={selectedToken}
+                amount={amount}
+              />
+            )}
 
             {/* Action Button */}
             <div className="pt-6">

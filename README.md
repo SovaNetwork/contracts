@@ -6,6 +6,20 @@
 
 SovaBTC is a comprehensive, multi-chain Bitcoin-backed token protocol that enables seamless Bitcoin interactions across different blockchain networks. Built with LayerZero's Omnichain Fungible Token (OFT) standard, it provides secure custody management, queued redemptions, and yield-generating staking capabilities.
 
+## 🔑 **How It Works - Simple Overview**
+
+**For Users:**
+1. **Deposit**: Send WBTC/USDC to `SovaBTCWrapper` → Get SovaBTC tokens
+2. **Bridge**: Send SovaBTC cross-chain via LayerZero (burns/mints automatically)
+3. **Redeem**: Queue redemption → Wait 10 days → Custodian fulfills → Get original tokens back
+
+**For Developers:**
+- `SovaBTCWrapper` = User interface for deposits/redemptions
+- `SovaBTCOFT` = LayerZero OFT token contract (actual SovaBTC token)
+- Integration via `ISovaBTC` interface: `wrapper.deposit()` → `sovaBTC.adminMint()`
+
+**Key Insight**: The wrapper doesn't import the OFT contract directly. Instead, it uses the `ISovaBTC` interface to call `adminMint()` on the OFT contract, which mints SovaBTC tokens to users.
+
 ## 🌟 Key Features
 
 ### 🔗 Multi-Chain Compatibility
@@ -36,6 +50,72 @@ SovaBTC is a comprehensive, multi-chain Bitcoin-backed token protocol that enabl
 
 ## 🏗️ Architecture Overview
 
+### How the Contracts Work Together
+
+SovaBTC uses a **two-contract system** that seamlessly integrates to provide both multi-token deposits and cross-chain functionality:
+
+#### 1. **SovaBTCOFT** - The Token Contract
+- **LayerZero OFT**: Omnichain Fungible Token for cross-chain transfers
+- **ISovaBTC Interface**: Implements the standard interface for minting/burning
+- **Minter Authorization**: Only authorized contracts (like the wrapper) can mint tokens
+- **8 Decimals**: Bitcoin-compatible precision
+
+#### 2. **SovaBTCWrapper** - The User Interface
+- **Multi-Token Deposits**: Accept WBTC, USDC, and other whitelisted tokens
+- **Automatic Minting**: Calls `SovaBTCOFT.adminMint()` to create SovaBTC tokens
+- **Reserve Management**: Transfers deposited tokens to RedemptionQueue
+- **Decimal Conversion**: Handles different token decimals automatically
+
+#### 3. **The Complete User Flow**
+
+```mermaid
+flowchart TD
+    A["User wants to deposit WBTC"] --> B["Calls SovaBTCWrapper.deposit()"]
+    B --> C["Wrapper validates WBTC is whitelisted"]
+    C --> D["Wrapper validates 8 decimals = 8 decimals"]
+    D --> E["Wrapper transfers WBTC to RedemptionQueue"]
+    E --> F["Wrapper calls sovaBTC.adminMint<br/>user, amount"]
+    F --> G["SovaBTCOFT mints SovaBTC tokens<br/>to user wallet"]
+    G --> H["User receives SovaBTC tokens<br/>8 decimals, 1:1 Bitcoin value"]
+    H --> I["User can now bridge cross-chain<br/>via LayerZero"]
+    
+    style A fill:#e3f2fd
+    style B fill:#e8f5e8
+    style F fill:#fff3e0
+    style G fill:#f3e5f5
+    style H fill:#e8f5e8
+    style I fill:#e3f2fd
+```
+
+**Example: Depositing 1 WBTC**
+1. User calls `SovaBTCWrapper.deposit(wbtcAddress, 1e8)` (1 WBTC - 8 decimals)
+2. Wrapper validates: WBTC has 8 decimals, same as SovaBTC
+3. Wrapper calls `sovaBTC.adminMint(user, 1e8)` (1 SovaBTC)
+4. SovaBTCOFT mints 1 SovaBTC to user
+5. User receives 1 SovaBTC (8 decimals) = 1 Bitcoin worth
+
+#### 4. **Critical Integration Points**
+
+**During Deployment:**
+```solidity
+// 1. Deploy SovaBTCOFT
+SovaBTCOFT sovaBTC = new SovaBTCOFT("SovaBTC", "SOVA", lzEndpoint, owner);
+
+// 2. Deploy SovaBTCWrapper with SovaBTCOFT address
+SovaBTCWrapper wrapper = new SovaBTCWrapper(
+    address(sovaBTC),  // ← SovaBTCOFT address
+    tokenWhitelist,
+    custodyManager,
+    minDeposit
+);
+
+// 3. Authorize wrapper as minter
+sovaBTC.addMinter(address(wrapper));  // ← Critical step!
+
+// 4. Set RedemptionQueue on wrapper
+wrapper.setRedemptionQueue(address(redemptionQueue));
+```
+
 ```mermaid
 graph TB
     A[User] --> B[SovaBTCWrapper]
@@ -55,7 +135,23 @@ graph TB
     
     N[Sova Chain] --> O[SovaBitcoin Precompile]
     D --> O
+    
+    style B fill:#e1f5fe
+    style D fill:#f3e5f5
+    style E fill:#fff3e0
 ```
+
+**Key Relationships:**
+- `SovaBTCWrapper` → `SovaBTCOFT` (via `ISovaBTC` interface)
+- `SovaBTCWrapper` → `RedemptionQueue` (for reserves)
+- `SovaBTCWrapper` → `TokenWhitelist` (for validation)
+- `SovaBTCOFT` → `LayerZero` (for cross-chain transfers)
+
+## 📚 **Key Documentation**
+
+For detailed deployment information and contract addresses, see:
+- **[docs/deployment/](./docs/deployment/)** - Network deployments and contract addresses
+- **[docs/ui/](./docs/ui/)** - Frontend development guides
 
 ## 📋 Contract Overview
 
@@ -63,12 +159,35 @@ graph TB
 
 | Contract | Description | Key Features |
 |----------|-------------|--------------|
-| `SovaBTC.sol` | Main Bitcoin-backed token contract | ERC20, minting, burning, Bitcoin integration |
-| `SovaBTCOFT.sol` | LayerZero OFT implementation | Cross-chain transfers, omnichain compatibility |
-| `SovaBTCWrapper.sol` | Multi-token wrapper and main interface | Deposits, redemptions, custody integration |
-| `TokenWhitelist.sol` | Approved token management | Add/remove tokens, decimal handling |
-| `RedemptionQueue.sol` | Queued redemption system | Time delays, reserve validation, batch processing |
-| `CustodyManager.sol` | Security and custody controls | Role management, destination validation |
+| **`SovaBTCOFT.sol`** | 🌐 LayerZero OFT token contract | Cross-chain transfers, minting/burning, 8 decimals |
+| **`SovaBTCWrapper.sol`** | 🎯 Main user interface | Multi-token deposits, automatic minting, reserve management |
+| `TokenWhitelist.sol` | ✅ Approved token management | Add/remove tokens, decimal handling |
+| `RedemptionQueue.sol` | ⏰ Queued redemption system | Time delays, reserve validation, batch processing |
+| `CustodyManager.sol` | 🔒 Security and custody controls | Role management, destination validation |
+
+### Contract Integration Flow
+
+```solidity
+// User deposits WBTC to get SovaBTC
+function deposit(address token, uint256 amount) external {
+    // 1. Validate token is whitelisted
+    require(tokenWhitelist.isTokenAllowed(token), "Token not allowed");
+    
+    // 2. Convert to 8 decimals (Bitcoin precision)
+    uint256 sovaAmount = convertToSovaBTCAmount(amount);
+    
+    // 3. Transfer WBTC to reserves
+    IERC20(token).transferFrom(msg.sender, address(redemptionQueue), amount);
+    
+    // 4. Mint SovaBTC tokens to user
+    sovaBTC.adminMint(msg.sender, sovaAmount);  // ← Key integration!
+}
+```
+
+**Critical Setup Requirements:**
+1. **Minter Authorization**: `SovaBTCWrapper` must be added as minter on `SovaBTCOFT`
+2. **Interface Compatibility**: `SovaBTCOFT` implements `ISovaBTC` for wrapper integration
+3. **Reserve Management**: `RedemptionQueue` must be set on wrapper for proper reserves
 
 ### Staking System
 
@@ -76,13 +195,6 @@ graph TB
 |----------|-------------|--------------|
 | `SovaBTCStaking.sol` | SovaBTC staking contract | Stake SovaBTC, earn SOVA rewards |
 | `SOVAToken.sol` | Protocol governance token | Minting controls, revenue sharing |
-
-### Utility Contracts
-
-| Contract | Description | Key Features |
-|----------|-------------|--------------|
-| `SovaBitcoin.sol` | Bitcoin precompile library | Address conversion, transaction handling |
-| `SovaL1Block.sol` | Bitcoin block data interface | L1 block information for Sova chain |
 
 ## 🧪 Testing & Coverage
 
@@ -143,29 +255,49 @@ forge build
 forge test
 ```
 
-### Basic Usage
+### Deployment & Setup
 
-#### 1. Deploy Core Contracts
+#### 1. Deploy Core Contracts (Proper Order)
 
 ```bash
-# Deploy to local network
-forge script script/DeployTokenWrapper.s.sol --rpc-url http://localhost:8545 --broadcast
+# Deploy all contracts in correct order with proper integration
+forge script script/DeployOFTComplete.s.sol --rpc-url $RPC_URL --broadcast
+
+# This script handles:
+# - Deploying SovaBTCOFT with LayerZero integration
+# - Deploying SovaBTCWrapper with SovaBTCOFT address
+# - Adding wrapper as authorized minter
+# - Setting up RedemptionQueue integration
 ```
 
-#### 2. Deposit BTC-Pegged Tokens
+#### 2. Verify Integration
+
+```bash
+# Check that wrapper is authorized minter
+cast call $SOVA_BTC_OFT "isMinter(address)" $WRAPPER_ADDRESS --rpc-url $RPC_URL
+
+# Should return: true (0x0000000000000000000000000000000000000000000000000000000000000001)
+```
+
+### Basic Usage
+
+#### 1. Deposit WBTC to Get SovaBTC
 
 ```solidity
-// Approve tokens
+// Approve WBTC spending
 IERC20(wbtcAddress).approve(wrapperAddress, amount);
 
-// Deposit WBTC to get SovaBTC
+// Deposit WBTC → Get SovaBTC (automatic minting)
 ISovaBTCWrapper(wrapperAddress).deposit(wbtcAddress, amount);
+
+// User now has SovaBTC tokens (8 decimals)
+uint256 sovaBTCBalance = IERC20(sovaBTCAddress).balanceOf(user);
 ```
 
-#### 3. Cross-Chain Transfer
+#### 2. Cross-Chain Transfer SovaBTC
 
 ```solidity
-// Send SovaBTC to another chain
+// Send SovaBTC to another chain via LayerZero
 bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
 SendParam memory sendParam = SendParam({
     dstEid: destinationEndpointId,
@@ -177,10 +309,11 @@ SendParam memory sendParam = SendParam({
     oftCmd: ""
 });
 
+// Send cross-chain (burns locally, mints on destination)
 oft.send{value: nativeFee}(sendParam, MessagingFee(nativeFee, 0), payable(msg.sender));
 ```
 
-#### 4. Queue Redemption (Manual Fulfillment Process)
+#### 3. Queue Redemption (Manual Fulfillment Process)
 
 ```solidity
 // 1. User queues redemption (burns SovaBTC immediately, creates redemption request)
@@ -243,11 +376,34 @@ ISovaBTCStaking(stakingAddress).claimRewards(poolId);
 PRIVATE_KEY=your_private_key_here
 RPC_URL=your_rpc_url_here
 
-# LayerZero Configuration
-LZ_ENDPOINT_ETHEREUM=0x1a44076050125825900e736c501f859c50fE728c
-LZ_ENDPOINT_ARBITRUM=0x1a44076050125825900e736c501f859c50fE728c
-LZ_ENDPOINT_SOVA=your_sova_endpoint_here
+# LayerZero Endpoints (Testnet)
+LZ_ENDPOINT_BASE_SEPOLIA=0x6EDCE65403992e310A62460808c4b910D972f10f
+LZ_ENDPOINT_OPTIMISM_SEPOLIA=0x6EDCE65403992e310A62460808c4b910D972f10f
+LZ_ENDPOINT_ETHEREUM_SEPOLIA=0x6EDCE65403992e310A62460808c4b910D972f10f
 ```
+
+### Deployment Configuration
+
+**Critical Integration Steps:**
+```bash
+# 1. Deploy in proper order
+forge script script/DeployOFTComplete.s.sol --rpc-url $RPC_URL --broadcast
+
+# 2. Verify wrapper is authorized minter
+cast call $SOVA_BTC_OFT "isMinter(address)" $WRAPPER_ADDRESS --rpc-url $RPC_URL
+
+# 3. Add whitelisted tokens (note: WBTC is 8 decimals, not 18)
+cast send $TOKEN_WHITELIST "addToken(address,uint8)" $WBTC_ADDRESS 8 --rpc-url $RPC_URL
+
+# 4. Set RedemptionQueue on wrapper
+cast send $WRAPPER "setRedemptionQueue(address)" $REDEMPTION_QUEUE --rpc-url $RPC_URL
+```
+
+**Contract Address Dependencies:**
+- `SovaBTCWrapper` constructor requires `SovaBTCOFT` address
+- `SovaBTCOFT` must add `SovaBTCWrapper` as authorized minter
+- `SovaBTCWrapper` must have `RedemptionQueue` address set
+- `TokenWhitelist` must be populated with approved tokens
 
 ### Contract Parameters
 
@@ -256,15 +412,12 @@ LZ_ENDPOINT_SOVA=your_sova_endpoint_here
 - **Admin Controls**: Add/remove tokens, update decimals
 
 #### RedemptionQueue
-- **Default Delay**: 10 days
-- **Min Delay**: 1 hour
-- **Max Delay**: 30 days
+- **Default Delay**: 10 days (configurable)
 - **Custodian Roles**: Multi-signature custody support
 
 #### Staking
 - **SovaBTC Pool**: Stake SovaBTC, earn SOVA rewards
 - **SOVA Pool**: Stake SOVA, earn protocol revenue
-- **Lock Periods**: 0-365 days with multiplier rewards
 
 ## 🔒 Security Features
 
@@ -291,154 +444,66 @@ LZ_ENDPOINT_SOVA=your_sova_endpoint_here
 
 ## 🌐 Supported Networks
 
-| Network | Status | LayerZero Endpoint | SovaBTC Address |
-|---------|--------|--------------------|-----------------|
-| Ethereum | ✅ Supported | `0x1a44076050125825900e736c501f859c50fE728c` | TBD |
-| Arbitrum | ✅ Supported | `0x1a44076050125825900e736c501f859c50fE728c` | TBD |
-| Sova Chain | ✅ Supported | Custom Endpoint | TBD |
-| Polygon | 🔄 Planned | TBD | TBD |
-| BSC | 🔄 Planned | TBD | TBD |
+The protocol supports LayerZero V2 cross-chain transfers. Current deployments:
+
+- **Base Sepolia** (Testnet): Primary testnet deployment  
+- **Optimism Sepolia** (Testnet): Cross-chain testing
+- **Ethereum Sepolia** (Testnet): Available for deployment
+
+For current contract addresses, see [docs/deployment/](./docs/deployment/).
 
 ## 👥 Custodian Management
 
-### Current Authorized Custodians
+Custodians are authorized addresses that can fulfill redemption requests after the time delay period.
 
-| Address | Role | Status |
-|---------|------|--------|
-| `0x75BbFf2206b6Ad50786Ee3ce8A81eDb72f3e381b` | Deployer/Admin | ✅ Active |
+### Adding Custodians
 
-### Adding New Custodians
+**Prerequisites**: You must be the contract owner
 
-**Prerequisites**:
-- You must be the contract owner
-- Have the target wallet address ready
-- Ensure the address is trustworthy (custodians can fulfill redemptions)
-
-**Method 1: Using the Script** (Recommended)
+**Method 1: Using Script**
 ```bash
-# 1. Edit the script to add your custodian address
-# Edit script/SetCustodian.s.sol, update DEPLOYER_ADDRESS constant
-
-# 2. Run the authorization script
-forge script script/SetCustodian.s.sol --fork-url https://sepolia.base.org --broadcast
+# Edit script/SetCustodian.s.sol with your custodian address
+forge script script/SetCustodian.s.sol --fork-url $RPC_URL --broadcast
 ```
 
 **Method 2: Direct Contract Call**
 ```bash
-# Set environment variables
-export REDEMPTION_QUEUE="0x6CDD3cD1c677abbc347A0bDe0eAf350311403638"
-export CUSTODIAN_ADDRESS="0xYourCustodianAddressHere"
-
 # Authorize custodian (owner only)
 cast send $REDEMPTION_QUEUE "setCustodian(address,bool)" $CUSTODIAN_ADDRESS true \
-  --rpc-url https://sepolia.base.org \
-  --private-key $PRIVATE_KEY
-
-# Verify authorization
-cast call $REDEMPTION_QUEUE "custodians(address)" $CUSTODIAN_ADDRESS \
-  --rpc-url https://sepolia.base.org
-```
-
-**Method 3: Via Web UI** (Future Enhancement)
-```bash
-# Coming soon: Admin interface for custodian management
-# Navigate to http://localhost:3000/admin
-# Use "Role Management" section to add/remove custodians
-```
-
-### Removing Custodians
-
-```bash
-# Remove custodian access (owner only)
-cast send $REDEMPTION_QUEUE "setCustodian(address,bool)" $CUSTODIAN_ADDRESS false \
-  --rpc-url https://sepolia.base.org \
-  --private-key $PRIVATE_KEY
+  --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ### Custodian Responsibilities
 
-**Daily Operations**:
-- Monitor pending redemptions at `/admin` dashboard
-- Fulfill ready redemptions (after 10-day delay)
-- Process batch fulfillments efficiently
-- Verify reserve availability before fulfillment
+- **Monitor Redemptions**: Check for ready redemptions after delay period
+- **Fulfill Requests**: Process redemptions via admin dashboard or direct contract calls
+- **Security**: Keep custodian wallet secure and verify redemption details
+- **Batch Processing**: Use batch fulfillment for efficiency
 
-**Security Practices**:
-- Keep custodian wallet secure (hardware wallet recommended)
-- Verify redemption details before fulfillment
-- Monitor for suspicious redemption patterns
-- Report any anomalies to protocol administrators
+### Admin Dashboard
 
-**Emergency Procedures**:
-- Contact protocol owner if issues arise
-- Emergency pause procedures (owner only)
-- Coordinate with other custodians for coverage
-
-### Web UI Admin Dashboard
-
-**Access Requirements**:
-1. Connected wallet must be authorized custodian
-2. Navigate to `http://localhost:3000/admin`
-3. Dashboard will show access denied if not authorized
-
-**Features Available**:
-- View all pending redemptions across users
-- Batch select multiple redemptions
-- Individual and batch fulfillment actions
+Access the admin interface at `http://localhost:3000/admin` (requires authorized custodian wallet):
+- View all pending redemptions
+- Batch select and fulfill multiple redemptions
 - Real-time status updates and transaction tracking
-- Reserve monitoring for each token type
-
-**Dashboard Sections**:
-- **Overview Stats**: Pending, ready, users, selected counts
-- **Batch Actions**: Select all, batch fulfill operations
-- **Redemption List**: Individual redemption cards with status
-- **Transaction Status**: Real-time feedback and explorer links
 
 ## 📚 API Reference
 
-### SovaBTCWrapper
+### Key Functions
 
-```solidity
-function deposit(address token, uint256 amount) external;
-function previewDeposit(address token, uint256 amount) external view returns (uint256);
-function emergencyWithdraw(address token, uint256 amount, address to) external;
-function setRedemptionQueue(address _redemptionQueue) external;
-```
+**SovaBTCWrapper**
+- `deposit(address token, uint256 amount)` - Deposit whitelisted tokens for SovaBTC
+- `previewDeposit(address token, uint256 amount)` - Preview SovaBTC amount to be minted
 
-### RedemptionQueue
-
-```solidity
-// User Functions - Create redemption requests
-function redeem(address token, uint256 sovaAmount) external returns (uint256 redemptionId);
-function getUserRedemptions(address user) external view returns (uint256[] memory);
-function getPendingRedemptions(address user) external view returns (RedemptionRequest[] memory);
-function isRedemptionReady(uint256 redemptionId) external view returns (bool);
-function getRedemptionReadyTime(uint256 redemptionId) external view returns (uint256);
-
-// Custodian Functions - Manual fulfillment (requires authorization)
-function fulfillRedemption(uint256 redemptionId) external; // onlyCustodian
-function batchFulfillRedemptions(uint256[] calldata redemptionIds) external; // onlyCustodian
-
-// View Functions
-function getRedemptionRequest(uint256 redemptionId) external view returns (RedemptionRequest memory);
-function getAvailableReserve(address token) external view returns (uint256);
-```
+**RedemptionQueue**
+- `redeem(address token, uint256 sovaAmount)` - Queue redemption (burns SovaBTC immediately)
+- `fulfillRedemption(uint256 redemptionId)` - Fulfill redemption (custodian only)
+- `isRedemptionReady(uint256 redemptionId)` - Check if redemption is ready
 
 **Key Points:**
-- 🔥 `redeem()` **burns sovaBTC immediately** and creates a redemption request with unique ID
+- 🔥 `redeem()` burns SovaBTC immediately and creates a redemption request
 - ⏰ **10-day delay** before redemption can be fulfilled
-- 👥 **Manual fulfillment**: Authorized custodians must call `fulfillRedemption()` 
-- 📊 **Multiple redemptions**: Users can have unlimited concurrent redemption requests
-- 🔍 **Tracking**: Each redemption has a unique ID for status tracking
-
-### SovaBTCStaking
-
-```solidity
-function stake(uint256 poolId, uint256 amount, uint256 lockPeriod) external;
-function unstake(uint256 poolId, uint256 amount) external;
-function claimRewards(uint256 poolId) external;
-function pendingRewards(uint256 poolId, address user) external view returns (uint256);
-```
+- 👥 **Manual fulfillment**: Authorized custodians must fulfill redemptions
 
 ## 🤝 Contributing
 
@@ -473,51 +538,23 @@ forge test
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🔗 Links
-
-- **Documentation**: [docs.sovabtc.com](https://docs.sovabtc.com)
-- **Website**: [sovabtc.com](https://sovabtc.com)
-- **Discord**: [Join our community](https://discord.gg/sovabtc)
-- **Twitter**: [@SovaBTC](https://twitter.com/sovabtc)
-
 ## ⚠️ Disclaimer
 
 This software is provided "as is" without warranty. Use at your own risk. Always conduct thorough testing and security audits before deploying to mainnet.
 
 ---
 
-## 🔧 Quick Command Reference
+## 🔧 Quick Commands
 
-### Custodian Management
 ```bash
-# Authorize your deployer address (run once)
-forge script script/SetCustodian.s.sol --fork-url https://sepolia.base.org --broadcast
+# Build and test
+forge build && forge test
 
-# Check if address is authorized
-cast call 0x6CDD3cD1c677abbc347A0bDe0eAf350311403638 "custodians(address)" YOUR_ADDRESS --rpc-url https://sepolia.base.org
-
-# Access admin dashboard
-cd ui && npm run dev
-open http://localhost:3000/admin
-```
-
-### Development Commands
-```bash
-# Test protocol functionality
-forge script script/TestFullProtocolFlow.s.sol --fork-url https://sepolia.base.org --broadcast
+# Deploy contracts
+forge script script/DeployOFTComplete.s.sol --rpc-url $RPC_URL --broadcast
 
 # Run frontend
 cd ui && npm run dev
-
-# Deploy contracts (if needed)
-forge script script/Deploy.s.sol --fork-url https://sepolia.base.org --broadcast
-```
-
-### Contract Addresses (Base Sepolia)
-```bash
-export REDEMPTION_QUEUE="0x6CDD3cD1c677abbc347A0bDe0eAf350311403638"
-export WRAPPER="0x58c969172fa3A1D8379Eb942Bae4693d3b9cd58c"
-export SOVABTC="0xF6c09Dc46AA90Ee3BcBE7AD955c5453d7247295F"
 ```
 
 ---

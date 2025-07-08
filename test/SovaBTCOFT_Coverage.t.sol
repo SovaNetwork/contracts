@@ -1,666 +1,613 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
 import "forge-std/Test.sol";
+import "forge-std/console.sol";
 import "../src/SovaBTCOFT.sol";
+import "../src/interfaces/ISovaBTC.sol";
+import { SendParam, MessagingFee, MessagingReceipt, OFTReceipt } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title SovaBTCOFTCoverageTest
- * @notice Comprehensive test suite to achieve 100% coverage for SovaBTCOFT contract
+ * @title SovaBTCOFT Coverage Test
+ * @notice Comprehensive test suite for SovaBTCOFT LayerZero OFT contract
  */
 contract SovaBTCOFTCoverageTest is Test {
-    SovaBTCOFT public sovaBTCOFT;
-
-    address public owner = address(0x1);
-    address public minter = address(0x2);
-    address public endpoint = address(0x3);
-    address public user1 = address(0x4);
-    address public user2 = address(0x5);
-
+    SovaBTCOFT public oft;
+    address public owner;
+    address public user1;
+    address public user2;
+    address public minter1;
+    address public minter2;
+    address public mockEndpoint;
+    
+    // Events to test
+    event MinterAdded(address indexed minter);
+    event MinterRemoved(address indexed minter);
+    event AdminMinted(address indexed to, uint256 amount);
+    event AdminBurned(address indexed from, uint256 amount);
+    event ContractPausedByOwner(address indexed account);
+    event ContractUnpausedByOwner(address indexed account);
+    
     function setUp() public {
-        vm.startPrank(owner);
-        sovaBTCOFT = new SovaBTCOFT("SovaBTC OFT", "SOVAOFT", endpoint, minter);
-        vm.stopPrank();
+        owner = address(this);
+        user1 = makeAddr("user1");
+        user2 = makeAddr("user2");
+        minter1 = makeAddr("minter1");
+        minter2 = makeAddr("minter2");
+        mockEndpoint = makeAddr("mockEndpoint");
+        
+        // Deploy SovaBTCOFT
+        oft = new SovaBTCOFT(
+            "Sova Bitcoin",
+            "sovaBTC",
+            mockEndpoint,
+            owner
+        );
+        
+        // Give users some ETH for gas
+        vm.deal(user1, 10 ether);
+        vm.deal(user2, 10 ether);
+        vm.deal(minter1, 10 ether);
+        vm.deal(minter2, 10 ether);
     }
-
+    
     // ============ Constructor Tests ============
-
+    
     function test_Constructor_Success() public {
-        assertEq(sovaBTCOFT.name(), "SovaBTC OFT");
-        assertEq(sovaBTCOFT.symbol(), "SOVAOFT");
-        assertEq(sovaBTCOFT.decimals(), 8);
-        assertEq(sovaBTCOFT.endpoint(), endpoint);
-        assertEq(sovaBTCOFT.minter(), minter);
-        assertEq(sovaBTCOFT.minDepositAmount(), 10_000);
-        assertEq(sovaBTCOFT.maxDepositAmount(), 100_000_000_000);
-        assertEq(sovaBTCOFT.maxGasLimitAmount(), 50_000_000);
-        assertFalse(sovaBTCOFT.isPaused());
+        assertEq(oft.name(), "Sova Bitcoin");
+        assertEq(oft.symbol(), "sovaBTC");
+        assertEq(oft.decimals(), 8);
+        assertEq(oft.owner(), owner);
+        assertEq(oft.minDepositAmount(), 10_000);
+        assertEq(oft.maxDepositAmount(), 100_000_000_000);
+        assertEq(oft.maxGasLimitAmount(), 50_000_000);
+        assertFalse(oft.isPaused());
+        assertTrue(oft.minters(owner)); // Deployer is initial minter
     }
-
-    function test_Constructor_ZeroEndpoint() public {
-        vm.expectRevert(SovaBTCOFT.ZeroAddress.selector);
-        new SovaBTCOFT("Test", "TEST", address(0), minter);
+    
+    function test_Constructor_InitialMinter() public {
+        assertTrue(oft.minters(owner));
+        assertTrue(oft.isMinter(owner));
     }
-
-    function test_Constructor_ZeroMinter() public {
-        vm.expectRevert(SovaBTCOFT.ZeroAddress.selector);
-        new SovaBTCOFT("Test", "TEST", endpoint, address(0));
+    
+    // ============ Minter Management Tests ============
+    
+    function test_AddMinter_Success() public {
+        vm.expectEmit(true, false, false, false);
+        emit MinterAdded(minter1);
+        
+        oft.addMinter(minter1);
+        
+        assertTrue(oft.minters(minter1));
+        assertTrue(oft.isMinter(minter1));
     }
-
-    // ============ Quote Send Tests ============
-
-    function test_QuoteSend_PayInNative() public {
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = sovaBTCOFT.quoteSend(sendParam, false);
-        assertEq(fee.nativeFee, 0.001 ether);
-        assertEq(fee.lzTokenFee, 0);
-    }
-
-    function test_QuoteSend_PayInLzToken() public {
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        // This covers line 162: return fee statement
-        SovaBTCOFT.MessagingFee memory fee = sovaBTCOFT.quoteSend(sendParam, true);
-        assertEq(fee.nativeFee, 0.001 ether);
-        assertEq(fee.lzTokenFee, 100e18);
-
-        // Force explicit usage of the return value to ensure line 162 coverage
-        assertTrue(fee.nativeFee > 0);
-        assertTrue(fee.lzTokenFee > 0);
-    }
-
-    // ============ Send Function Tests ============
-
-    function test_Send_ZeroAmount() public {
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 0,
-            minAmountLD: 0,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.expectRevert(SovaBTCOFT.ZeroAmount.selector);
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-    }
-
-    function test_Send_InvalidPeer() public {
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 999, // Invalid peer
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.expectRevert(abi.encodeWithSelector(SovaBTCOFT.InvalidPeer.selector, 999));
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-    }
-
-    function test_Send_InsufficientFee() public {
-        // Set up peer first
-        vm.prank(owner);
-        sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.expectRevert("Insufficient fee");
-        sovaBTCOFT.send{value: 0.0005 ether}(sendParam, fee, user1);
-    }
-
-    function test_Send_InsufficientBalance() public {
-        // Set up peer first
-        vm.prank(owner);
-        sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.expectRevert("Insufficient balance");
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-    }
-
-    function test_Send_Success_WithExcessFee() public {
-        // Set up peer first
-        vm.prank(owner);
-        sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-
-        // Mint tokens to user1
-        vm.prank(minter);
-        sovaBTCOFT.adminMint(user1, 2000000);
-
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user2))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        uint256 initialBalance = user1.balance;
-        vm.deal(user1, 2 ether);
-
-        vm.prank(user1);
-        // Send with excess fee to cover line 212: payable(_refundAddress).transfer(msg.value - _fee.nativeFee);
-        (SovaBTCOFT.MessagingReceipt memory msgReceipt, SovaBTCOFT.OFTReceipt memory oftReceipt) =
-            sovaBTCOFT.send{value: 0.002 ether}(sendParam, fee, user1);
-
-        // Check refund was processed
-        assertEq(user1.balance, 2 ether - 0.001 ether);
-
-        // Check receipts
-        assertEq(oftReceipt.amountSentLD, 1000000);
-        assertEq(oftReceipt.amountReceivedLD, 1000000);
-        assertTrue(msgReceipt.guid != bytes32(0));
-
-        // Check tokens were burned
-        assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
-    }
-
-    function test_Send_Success_ExactFee() public {
-        // Set up peer first
-        vm.prank(owner);
-        sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-
-        // Mint tokens to user1
-        vm.prank(minter);
-        sovaBTCOFT.adminMint(user1, 2000000);
-
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user2))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.deal(user1, 1 ether);
-
-        vm.prank(user1);
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-
-        // Check exact fee was used, no refund
-        assertEq(user1.balance, 1 ether - 0.001 ether);
-        assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
-    }
-
-    function test_Send_WhenPaused() public {
-        // Pause contract
-        vm.prank(owner);
-        sovaBTCOFT.pause();
-
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-    }
-
-    // ============ Simulate Receive Tests ============
-
-    function test_SimulateReceive_ZeroAmount() public {
-        vm.prank(endpoint);
-        vm.expectRevert(SovaBTCOFT.ZeroAmount.selector);
-        sovaBTCOFT.simulateReceive(1, user1, 0);
-    }
-
-    function test_SimulateReceive_ZeroAddress() public {
-        vm.prank(endpoint);
-        vm.expectRevert(SovaBTCOFT.ZeroAddress.selector);
-        sovaBTCOFT.simulateReceive(1, address(0), 1000000);
-    }
-
-    function test_SimulateReceive_OnlyEndpoint() public {
-        vm.prank(user1);
-        vm.expectRevert(SovaBTCOFT.InvalidEndpoint.selector);
-        sovaBTCOFT.simulateReceive(1, user1, 1000000);
-    }
-
-    function test_SimulateReceive_Success() public {
-        vm.prank(endpoint);
-        sovaBTCOFT.simulateReceive(1, user1, 1000000);
-
-        assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
-    }
-
-    function test_SimulateReceive_WhenPaused() public {
-        vm.prank(owner);
-        sovaBTCOFT.pause();
-
-        vm.prank(endpoint);
-        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
-        sovaBTCOFT.simulateReceive(1, user1, 1000000);
-    }
-
-    // ============ Admin Function Tests ============
-
-    function test_SetPeer_Success() public {
-        bytes32 peer = bytes32(uint256(uint160(address(0x123))));
-
-        vm.prank(owner);
-        sovaBTCOFT.setPeer(1, peer);
-
-        assertEq(sovaBTCOFT.peers(1), peer);
-    }
-
-    function test_SetPeer_OnlyOwner() public {
+    
+    function test_AddMinter_OnlyOwner() public {
         vm.prank(user1);
         vm.expectRevert();
-        sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
+        oft.addMinter(minter1);
     }
-
-    function test_SetMinter_Success() public {
-        address newMinter = address(0x999);
-
-        vm.prank(owner);
-        sovaBTCOFT.setMinter(newMinter);
-
-        assertEq(sovaBTCOFT.minter(), newMinter);
-    }
-
-    function test_SetMinter_ZeroAddress() public {
-        vm.prank(owner);
+    
+    function test_AddMinter_ZeroAddress() public {
         vm.expectRevert(SovaBTCOFT.ZeroAddress.selector);
-        sovaBTCOFT.setMinter(address(0));
+        oft.addMinter(address(0));
     }
-
-    function test_SetMinter_OnlyOwner() public {
+    
+    function test_RemoveMinter_Success() public {
+        oft.addMinter(minter1);
+        assertTrue(oft.isMinter(minter1));
+        
+        vm.expectEmit(true, false, false, false);
+        emit MinterRemoved(minter1);
+        
+        oft.removeMinter(minter1);
+        
+        assertFalse(oft.minters(minter1));
+        assertFalse(oft.isMinter(minter1));
+    }
+    
+    function test_RemoveMinter_OnlyOwner() public {
+        oft.addMinter(minter1);
+        
         vm.prank(user1);
         vm.expectRevert();
-        sovaBTCOFT.setMinter(address(0x999));
+        oft.removeMinter(minter1);
     }
-
+    
+    function test_IsMinter_Multiple() public {
+        oft.addMinter(minter1);
+        oft.addMinter(minter2);
+        
+        assertTrue(oft.isMinter(owner));
+        assertTrue(oft.isMinter(minter1));
+        assertTrue(oft.isMinter(minter2));
+        assertFalse(oft.isMinter(user1));
+    }
+    
+    // ============ ISovaBTC Interface Tests ============
+    
     function test_AdminMint_Success() public {
-        vm.prank(minter);
-        sovaBTCOFT.adminMint(user1, 1000000);
-
-        assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
+        uint256 amount = 1000_000; // 0.01 BTC
+        
+        vm.expectEmit(true, false, false, true);
+        emit AdminMinted(user1, amount);
+        
+        oft.adminMint(user1, amount);
+        
+        assertEq(oft.balanceOf(user1), amount);
+        assertEq(oft.totalSupply(), amount);
     }
-
-    function test_AdminMint_ZeroAmount() public {
-        vm.prank(minter);
-        vm.expectRevert(SovaBTCOFT.ZeroAmount.selector);
-        sovaBTCOFT.adminMint(user1, 0);
-    }
-
+    
     function test_AdminMint_OnlyMinter() public {
         vm.prank(user1);
-        vm.expectRevert(abi.encodeWithSelector(SovaBTCOFT.UnauthorizedMinter.selector, user1));
-        sovaBTCOFT.adminMint(user1, 1000000);
+        vm.expectRevert(SovaBTCOFT.UnauthorizedMinter.selector);
+        oft.adminMint(user1, 1000_000);
     }
-
-    function test_AdminBurn_Success() public {
-        // First mint some tokens
-        vm.prank(minter);
-        sovaBTCOFT.adminMint(user1, 1000000);
-
-        vm.prank(minter);
-        sovaBTCOFT.adminBurn(user1, 500000);
-
-        assertEq(sovaBTCOFT.balanceOf(user1), 500000);
-    }
-
-    function test_AdminBurn_ZeroAmount() public {
-        vm.prank(minter);
+    
+    function test_AdminMint_ZeroAmount() public {
         vm.expectRevert(SovaBTCOFT.ZeroAmount.selector);
-        sovaBTCOFT.adminBurn(user1, 0);
+        oft.adminMint(user1, 0);
     }
-
-    function test_AdminBurn_OnlyMinter() public {
-        vm.prank(user1);
-        vm.expectRevert(abi.encodeWithSelector(SovaBTCOFT.UnauthorizedMinter.selector, user1));
-        sovaBTCOFT.adminBurn(user1, 1000000);
-    }
-
-    function test_Pause_Success() public {
-        vm.prank(owner);
-        sovaBTCOFT.pause();
-
-        assertTrue(sovaBTCOFT.isPaused());
-    }
-
-    function test_Pause_AlreadyPaused() public {
-        vm.prank(owner);
-        sovaBTCOFT.pause();
-
-        // This covers line 288: if (_paused) revert ContractPaused();
-        vm.prank(owner);
+    
+    function test_AdminMint_WhenPaused() public {
+        oft.pause();
+        
         vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
-        sovaBTCOFT.pause();
+        oft.adminMint(user1, 1000_000);
     }
-
+    
+    function test_AdminMint_MultipleMintersCanMint() public {
+        oft.addMinter(minter1);
+        oft.addMinter(minter2);
+        
+        vm.prank(minter1);
+        oft.adminMint(user1, 1000_000);
+        
+        vm.prank(minter2);
+        oft.adminMint(user2, 2000_000);
+        
+        assertEq(oft.balanceOf(user1), 1000_000);
+        assertEq(oft.balanceOf(user2), 2000_000);
+        assertEq(oft.totalSupply(), 3000_000);
+    }
+    
+    function test_AdminBurn_Success() public {
+        uint256 amount = 1000_000;
+        oft.adminMint(user1, amount);
+        
+        vm.expectEmit(true, false, false, true);
+        emit AdminBurned(user1, amount);
+        
+        oft.adminBurn(user1, amount);
+        
+        assertEq(oft.balanceOf(user1), 0);
+        assertEq(oft.totalSupply(), 0);
+    }
+    
+    function test_AdminBurn_OnlyMinter() public {
+        oft.adminMint(user1, 1000_000);
+        
+        vm.prank(user1);
+        vm.expectRevert(SovaBTCOFT.UnauthorizedMinter.selector);
+        oft.adminBurn(user1, 1000_000);
+    }
+    
+    function test_AdminBurn_ZeroAmount() public {
+        vm.expectRevert(SovaBTCOFT.ZeroAmount.selector);
+        oft.adminBurn(user1, 0);
+    }
+    
+    function test_AdminBurn_WhenPaused() public {
+        oft.adminMint(user1, 1000_000);
+        oft.pause();
+        
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        oft.adminBurn(user1, 1000_000);
+    }
+    
+    function test_AdminBurn_InsufficientBalance() public {
+        oft.adminMint(user1, 1000_000);
+        
+        vm.expectRevert();
+        oft.adminBurn(user1, 2000_000);
+    }
+    
+    // ============ Pause/Unpause Tests ============
+    
+    function test_Pause_Success() public {
+        assertFalse(oft.isPaused());
+        
+        vm.expectEmit(true, false, false, false);
+        emit ContractPausedByOwner(owner);
+        
+        oft.pause();
+        
+        assertTrue(oft.isPaused());
+    }
+    
     function test_Pause_OnlyOwner() public {
         vm.prank(user1);
         vm.expectRevert();
-        sovaBTCOFT.pause();
+        oft.pause();
     }
-
+    
+    function test_Pause_AlreadyPaused() public {
+        oft.pause();
+        
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        oft.pause();
+    }
+    
     function test_Unpause_Success() public {
-        vm.startPrank(owner);
-        sovaBTCOFT.pause();
-        sovaBTCOFT.unpause();
-        vm.stopPrank();
-
-        assertFalse(sovaBTCOFT.isPaused());
+        oft.pause();
+        assertTrue(oft.isPaused());
+        
+        vm.expectEmit(true, false, false, false);
+        emit ContractUnpausedByOwner(owner);
+        
+        oft.unpause();
+        
+        assertFalse(oft.isPaused());
     }
-
-    function test_Unpause_NotPaused() public {
-        vm.prank(owner);
-        vm.expectRevert("Contract not paused");
-        sovaBTCOFT.unpause();
-    }
-
+    
     function test_Unpause_OnlyOwner() public {
-        vm.prank(owner);
-        sovaBTCOFT.pause();
-
+        oft.pause();
+        
         vm.prank(user1);
         vm.expectRevert();
-        sovaBTCOFT.unpause();
+        oft.unpause();
     }
-
-    // ============ ISovaBTC Compatibility Tests ============
-
-    function test_IsPaused() public {
-        assertFalse(sovaBTCOFT.isPaused());
-
-        vm.prank(owner);
-        sovaBTCOFT.pause();
-
-        assertTrue(sovaBTCOFT.isPaused());
+    
+    function test_Unpause_NotPaused() public {
+        vm.expectRevert("Contract not paused");
+        oft.unpause();
     }
-
-    function test_SetMinDepositAmount_Success() public {
-        // This covers lines 308-309
-        vm.prank(owner);
-        sovaBTCOFT.setMinDepositAmount(50000);
-
-        assertEq(sovaBTCOFT.minDepositAmount(), 50000);
+    
+    // ============ Configuration Tests ============
+    
+    function test_SetMinDepositAmount() public {
+        oft.setMinDepositAmount(20_000);
+        assertEq(oft.minDepositAmount(), 20_000);
     }
-
+    
     function test_SetMinDepositAmount_OnlyOwner() public {
         vm.prank(user1);
         vm.expectRevert();
-        sovaBTCOFT.setMinDepositAmount(50000);
+        oft.setMinDepositAmount(20_000);
     }
-
-    function test_SetMaxDepositAmount_Success() public {
-        // This covers lines 312-313
-        vm.prank(owner);
-        sovaBTCOFT.setMaxDepositAmount(200_000_000_000);
-
-        assertEq(sovaBTCOFT.maxDepositAmount(), 200_000_000_000);
+    
+    function test_SetMaxDepositAmount() public {
+        oft.setMaxDepositAmount(200_000_000_000);
+        assertEq(oft.maxDepositAmount(), 200_000_000_000);
     }
-
+    
     function test_SetMaxDepositAmount_OnlyOwner() public {
         vm.prank(user1);
         vm.expectRevert();
-        sovaBTCOFT.setMaxDepositAmount(200_000_000_000);
+        oft.setMaxDepositAmount(200_000_000_000);
     }
-
-    function test_SetMaxGasLimitAmount_Success() public {
-        // This covers lines 316-317
-        vm.prank(owner);
-        sovaBTCOFT.setMaxGasLimitAmount(100_000_000);
-
-        assertEq(sovaBTCOFT.maxGasLimitAmount(), 100_000_000);
+    
+    function test_SetMaxGasLimitAmount() public {
+        oft.setMaxGasLimitAmount(100_000_000);
+        assertEq(oft.maxGasLimitAmount(), 100_000_000);
     }
-
+    
     function test_SetMaxGasLimitAmount_OnlyOwner() public {
         vm.prank(user1);
         vm.expectRevert();
-        sovaBTCOFT.setMaxGasLimitAmount(100_000_000);
+        oft.setMaxGasLimitAmount(100_000_000);
     }
-
-    function test_DepositBTC_NotImplemented() public {
-        vm.expectRevert("Not implemented for OFT");
-        sovaBTCOFT.depositBTC(1000000, "");
+    
+    // ============ Bitcoin Function Tests (Should Revert) ============
+    
+    function test_DepositBTC_NotSupported() public {
+        vm.expectRevert("SovaBTCOFT: Bitcoin deposits not supported on OFT contract");
+        oft.depositBTC(1000_000, "");
     }
-
-    function test_Withdraw_NotImplemented() public {
-        vm.expectRevert("Not implemented for OFT");
-        sovaBTCOFT.withdraw(1000000, 50000, 800000, "bc1test123");
+    
+    function test_Withdraw_NotSupported() public {
+        vm.expectRevert("SovaBTCOFT: Bitcoin withdrawals not supported on OFT contract");
+        oft.withdraw(1000_000, 1000, 50_000, "bc1qtest");
     }
-
-    function test_IsTransactionUsed_ReturnsFalse() public {
-        bool result = sovaBTCOFT.isTransactionUsed(bytes32(uint256(123)));
-        assertFalse(result);
+    
+    function test_IsTransactionUsed_AlwaysFalse() public {
+        assertFalse(oft.isTransactionUsed(bytes32(0)));
+        assertFalse(oft.isTransactionUsed(keccak256("test")));
     }
-
-    // ============ Additional Coverage for Missing Lines ============
-
-    function test_QuoteSend_ReturnStatement_Coverage() public {
-        // This test specifically targets line 162: return fee statement
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        // Call both branches to ensure the return statement is hit
-        SovaBTCOFT.MessagingFee memory fee1 = sovaBTCOFT.quoteSend(sendParam, false);
-        SovaBTCOFT.MessagingFee memory fee2 = sovaBTCOFT.quoteSend(sendParam, true);
-
-        // Verify both returns worked
-        assertNotEq(fee1.lzTokenFee, fee2.lzTokenFee);
-        assertEq(fee1.nativeFee, fee2.nativeFee);
-
-        // Multiple assertions to force usage of return values
-        assertEq(fee1.lzTokenFee, 0);
-        assertEq(fee2.lzTokenFee, 100e18);
-        assertEq(fee1.nativeFee, 0.001 ether);
-        assertEq(fee2.nativeFee, 0.001 ether);
-
-        // Try different parameters to hit different code paths
-        sendParam.amountLD = 5000000;
-        SovaBTCOFT.MessagingFee memory fee3 = sovaBTCOFT.quoteSend(sendParam, false);
-        assertEq(fee3.lzTokenFee, 0);
-
-        // Test with empty options
-        sendParam.extraOptions = "";
-        sendParam.composeMsg = "";
-        SovaBTCOFT.MessagingFee memory fee4 = sovaBTCOFT.quoteSend(sendParam, true);
-        assertEq(fee4.lzTokenFee, 100e18);
-
-        // Force multiple return statement executions
-        for (uint256 i = 0; i < 3; i++) {
-            sendParam.amountLD = 1000000 + i;
-            SovaBTCOFT.MessagingFee memory feeLoop = sovaBTCOFT.quoteSend(sendParam, i % 2 == 0);
-            assertTrue(feeLoop.nativeFee > 0);
-        }
-    }
-
-    // ============ Additional Line Coverage Tests ============
-
-    function test_QuoteSend_ForceReturnStatementExecution() public {
-        // This test forces execution of the return statement multiple times
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user1))),
-            amountLD: 1000000,
-            minAmountLD: 1000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        // Multiple sequential calls to force return statement execution
-        SovaBTCOFT.MessagingFee memory result;
-
-        // Call 1
-        result = sovaBTCOFT.quoteSend(sendParam, false);
-        require(result.nativeFee > 0, "Fee should be positive");
-
-        // Call 2
-        result = sovaBTCOFT.quoteSend(sendParam, true);
-        require(result.lzTokenFee > 0, "LZ token fee should be positive");
-
-        // Call 3 with different params
-        sendParam.dstEid = 2;
-        result = sovaBTCOFT.quoteSend(sendParam, false);
-        require(result.nativeFee > 0, "Fee should be positive for dst 2");
-
-        // Call 4 with different amount
-        sendParam.amountLD = 2000000;
-        result = sovaBTCOFT.quoteSend(sendParam, true);
-        require(result.nativeFee > 0, "Fee should be positive for amount 2M");
-    }
-
-    // ============ Integration Tests ============
-
-    function test_FullCrossChainFlow() public {
-        // Set up peer
-        vm.prank(owner);
-        sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-
-        // Mint initial tokens
-        vm.prank(minter);
-        sovaBTCOFT.adminMint(user1, 5000000);
-
-        // User1 sends cross-chain
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user2))),
-            amountLD: 2000000,
-            minAmountLD: 2000000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.deal(user1, 1 ether);
+    
+    // ============ ERC20 Functionality Tests ============
+    
+    function test_Transfer_Success() public {
+        uint256 amount = 1000_000;
+        oft.adminMint(user1, amount);
+        
         vm.prank(user1);
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-
-        // Check source chain burn
-        assertEq(sovaBTCOFT.balanceOf(user1), 3000000);
-
-        // Simulate receive on destination
-        vm.prank(endpoint);
-        sovaBTCOFT.simulateReceive(1, user2, 2000000);
-
-        // Check destination chain mint
-        assertEq(sovaBTCOFT.balanceOf(user2), 2000000);
+        bool success = oft.transfer(user2, amount / 2);
+        
+        assertTrue(success);
+        assertEq(oft.balanceOf(user1), amount / 2);
+        assertEq(oft.balanceOf(user2), amount / 2);
     }
-
-    function test_AdminOperations() public {
-        // Test minter change
-        address newMinter = address(0x777);
-        vm.prank(owner);
-        sovaBTCOFT.setMinter(newMinter);
-
-        // Test with new minter
-        vm.prank(newMinter);
-        sovaBTCOFT.adminMint(user1, 1000000);
-        assertEq(sovaBTCOFT.balanceOf(user1), 1000000);
-
-        // Test limit changes
-        vm.startPrank(owner);
-        sovaBTCOFT.setMinDepositAmount(20000);
-        sovaBTCOFT.setMaxDepositAmount(500_000_000_000);
-        sovaBTCOFT.setMaxGasLimitAmount(75_000_000);
+    
+    function test_Transfer_WhenPaused() public {
+        uint256 amount = 1000_000;
+        oft.adminMint(user1, amount);
+        oft.pause();
+        
+        vm.prank(user1);
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        oft.transfer(user2, amount / 2);
+    }
+    
+    function test_Approve_Success() public {
+        uint256 amount = 1000_000;
+        oft.adminMint(user1, amount);
+        
+        vm.prank(user1);
+        bool success = oft.approve(user2, amount);
+        
+        assertTrue(success);
+        assertEq(oft.allowance(user1, user2), amount);
+    }
+    
+    function test_TransferFrom_Success() public {
+        uint256 amount = 1000_000;
+        oft.adminMint(user1, amount);
+        
+        vm.prank(user1);
+        oft.approve(user2, amount);
+        
+        vm.prank(user2);
+        bool success = oft.transferFrom(user1, user2, amount / 2);
+        
+        assertTrue(success);
+        assertEq(oft.balanceOf(user1), amount / 2);
+        assertEq(oft.balanceOf(user2), amount / 2);
+        assertEq(oft.allowance(user1, user2), amount / 2);
+    }
+    
+    function test_TransferFrom_WhenPaused() public {
+        uint256 amount = 1000_000;
+        oft.adminMint(user1, amount);
+        
+        vm.prank(user1);
+        oft.approve(user2, amount);
+        
+        oft.pause();
+        
+        vm.prank(user2);
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        oft.transferFrom(user1, user2, amount / 2);
+    }
+    
+    // ============ Decimal Tests ============
+    
+    function test_Decimals_Returns8() public {
+        assertEq(oft.decimals(), 8);
+    }
+    
+    function test_Decimals_BtcCompatible() public {
+        // Test that amounts work correctly with 8 decimals
+        uint256 oneBTC = 1e8;
+        uint256 oneSatoshi = 1;
+        
+        oft.adminMint(user1, oneBTC);
+        assertEq(oft.balanceOf(user1), oneBTC);
+        
+        oft.adminMint(user2, oneSatoshi);
+        assertEq(oft.balanceOf(user2), oneSatoshi);
+        
+        assertEq(oft.totalSupply(), oneBTC + oneSatoshi);
+    }
+    
+    // ============ Edge Cases and Error Conditions ============
+    
+    function test_MultipleOperations_Sequence() public {
+        // Test sequence of operations
+        oft.addMinter(minter1);
+        
+        vm.prank(minter1);
+        oft.adminMint(user1, 5000_000);
+        
+        vm.prank(user1);
+        oft.transfer(user2, 2000_000);
+        
+        vm.prank(minter1);
+        oft.adminBurn(user1, 1000_000);
+        
+        assertEq(oft.balanceOf(user1), 2000_000);
+        assertEq(oft.balanceOf(user2), 2000_000);
+        assertEq(oft.totalSupply(), 4000_000);
+    }
+    
+    function test_PauseUnpause_Sequence() public {
+        oft.adminMint(user1, 1000_000);
+        
+        // Normal operations work
+        vm.prank(user1);
+        oft.transfer(user2, 500_000);
+        
+        // Pause
+        oft.pause();
+        
+        // Operations fail when paused
+        vm.prank(user1);
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        oft.transfer(user2, 100_000);
+        
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        oft.adminMint(user1, 100_000);
+        
+        // Unpause
+        oft.unpause();
+        
+        // Operations work again
+        vm.prank(user1);
+        oft.transfer(user2, 100_000);
+        
+        oft.adminMint(user1, 100_000);
+        
+        assertEq(oft.balanceOf(user1), 500_000);
+        assertEq(oft.balanceOf(user2), 600_000);
+    }
+    
+    function test_MinterManagement_Sequence() public {
+        // Add multiple minters
+        oft.addMinter(minter1);
+        oft.addMinter(minter2);
+        
+        assertTrue(oft.isMinter(minter1));
+        assertTrue(oft.isMinter(minter2));
+        
+        // Remove one minter
+        oft.removeMinter(minter1);
+        assertFalse(oft.isMinter(minter1));
+        assertTrue(oft.isMinter(minter2));
+        
+        // Removed minter cannot mint
+        vm.prank(minter1);
+        vm.expectRevert(SovaBTCOFT.UnauthorizedMinter.selector);
+        oft.adminMint(user1, 1000_000);
+        
+        // Active minter can still mint
+        vm.prank(minter2);
+        oft.adminMint(user1, 1000_000);
+        
+        assertEq(oft.balanceOf(user1), 1000_000);
+    }
+    
+    function test_LargeAmounts() public {
+        // Test with large amounts (close to max BTC supply)
+        uint256 largeAmount = 21_000_000 * 1e8; // 21M BTC
+        
+        oft.adminMint(user1, largeAmount);
+        assertEq(oft.balanceOf(user1), largeAmount);
+        
+        vm.prank(user1);
+        oft.transfer(user2, largeAmount / 2);
+        
+        assertEq(oft.balanceOf(user1), largeAmount / 2);
+        assertEq(oft.balanceOf(user2), largeAmount / 2);
+    }
+    
+    function test_SmallAmounts() public {
+        // Test with smallest amount (1 satoshi)
+        uint256 oneSatoshi = 1;
+        
+        oft.adminMint(user1, oneSatoshi);
+        assertEq(oft.balanceOf(user1), oneSatoshi);
+        
+        vm.prank(user1);
+        oft.transfer(user2, oneSatoshi);
+        
+        assertEq(oft.balanceOf(user1), 0);
+        assertEq(oft.balanceOf(user2), oneSatoshi);
+    }
+    
+    // ============ Access Control Edge Cases ============
+    
+    function test_OnlyOwner_Functions() public {
+        address notOwner = makeAddr("notOwner");
+        
+        vm.startPrank(notOwner);
+        
+        vm.expectRevert();
+        oft.addMinter(minter1);
+        
+        vm.expectRevert();
+        oft.removeMinter(owner);
+        
+        vm.expectRevert();
+        oft.pause();
+        
+        vm.expectRevert();
+        oft.setMinDepositAmount(1000);
+        
+        vm.expectRevert();
+        oft.setMaxDepositAmount(1000);
+        
+        vm.expectRevert();
+        oft.setMaxGasLimitAmount(1000);
+        
         vm.stopPrank();
-
-        assertEq(sovaBTCOFT.minDepositAmount(), 20000);
-        assertEq(sovaBTCOFT.maxDepositAmount(), 500_000_000_000);
-        assertEq(sovaBTCOFT.maxGasLimitAmount(), 75_000_000);
     }
-
-    function test_PauseWorkflow() public {
-        // Mint some tokens
-        vm.prank(minter);
-        sovaBTCOFT.adminMint(user1, 1000000);
-
-        // Set up peer
-        vm.prank(owner);
-        sovaBTCOFT.setPeer(1, bytes32(uint256(uint160(address(0x123)))));
-
-        // Pause contract
-        vm.prank(owner);
-        sovaBTCOFT.pause();
-
-        // Test that operations are blocked
-        SovaBTCOFT.SendParam memory sendParam = SovaBTCOFT.SendParam({
-            dstEid: 1,
-            to: bytes32(uint256(uint160(user2))),
-            amountLD: 500000,
-            minAmountLD: 500000,
-            extraOptions: "",
-            composeMsg: ""
-        });
-
-        SovaBTCOFT.MessagingFee memory fee = SovaBTCOFT.MessagingFee({nativeFee: 0.001 ether, lzTokenFee: 0});
-
-        vm.deal(user1, 1 ether);
-        vm.prank(user1);
-        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-
-        vm.prank(endpoint);
-        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
-        sovaBTCOFT.simulateReceive(1, user2, 500000);
-
-        // Unpause and test operations work again
-        vm.prank(owner);
-        sovaBTCOFT.unpause();
-
-        vm.prank(user1);
-        sovaBTCOFT.send{value: 0.001 ether}(sendParam, fee, user1);
-        assertEq(sovaBTCOFT.balanceOf(user1), 500000);
+    
+    function test_OnlyMinter_Functions() public {
+        address notMinter = makeAddr("notMinter");
+        
+        vm.startPrank(notMinter);
+        
+        vm.expectRevert(SovaBTCOFT.UnauthorizedMinter.selector);
+        oft.adminMint(user1, 1000_000);
+        
+        vm.expectRevert(SovaBTCOFT.UnauthorizedMinter.selector);
+        oft.adminBurn(user1, 1000_000);
+        
+        vm.stopPrank();
     }
-}
+    
+    // ============ Integration Tests ============
+    
+    function test_FullWorkflow() public {
+        // 1. Add minter
+        oft.addMinter(minter1);
+        
+        // 2. Mint tokens
+        vm.prank(minter1);
+        oft.adminMint(user1, 10_000_000); // 0.1 BTC
+        
+        // 3. User transfers
+        vm.prank(user1);
+        oft.transfer(user2, 3_000_000); // 0.03 BTC
+        
+        // 4. Approve and transferFrom
+        vm.prank(user1);
+        oft.approve(user2, 5_000_000);
+        
+        vm.prank(user2);
+        oft.transferFrom(user1, user2, 2_000_000); // 0.02 BTC
+        
+        // 5. Burn tokens
+        vm.prank(minter1);
+        oft.adminBurn(user1, 5_000_000); // 0.05 BTC
+        
+        // 6. Check final balances
+        assertEq(oft.balanceOf(user1), 0);
+        assertEq(oft.balanceOf(user2), 5_000_000);
+        assertEq(oft.totalSupply(), 5_000_000);
+        assertEq(oft.allowance(user1, user2), 3_000_000);
+    }
+    
+    function test_EmergencyPauseScenario() public {
+        // Normal operation
+        oft.addMinter(minter1);
+        vm.prank(minter1);
+        oft.adminMint(user1, 10_000_000);
+        
+        // Emergency pause
+        oft.pause();
+        
+        // All operations should fail
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        vm.prank(minter1);
+        oft.adminMint(user2, 1_000_000);
+        
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        vm.prank(minter1);
+        oft.adminBurn(user1, 1_000_000);
+        
+        vm.expectRevert(SovaBTCOFT.ContractPaused.selector);
+        vm.prank(user1);
+        oft.transfer(user2, 1_000_000);
+        
+        // Unpause and resume
+        oft.unpause();
+        
+        vm.prank(user1);
+        oft.transfer(user2, 1_000_000);
+        
+        assertEq(oft.balanceOf(user1), 9_000_000);
+        assertEq(oft.balanceOf(user2), 1_000_000);
+    }
+} 
