@@ -19,3 +19,4 @@ out/
 
 # Soldeer dependencies
 dependencies/
+.env
