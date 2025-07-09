@@ -9,7 +9,7 @@ out/
 
 
 # Dotenv file
-.env
+.env_local
 
 # Workspace settings
 .vscode
@@ -20,5 +20,5 @@ out/
 # Soldeer dependencies
 dependencies/
 .env
-.env
+
 .env
