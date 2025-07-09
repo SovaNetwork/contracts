@@ -607,14 +607,33 @@ export function UnifiedSwapInterface() {
               </motion.div>
             )}
 
-            {/* Enhanced Operation Info */}
+            {/* Operation Info */}
             {detectedOperation && fromToken && toToken && !showTransactionFlow && (
-              <SwapRouteDisplay
-                operation={detectedOperation}
-                fromToken={fromToken}
-                toToken={toToken}
-                amount={amount}
-              />
+              <div className="p-4 bg-blue-900/20 border border-blue-600 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <Info className="w-4 h-4 text-blue-400 mt-0.5" />
+                  <div className="text-sm text-blue-200">
+                    {detectedOperation === 'wrap' && (
+                      <>
+                        <span className="font-medium">Token Wrapping:</span> Convert {fromToken.symbol} to sovaBTC 
+                        on {fromToken.network.name} with automatic decimal conversion.
+                      </>
+                    )}
+                    {detectedOperation === 'bridge' && (
+                      <>
+                        <span className="font-medium">Cross-Chain Bridge:</span> Transfer sovaBTC from {fromToken.network.name} 
+                        to {toToken.network.name} using LayerZero V2 infrastructure.
+                      </>
+                    )}
+                    {detectedOperation === 'unwrap' && (
+                      <>
+                        <span className="font-medium">Token Unwrapping:</span> Redeem sovaBTC for {toToken.symbol} 
+                        through the 10-day redemption queue system.
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Transaction Flow */}
