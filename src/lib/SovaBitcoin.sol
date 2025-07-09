@@ -138,13 +138,23 @@ library SovaBitcoin {
     /**
      * @notice Calls the Vault Spend precompile to construct and broadcast a Bitcoin transaction
      *
-     * @param inputData Encoded input data for the precompile
+     * @param caller            The address of the caller (EVM address)
+     * @param amount            The amount of satoshis to withdraw
+     * @param btcGasLimit       Specified gas limit for the Bitcoin transaction (in satoshis)
+     * @param btcBlockHeight    The current BTC block height. This is used to source spendable Bitcoin UTXOs
+     * @param dest              The destination Bitcoin address (bech32)
      *
-     * @return btcTxid The txid returned by the precompile
+     * @return btcTxid          Txid of the constructed Bitcoin transaction
      */
-    function vaultSpend(bytes memory inputData) internal returns (bytes32 btcTxid) {
+    function vaultSpend(address caller, uint64 amount, uint64 btcGasLimit, uint64 btcBlockHeight, string calldata dest)
+        internal
+        returns (bytes32 btcTxid)
+    {
+        bytes memory inputData = abi.encode(caller, amount, btcGasLimit, btcBlockHeight, dest);
+
         (bool success, bytes memory returndata) = VAULT_SPEND_PRECOMPILE_ADDRESS.call(inputData);
         if (!success) revert PrecompileCallFailed();
+
         return bytes32(returndata);
     }
 }
