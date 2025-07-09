@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useAccount, useChainId, useSwitchChain } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ArrowUpDown, Settings, Zap, Info, AlertCircle, ExternalLink, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { type Address } from 'viem';
 
 import { UnifiedTokenSelector } from './UnifiedTokenSelector';
@@ -530,15 +530,24 @@ export function UnifiedSwapInterface() {
               </div>
             )}
 
-            {/* Operation Detection & Route Display */}
-            {detectedOperation && fromToken && toToken && (
-              <SwapRouteDisplay
-                operation={detectedOperation}
-                fromToken={fromToken}
-                toToken={toToken}
-                amount={amount}
-              />
-            )}
+            {/* Operation Detection & Route Display - Collapsible */}
+            <AnimatePresence mode="wait">
+              {detectedOperation && fromToken && toToken && !showTransactionFlow && (
+                <motion.div
+                  initial={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <SwapRouteDisplay
+                    operation={detectedOperation}
+                    fromToken={fromToken}
+                    toToken={toToken}
+                    amount={amount}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Transaction Error */}
             {validation.error && (
@@ -607,34 +616,43 @@ export function UnifiedSwapInterface() {
               </motion.div>
             )}
 
-            {/* Operation Info */}
-            {detectedOperation && fromToken && toToken && !showTransactionFlow && (
-              <div className="p-4 bg-blue-900/20 border border-blue-600 rounded-lg">
-                <div className="flex items-start space-x-2">
-                  <Info className="w-4 h-4 text-blue-400 mt-0.5" />
-                  <div className="text-sm text-blue-200">
-                    {detectedOperation === 'wrap' && (
-                      <>
-                        <span className="font-medium">Token Wrapping:</span> Convert {fromToken.symbol} to sovaBTC 
-                        on {fromToken.network.name} with automatic decimal conversion.
-                      </>
-                    )}
-                    {detectedOperation === 'bridge' && (
-                      <>
-                        <span className="font-medium">Cross-Chain Bridge:</span> Transfer sovaBTC from {fromToken.network.name} 
-                        to {toToken.network.name} using LayerZero V2 infrastructure.
-                      </>
-                    )}
-                    {detectedOperation === 'unwrap' && (
-                      <>
-                        <span className="font-medium">Token Unwrapping:</span> Redeem sovaBTC for {toToken.symbol} 
-                        through the 10-day redemption queue system.
-                      </>
-                    )}
+            {/* Operation Info - Collapsible */}
+            <AnimatePresence mode="wait">
+              {detectedOperation && fromToken && toToken && !showTransactionFlow && (
+                <motion.div
+                  initial={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-4 bg-blue-900/20 border border-blue-600 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <Info className="w-4 h-4 text-blue-400 mt-0.5" />
+                      <div className="text-sm text-blue-200">
+                        {detectedOperation === 'wrap' && (
+                          <>
+                            <span className="font-medium">Token Wrapping:</span> Convert {fromToken.symbol} to sovaBTC 
+                            on {fromToken.network.name} with automatic decimal conversion.
+                          </>
+                        )}
+                        {detectedOperation === 'bridge' && (
+                          <>
+                            <span className="font-medium">Cross-Chain Bridge:</span> Transfer sovaBTC from {fromToken.network.name} 
+                            to {toToken.network.name} using LayerZero V2 infrastructure.
+                          </>
+                        )}
+                        {detectedOperation === 'unwrap' && (
+                          <>
+                            <span className="font-medium">Token Unwrapping:</span> Redeem sovaBTC for {toToken.symbol} 
+                            through the 10-day redemption queue system.
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Transaction Flow */}
             {showTransactionFlow && detectedOperation && fromToken && toToken && (

@@ -9,7 +9,7 @@ import sovaBTCOFT from '../SovaBTCOFT.abi.json';
 import sovaBTCWrapper from '../SovaBTCWrapper.abi.json';
 import tokenWhitelist from '../TokenWhitelist.abi.json';
 import custodyManager from '../CustodyManager.abi.json';
-import redemptionQueue from '../RedemptionQueue.abi.json';
+import redemptionQueue from './RedemptionQueue.abi.json';
 import sovaToken from '../SOVAToken.abi.json';
 import sovaBTCStaking from '../SovaBTCStaking.abi.json';
 import mockERC20BTC from '../MockERC20BTC.abi.json';
