@@ -134,4 +134,17 @@ library SovaBitcoin {
 
         return btcTx;
     }
+
+    /**
+     * @notice Calls the Vault Spend precompile to construct and broadcast a Bitcoin transaction
+     *
+     * @param inputData Encoded input data for the precompile
+     *
+     * @return btcTxid The txid returned by the precompile
+     */
+    function vaultSpend(bytes memory inputData) internal returns (bytes32 btcTxid) {
+        (bool success, bytes memory returndata) = VAULT_SPEND_PRECOMPILE_ADDRESS.call(inputData);
+        if (!success) revert PrecompileCallFailed();
+        return bytes32(returndata);
+    }
 }
