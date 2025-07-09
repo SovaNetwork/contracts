@@ -20,7 +20,7 @@ export function Header() {
   ];
 
   return (
-    <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+    <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-[10000000]" style={{ zIndex: 10000000 }}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
