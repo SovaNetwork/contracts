@@ -507,9 +507,29 @@ export function UnifiedSwapInterface() {
         {/* RIGHT SIDE: Transaction Flow & Actions */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-6"
+          animate={{ 
+            opacity: (!amount || Number(amount) <= 0) ? 0.3 : 1, 
+            x: 0 
+          }}
+          transition={{ duration: 0.5 }}
+          className={cn(
+            "space-y-6",
+            (!amount || Number(amount) <= 0) && "pointer-events-none"
+          )}
         >
+          {/* Amount Required Prompt */}
+          {fromToken && toToken && (!amount || Number(amount) <= 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="defi-card p-4 text-center border-2 border-dashed border-border/50"
+            >
+              <div className="text-sm text-muted-foreground">
+                💡 Enter an amount to see transaction options
+              </div>
+            </motion.div>
+          )}
+
           {/* Transaction Actions Card */}
           <div className="defi-card p-6 space-y-6">
             {/* Network Mismatch Warning */}

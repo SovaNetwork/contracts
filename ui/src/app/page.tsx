@@ -82,14 +82,14 @@ export default function HomePage() {
                   <div className="defi-card p-4 text-center">
                     <div className="text-sm text-foreground/60 mb-1">ETH Balance</div>
                     <div className="text-lg font-semibold">
-                      {ethBalance ? formatTokenAmount(ethBalance.value, 18, 4) : '0.0000'} ETH
+                      {ethBalance ? formatTokenAmount(ethBalance.value, 18, 4) : '0.00'} ETH
                     </div>
                   </div>
                   
                   <div className="defi-card p-4 text-center">
                     <div className="text-sm text-foreground/60 mb-1">SovaBTC Balance</div>
                     <div className="text-lg font-semibold">
-                      {sovaBTCBalance ? formatTokenAmount(sovaBTCBalance.value, 8, 8) : '0.00000000'} sovaBTC
+                      {sovaBTCBalance ? formatTokenAmount(sovaBTCBalance.value, 8, 8) : '0.00'} sovaBTC
                     </div>
                   </div>
                   
