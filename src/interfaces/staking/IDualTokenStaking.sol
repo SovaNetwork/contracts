@@ -12,8 +12,8 @@ interface IDualTokenStaking {
     }
 
     struct RewardRate {
-        uint256 sovaBTCToSovaRate;  // Reward rate for staking SovaBTC -> earn SOVA
-        uint256 sovaToSovaBTCRate;  // Reward rate for staking SOVA -> earn SovaBTC
+        uint256 sovaBTCToSovaRate; // Reward rate for staking SovaBTC -> earn SOVA
+        uint256 sovaToSovaBTCRate; // Reward rate for staking SOVA -> earn SovaBTC
         uint256 dualStakeMultiplier; // Bonus multiplier for dual staking (basis points)
     }
 
@@ -52,7 +52,8 @@ interface IDualTokenStaking {
     function emergencyUnstake() external;
 
     // Admin functions
-    function setRewardRates(uint256 sovaBTCToSovaRate, uint256 sovaToSovaBTCRate, uint256 dualStakeMultiplier) external;
+    function setRewardRates(uint256 sovaBTCToSovaRate, uint256 sovaToSovaBTCRate, uint256 dualStakeMultiplier)
+        external;
     function addRewards(uint256 sovaBTCAmount, uint256 sovaAmount) external;
     function setLockPeriods(uint256[] calldata periods, uint256[] calldata multipliers) external;
 }

@@ -2,9 +2,12 @@
 pragma solidity ^0.8.27;
 
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {ERC20BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
-import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
-import {ERC20PermitUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {ERC20BurnableUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import {ERC20PausableUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import {ERC20PermitUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -14,21 +17,21 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
  * @dev ERC-20 token representing wrapped Bitcoin variants
  * @notice This token maintains 1:1 backing with deposited Bitcoin tokens
  */
-contract SovaBTCToken is 
-    Initializable, 
-    ERC20Upgradeable, 
-    ERC20BurnableUpgradeable, 
-    ERC20PausableUpgradeable, 
-    OwnableUpgradeable, 
-    ERC20PermitUpgradeable, 
-    UUPSUpgradeable 
+contract SovaBTCToken is
+    Initializable,
+    ERC20Upgradeable,
+    ERC20BurnableUpgradeable,
+    ERC20PausableUpgradeable,
+    OwnableUpgradeable,
+    ERC20PermitUpgradeable,
+    UUPSUpgradeable
 {
     /// @notice The wrapper contract that can mint/burn tokens
     address public wrapper;
-    
+
     /// @notice Emitted when the wrapper address is updated
     event WrapperUpdated(address indexed oldWrapper, address indexed newWrapper);
-    
+
     error OnlyWrapper();
     error ZeroAddress();
 
@@ -64,10 +67,10 @@ contract SovaBTCToken is
      */
     function setWrapper(address _wrapper) external onlyOwner {
         if (_wrapper == address(0)) revert ZeroAddress();
-        
+
         address oldWrapper = wrapper;
         wrapper = _wrapper;
-        
+
         emit WrapperUpdated(oldWrapper, _wrapper);
     }
 

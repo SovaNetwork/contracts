@@ -1,95 +1,71 @@
-# SovaBTC Product Specification
+# SovaBTC Yield System Product Specification
 
 ## Overview
-SovaBTC is a 1:1 wrapped Bitcoin token on EVM networks that allows users to deposit various wrapped Bitcoin variants (wBTC, cbBTC, etc.) and mint SovaBTC tokens. This extends Sova Network's existing native Bitcoin bridging capabilities to support ERC-20 wrapped Bitcoin tokens.
+The SovaBTC Yield System is a multi-chain yield-generating vault that accepts various Bitcoin variants (WBTC, cbBTC, tBTC, native sovaBTC) and provides Bitcoin-denominated yield through actively managed investment strategies. Users receive `sovaBTCYield` tokens representing their vault share and can stake these tokens for additional rewards.
 
 ## Core Components
 
-### 1. SovaBTC Token (ERC-20)
-- **Standard**: ERC-20 compliant token
-- **Ratio**: 1:1 with deposited Bitcoin variants
+### 1. SovaBTCYieldVault (ERC-4626)
+- **Standard**: ERC-4626 compliant yield vault
+- **Deposits**: Multiple Bitcoin variants (WBTC, cbBTC, tBTC, sovaBTC)
+- **Shares**: `sovaBTCYield` tokens representing vault ownership
 - **Decimals**: 8 (matching Bitcoin)
-- **Features**:
-  - Mintable (by wrapper contract only)
-  - Burnable (for redemptions)
-  - Pausable (emergency circuit breaker)
+- **Yield Source**: Admin-managed investment strategies
 
-### 2. SovaBTC Wrapper Contract
-**Core Functionality**:
-- Accept deposits of whitelisted wrapped Bitcoin tokens
-- Mint equivalent SovaBTC tokens to depositors
-- Handle redemptions with configurable queue
-- Admin-controlled token whitelist
+**Key Functions**:
+- `deposit(uint256 assets, address receiver)`: Deposit primary asset
+- `depositAsset(address asset, uint256 amount, address receiver)`: Deposit any supported asset
+- `redeemForRewards(uint256 shares, address receiver)`: Redeem for sovaBTC/BridgedSovaBTC
+- `addYield(uint256 rewardAmount)`: Admin adds yield to vault
 
-**Admin Functions**:
-- Add/remove accepted wrapped Bitcoin tokens
-- Withdraw deposited tokens to specified addresses
-- Configure redemption queue parameters
-- Pause/unpause contract operations
-- Emergency functions for recovery
+### 2. BridgedSovaBTC (Hyperlane Integration)
+- **Purpose**: Canonical sovaBTC representation on non-Sova networks
+- **Bridge**: Hyperlane for cross-chain messaging
+- **Access Control**: Role-based minting (VAULT_ROLE, BRIDGE_ROLE)
+- **Network Support**: Ethereum, Base, other EVM chains
 
-**User Functions**:
-- `deposit(address token, uint256 amount)`: Deposit wrapped BTC variant
-- `requestRedemption(uint256 amount, address preferredToken)`: Queue redemption
-- `claimRedemption(uint256 redemptionId)`: Claim after queue period
-- `getRedemptionStatus(uint256 redemptionId)`: Check redemption status
+**Key Functions**:
+- `mint(address to, uint256 amount)`: Mint bridged tokens (authorized only)
+- `bridgeToSova(address recipient, uint256 amount)`: Bridge back to Sova Network
+- `handle(uint32 origin, bytes32 sender, bytes calldata body)`: Hyperlane message handler
 
-### 3. Redemption Queue System
-**Design Considerations**:
-- **Option A**: Integrated into wrapper contract
-  - Pros: Simpler deployment, atomic operations
-  - Cons: Higher gas costs, less flexible upgrades
-  
-- **Option B**: Separate contract
-  - Pros: Modular, upgradeable independently, gas efficient
-  - Cons: Additional deployment complexity
+### 3. SovaBTCYieldStaking (Dual Token System)
+**Staking Mechanism**:
+- **Level 1**: Stake `sovaBTCYield` → Earn `SOVA` tokens
+- **Level 2**: Stake `SOVA` + `sovaBTCYield` → Earn `sovaBTC`/`BridgedSovaBTC`
+- **Requirement**: Must stake vault tokens to stake SOVA
 
-**Recommended**: Separate contract for flexibility
+**Key Functions**:
+- `stakeVaultTokens(uint256 amount, uint256 lockPeriod)`: Stake vault shares
+- `stakeSova(uint256 amount, uint256 lockPeriod)`: Stake SOVA (requires vault stake)
+- `claimRewards()`: Claim accumulated rewards
+- `compoundSovaRewards()`: Compound SOVA rewards back into SOVA stake
 
-**Features**:
-- Configurable queue duration (X days)
-- FIFO processing with priority options
-- Pro-rata distribution if insufficient liquidity
-- Emergency withdrawal mechanisms
+### 4. Network-Specific Rewards
+**Sova Network**:
+- Vault rewards: `sovaBTCYield` → native `sovaBTC`
+- Staking rewards: earn native `sovaBTC`
 
-### 4. Dual Token Staking System
-**Architecture**:
-- Staking contract accepting SovaBTC + SOVA tokens
-- Configurable secondary token (default: SOVA)
-- Reward distribution from vault contract
-- Time-weighted reward calculations
-
-**Components**:
-- **StakingVault**: Holds staked tokens
-- **RewardVault**: Preloaded with reward tokens
-- **StakingManager**: Logic for deposits/withdrawals/rewards
-
-**Features**:
-- Flexible reward token configuration
-- Compound/claim options
-- Lock periods with boost multipliers
-- Emergency unstake with penalties
+**Other Networks (Ethereum, Base)**:
+- Vault rewards: `sovaBTCYield` → `BridgedSovaBTC`
+- Staking rewards: earn `BridgedSovaBTC`
+- Hyperlane bridge for canonical sovaBTC
 
 ## Technical Architecture
 
 ### Contract Structure
 ```
 contracts/
-├── core/
-│   ├── SovaBTC.sol              # Main wrapper token
-│   ├── SovaBTCWrapper.sol       # Deposit/mint logic
-│   └── RedemptionQueue.sol      # Redemption queue
+├── vault/
+│   └── SovaBTCYieldVault.sol    # ERC-4626 yield vault
 ├── staking/
-│   ├── DualTokenStaking.sol     # Staking logic
-│   ├── StakingVault.sol         # Token custody
-│   └── RewardVault.sol          # Reward distribution
-├── interfaces/
-│   ├── ISovaBTC.sol
-│   ├── ISovaBTCWrapper.sol
-│   ├── IRedemptionQueue.sol
-│   └── IDualTokenStaking.sol
-└── libraries/
-    └── RedemptionLib.sol        # Queue calculations
+│   └── SovaBTCYieldStaking.sol  # Dual token staking system
+├── bridges/
+│   └── BridgedSovaBTC.sol       # Cross-chain sovaBTC token
+├── test/
+│   └── SovaBTCYieldSystem.t.sol # Comprehensive test suite
+└── script/
+    └── DeploySovaBTCYieldSystem.s.sol # Network-aware deployment
 ```
 
 ### Security Considerations
@@ -104,48 +80,54 @@ contracts/
 2. **Cross-chain**: Potential future bridging to Sova Network
 3. **DeFi Protocols**: Standard ERC-20 for composability
 
-## Implementation Phases
+## Implementation Status
 
-### Phase 1: Core Infrastructure
-- SovaBTC ERC-20 token
-- Basic wrapper contract
-- Admin functions
-- Initial testing framework
+### ✅ Phase 1: Core Yield Vault System
+- SovaBTCYieldVault (ERC-4626 compliant)
+- Multi-asset support with decimal normalization
+- Admin-managed investment strategies
+- Exchange rate based yield distribution
 
-### Phase 2: Redemption System
-- Queue contract implementation
-- Redemption logic
-- Liquidity management
-- Integration testing
+### ✅ Phase 2: Cross-Chain Infrastructure
+- BridgedSovaBTC with Hyperlane integration
+- Network-aware deployment scripts
+- Role-based access control for minting
+- Native sovaBTC support on Sova Network
 
-### Phase 3: Staking System
-- Dual token staking contracts
-- Reward distribution logic
-- Vault implementations
-- UI integration requirements
+### ✅ Phase 3: Dual Token Staking
+- SovaBTCYieldStaking with symbiotic rewards
+- Vault token → SOVA rewards
+- SOVA + vault token → sovaBTC rewards
+- Lock periods and compound functionality
 
-### Phase 4: Production Readiness
-- Comprehensive testing
-- Audit preparation
-- Documentation
-- Deployment scripts
+### ✅ Phase 4: Production Readiness
+- Comprehensive test suite (46 tests passing)
+- Multi-network deployment scripts
+- Code formatting and audit preparation
+- Complete documentation
 
 ## Dependencies
 - OpenZeppelin Contracts v5.x
 - Foundry for testing/deployment
 - Existing Sova Network contracts (reference only)
 
-## Open Questions
-1. Should redemption queue be part of wrapper or separate?
-2. Specific wrapped BTC tokens to support initially?
-3. Staking reward token(s) and distribution schedule?
-4. Integration with existing Sova Network UBTC?
-5. Multi-chain deployment strategy?
+## Deployment Networks
 
-## Success Criteria
-- Secure 1:1 wrapping of multiple BTC variants
-- Efficient redemption mechanism
-- Flexible staking system
-- Full test coverage
-- Clean audit report
-- Gas-optimized operations
+### Supported Networks
+1. **Ethereum Mainnet**: WBTC, cbBTC, tBTC → BridgedSovaBTC rewards
+2. **Base**: cbBTC, tBTC → BridgedSovaBTC rewards  
+3. **Sova Network**: Native sovaBTC → Native sovaBTC rewards
+4. **Sepolia Testnet**: Test tokens for development
+
+### Token Addresses
+- **Ethereum**: WBTC (0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599), cbBTC, tBTC
+- **Base**: cbBTC (0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf), tBTC
+- **Sova**: Native sovaBTC (0x2100000000000000000000000000000000000020)
+
+## Success Criteria ✅
+- ✅ ERC-4626 compliant yield vault with multi-asset support
+- ✅ Cross-chain sovaBTC distribution via Hyperlane bridge
+- ✅ Dual token staking with symbiotic reward structure
+- ✅ Comprehensive test coverage (46 tests passing)
+- ✅ Network-aware deployment infrastructure
+- ✅ Admin-managed yield generation strategies

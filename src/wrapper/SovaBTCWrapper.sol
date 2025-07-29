@@ -17,8 +17,13 @@ import "./SovaBTCToken.sol";
  * @title SovaBTCWrapper
  * @dev Main wrapper contract for managing Bitcoin token deposits and SovaBTC minting
  * @notice Allows users to deposit supported wrapped Bitcoin tokens and mint SovaBTC
+ *
+ * This contract handles ERC-20 wrapped Bitcoin tokens (WBTC, cbBTC, tBTC) on any EVM chain.
+ * On Sova Network, it works alongside the native SovaBTC predeploy contract that handles
+ * actual Bitcoin deposits via precompiles. The SovaBTCBridge contract can unify these
+ * two systems on Sova Network.
  */
-contract SovaBTCWrapper is 
+contract SovaBTCWrapper is
     Initializable,
     OwnableUpgradeable,
     UUPSUpgradeable,
@@ -54,11 +59,7 @@ contract SovaBTCWrapper is
         _disableInitializers();
     }
 
-    function initialize(
-        address initialOwner,
-        address _sovaBTC,
-        uint256 _queueDuration
-    ) public initializer {
+    function initialize(address initialOwner, address _sovaBTC, uint256 _queueDuration) public initializer {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
         __Pausable_init();
@@ -77,21 +78,13 @@ contract SovaBTCWrapper is
      * @param token Address of the token to add
      * @param name Human readable name of the token
      */
-    function addSupportedToken(address token, string calldata name) 
-        external 
-        onlyOwner 
-    {
+    function addSupportedToken(address token, string calldata name) external onlyOwner {
         if (token == address(0)) revert ZeroAddress();
         if (supportedTokens[token].isSupported) revert TokenAlreadySupported();
 
         uint8 decimals = IERC20Metadata(token).decimals();
-        
-        supportedTokens[token] = SupportedToken({
-            isSupported: true,
-            totalDeposited: 0,
-            decimals: decimals,
-            name: name
-        });
+
+        supportedTokens[token] = SupportedToken({isSupported: true, totalDeposited: 0, decimals: decimals, name: name});
 
         supportedTokenAddresses.push(token);
 
@@ -124,11 +117,7 @@ contract SovaBTCWrapper is
      * @param token Address of the token to deposit
      * @param amount Amount to deposit (in token's native decimals)
      */
-    function deposit(address token, uint256 amount) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-    {
+    function deposit(address token, uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
         if (!supportedTokens[token].isSupported) revert TokenNotSupported();
 
@@ -154,11 +143,11 @@ contract SovaBTCWrapper is
      * @param preferredToken Preferred token to receive (fallback to available tokens)
      * @return requestId The ID of the redemption request
      */
-    function requestRedemption(uint256 amount, address preferredToken) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-        returns (uint256 requestId) 
+    function requestRedemption(uint256 amount, address preferredToken)
+        external
+        nonReentrant
+        whenNotPaused
+        returns (uint256 requestId)
     {
         if (amount == 0) revert ZeroAmount();
         if (sovaBTC.balanceOf(msg.sender) < amount) revert InsufficientBalance();
@@ -184,7 +173,7 @@ contract SovaBTCWrapper is
      */
     function claimRedemption(uint256 requestId) external nonReentrant whenNotPaused {
         RedemptionRequest storage request = redemptionRequests[requestId];
-        
+
         if (request.user != msg.sender) revert ZeroAddress();
         if (request.fulfilled) revert RedemptionAlreadyFulfilled();
         if (block.timestamp < request.requestTime + queueDuration) revert RedemptionNotReady();
@@ -213,10 +202,7 @@ contract SovaBTCWrapper is
      * @param to Destination address
      * @param amount Amount to withdraw
      */
-    function adminWithdraw(address token, address to, uint256 amount) 
-        external 
-        onlyOwner 
-    {
+    function adminWithdraw(address token, address to, uint256 amount) external onlyOwner {
         if (to == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
         if (!supportedTokens[token].isSupported) revert TokenNotSupported();
@@ -228,14 +214,10 @@ contract SovaBTCWrapper is
     /**
      * @notice Emergency withdrawal function
      * @param token Token to withdraw
-     * @param to Destination address  
+     * @param to Destination address
      * @param amount Amount to withdraw
      */
-    function emergencyWithdraw(address token, address to, uint256 amount) 
-        external 
-        onlyOwner 
-        whenPaused 
-    {
+    function emergencyWithdraw(address token, address to, uint256 amount) external onlyOwner whenPaused {
         if (to == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
 
@@ -249,10 +231,10 @@ contract SovaBTCWrapper is
      */
     function setQueueDuration(uint256 _queueDuration) external onlyOwner {
         if (_queueDuration == 0) revert InvalidQueueDuration();
-        
+
         uint256 oldDuration = queueDuration;
         queueDuration = _queueDuration;
-        
+
         emit QueueDurationUpdated(oldDuration, _queueDuration);
     }
 

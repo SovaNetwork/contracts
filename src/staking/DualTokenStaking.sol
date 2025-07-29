@@ -16,7 +16,7 @@ import "../interfaces/staking/IDualTokenStaking.sol";
  * @dev Dual token staking system: SovaBTC <-> SOVA with cross-rewards
  * @notice Stake SovaBTC to earn SOVA, stake SOVA to earn SovaBTC
  */
-contract DualTokenStaking is 
+contract DualTokenStaking is
     Initializable,
     OwnableUpgradeable,
     UUPSUpgradeable,
@@ -28,7 +28,7 @@ contract DualTokenStaking is
 
     /// @notice SovaBTC token contract
     IERC20 public sovaBTC;
-    
+
     /// @notice SOVA token contract
     IERC20 public sova;
 
@@ -41,7 +41,7 @@ contract DualTokenStaking is
     /// @notice Total amount of SovaBTC staked
     uint256 public totalSovaBTCStaked;
 
-    /// @notice Total amount of SOVA staked  
+    /// @notice Total amount of SOVA staked
     uint256 public totalSovaStaked;
 
     /// @notice Lock period multipliers (lock period => multiplier in basis points)
@@ -64,31 +64,27 @@ contract DualTokenStaking is
         _disableInitializers();
     }
 
-    function initialize(
-        address initialOwner,
-        address _sovaBTC,
-        address _sova
-    ) public initializer {
+    function initialize(address initialOwner, address _sovaBTC, address _sova) public initializer {
         __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
         __Pausable_init();
         __ReentrancyGuard_init();
 
         if (_sovaBTC == address(0) || _sova == address(0)) revert ZeroAddress();
-        
+
         sovaBTC = IERC20(_sovaBTC);
         sova = IERC20(_sova);
 
         // Default reward rates (can be updated by owner)
         rewardRates = RewardRate({
             sovaBTCToSovaRate: 100, // 1% annual yield in basis points per second
-            sovaToSovaBTCRate: 50,  // 0.5% annual yield in basis points per second  
+            sovaToSovaBTCRate: 50, // 0.5% annual yield in basis points per second
             dualStakeMultiplier: 5000 // 50% bonus for dual staking
         });
 
         // Default lock periods and multipliers
         lockPeriods = [0, 30 days, 90 days, 180 days, 365 days];
-        lockMultipliers[0] = 10000;      // 1x (no lock)
+        lockMultipliers[0] = 10000; // 1x (no lock)
         lockMultipliers[30 days] = 11000; // 1.1x
         lockMultipliers[90 days] = 12500; // 1.25x
         lockMultipliers[180 days] = 15000; // 1.5x
@@ -102,25 +98,21 @@ contract DualTokenStaking is
      * @param amount Amount of SovaBTC to stake
      * @param lockPeriod Lock period in seconds
      */
-    function stakeSovaBTC(uint256 amount, uint256 lockPeriod) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-    {
+    function stakeSovaBTC(uint256 amount, uint256 lockPeriod) external nonReentrant whenNotPaused {
         if (amount < MIN_STAKE_AMOUNT) revert ZeroAmount();
         if (lockMultipliers[lockPeriod] == 0) revert InvalidLockPeriod();
 
         _updateRewards(msg.sender);
 
         StakeInfo storage stake = stakes[msg.sender];
-        
+
         // Transfer tokens
         sovaBTC.safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // Update stake info
         stake.sovaBTCAmount += amount;
         totalSovaBTCStaked += amount;
-        
+
         // Set lock end time (extend if longer than current)
         uint256 newLockEnd = block.timestamp + lockPeriod;
         if (newLockEnd > stake.lockEndTime) {
@@ -135,25 +127,21 @@ contract DualTokenStaking is
      * @param amount Amount of SOVA to stake
      * @param lockPeriod Lock period in seconds
      */
-    function stakeSova(uint256 amount, uint256 lockPeriod) 
-        external 
-        nonReentrant 
-        whenNotPaused 
-    {
+    function stakeSova(uint256 amount, uint256 lockPeriod) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
         if (lockMultipliers[lockPeriod] == 0) revert InvalidLockPeriod();
 
         _updateRewards(msg.sender);
 
         StakeInfo storage stake = stakes[msg.sender];
-        
+
         // Transfer tokens
         sova.safeTransferFrom(msg.sender, address(this), amount);
-        
+
         // Update stake info
         stake.sovaAmount += amount;
         totalSovaStaked += amount;
-        
+
         // Set lock end time (extend if longer than current)
         uint256 newLockEnd = block.timestamp + lockPeriod;
         if (newLockEnd > stake.lockEndTime) {
@@ -169,7 +157,7 @@ contract DualTokenStaking is
      */
     function unstakeSovaBTC(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        
+
         StakeInfo storage stake = stakes[msg.sender];
         if (stake.sovaBTCAmount < amount) revert InsufficientBalance();
         if (block.timestamp < stake.lockEndTime) revert StillLocked();
@@ -190,7 +178,7 @@ contract DualTokenStaking is
      */
     function unstakeSova(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        
+
         StakeInfo storage stake = stakes[msg.sender];
         if (stake.sovaAmount < amount) revert InsufficientBalance();
         if (block.timestamp < stake.lockEndTime) revert StillLocked();
@@ -210,9 +198,9 @@ contract DualTokenStaking is
      */
     function claimRewards() external nonReentrant {
         _updateRewards(msg.sender);
-        
+
         StakeInfo storage stake = stakes[msg.sender];
-        
+
         if (stake.sovaBTCRewards == 0 && stake.sovaRewards == 0) {
             revert NoRewards();
         }
@@ -238,9 +226,9 @@ contract DualTokenStaking is
      */
     function compound() external nonReentrant whenNotPaused {
         _updateRewards(msg.sender);
-        
+
         StakeInfo storage stake = stakes[msg.sender];
-        
+
         if (stake.sovaBTCRewards > 0) {
             uint256 sovaBTCRewards = stake.sovaBTCRewards;
             stake.sovaBTCRewards = 0;
@@ -261,7 +249,7 @@ contract DualTokenStaking is
      */
     function emergencyUnstake() external nonReentrant {
         StakeInfo storage stake = stakes[msg.sender];
-        
+
         if (stake.sovaBTCAmount == 0 && stake.sovaAmount == 0) {
             revert ZeroAmount();
         }
@@ -299,13 +287,12 @@ contract DualTokenStaking is
     /**
      * @notice Set reward rates (owner only)
      */
-    function setRewardRates(
-        uint256 sovaBTCToSovaRate,
-        uint256 sovaToSovaBTCRate,
-        uint256 dualStakeMultiplier
-    ) external onlyOwner {
+    function setRewardRates(uint256 sovaBTCToSovaRate, uint256 sovaToSovaBTCRate, uint256 dualStakeMultiplier)
+        external
+        onlyOwner
+    {
         if (dualStakeMultiplier > 50000) revert InvalidRewardRate(); // Max 500% bonus
-        
+
         rewardRates.sovaBTCToSovaRate = sovaBTCToSovaRate;
         rewardRates.sovaToSovaBTCRate = sovaToSovaBTCRate;
         rewardRates.dualStakeMultiplier = dualStakeMultiplier;
@@ -328,18 +315,15 @@ contract DualTokenStaking is
     /**
      * @notice Set lock periods and multipliers
      */
-    function setLockPeriods(uint256[] calldata periods, uint256[] calldata multipliers) 
-        external 
-        onlyOwner 
-    {
+    function setLockPeriods(uint256[] calldata periods, uint256[] calldata multipliers) external onlyOwner {
         if (periods.length != multipliers.length) revert InvalidLockPeriod();
-        
+
         // Clear existing periods
         for (uint256 i = 0; i < lockPeriods.length; i++) {
             delete lockMultipliers[lockPeriods[i]];
         }
         delete lockPeriods;
-        
+
         // Set new periods
         for (uint256 i = 0; i < periods.length; i++) {
             if (periods[i] > MAX_LOCK_PERIOD) revert InvalidLockPeriod();
@@ -355,25 +339,27 @@ contract DualTokenStaking is
 
     function getPendingRewards(address user) external view returns (uint256 sovaBTCRewards, uint256 sovaRewards) {
         StakeInfo memory stake = stakes[user];
-        
+
         if (stake.lastUpdateTime == 0) {
             return (0, 0);
         }
 
         uint256 timeElapsed = block.timestamp - stake.lastUpdateTime;
-        
+
         // Calculate base rewards
         uint256 pendingSovaBTCRewards = stake.sovaBTCRewards;
         uint256 pendingSovaRewards = stake.sovaRewards;
 
         if (stake.sovaBTCAmount > 0) {
             // SovaBTC staked earns SOVA
-            pendingSovaRewards += (stake.sovaBTCAmount * rewardRates.sovaBTCToSovaRate * timeElapsed) / (365 days * 10000);
+            pendingSovaRewards +=
+                (stake.sovaBTCAmount * rewardRates.sovaBTCToSovaRate * timeElapsed) / (365 days * 10000);
         }
 
         if (stake.sovaAmount > 0) {
             // SOVA staked earns SovaBTC
-            pendingSovaBTCRewards += (stake.sovaAmount * rewardRates.sovaToSovaBTCRate * timeElapsed) / (365 days * 10000);
+            pendingSovaBTCRewards +=
+                (stake.sovaAmount * rewardRates.sovaToSovaBTCRate * timeElapsed) / (365 days * 10000);
         }
 
         // Apply dual stake bonus
@@ -400,7 +386,7 @@ contract DualTokenStaking is
     // Internal functions
     function _updateRewards(address user) internal {
         StakeInfo storage stake = stakes[user];
-        
+
         if (stake.lastUpdateTime == 0) {
             stake.lastUpdateTime = block.timestamp;
             return;

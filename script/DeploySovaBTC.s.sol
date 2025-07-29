@@ -28,26 +28,26 @@ contract DeploySovaBTC is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
-        
+
         console.log("Deploying contracts with deployer:", deployer);
         console.log("Deployer balance:", deployer.balance / 1e18, "ETH");
 
         DeployConfig memory config = getDeployConfig();
-        
+
         vm.startBroadcast(deployerPrivateKey);
-        
+
         DeployedContracts memory contracts = deployContracts(config);
         configureContracts(config, contracts);
-        
+
         vm.stopBroadcast();
-        
+
         logDeployment(contracts);
         saveDeployment(contracts);
     }
 
     function getDeployConfig() internal view returns (DeployConfig memory) {
         uint256 chainId = block.chainid;
-        
+
         if (chainId == 1) {
             // Ethereum Mainnet
             return DeployConfig({
@@ -80,49 +80,30 @@ contract DeploySovaBTC is Script {
         }
     }
 
-    function deployContracts(DeployConfig memory config) 
-        internal 
-        returns (DeployedContracts memory) 
-    {
+    function deployContracts(DeployConfig memory config) internal returns (DeployedContracts memory) {
         console.log("Deploying SovaBTC Token...");
-        
+
         // Deploy SovaBTC Token
         SovaBTCToken sovaBTCImpl = new SovaBTCToken();
-        bytes memory sovaBTCInitData = abi.encodeCall(
-            SovaBTCToken.initialize,
-            (config.owner)
-        );
-        ERC1967Proxy sovaBTCProxy = new ERC1967Proxy(
-            address(sovaBTCImpl),
-            sovaBTCInitData
-        );
-        
+        bytes memory sovaBTCInitData = abi.encodeCall(SovaBTCToken.initialize, (config.owner));
+        ERC1967Proxy sovaBTCProxy = new ERC1967Proxy(address(sovaBTCImpl), sovaBTCInitData);
+
         console.log("Deploying SovaBTC Wrapper...");
-        
+
         // Deploy SovaBTC Wrapper
         SovaBTCWrapper wrapperImpl = new SovaBTCWrapper();
-        bytes memory wrapperInitData = abi.encodeCall(
-            SovaBTCWrapper.initialize,
-            (config.owner, address(sovaBTCProxy), config.queueDuration)
-        );
-        ERC1967Proxy wrapperProxy = new ERC1967Proxy(
-            address(wrapperImpl),
-            wrapperInitData
-        );
-        
+        bytes memory wrapperInitData =
+            abi.encodeCall(SovaBTCWrapper.initialize, (config.owner, address(sovaBTCProxy), config.queueDuration));
+        ERC1967Proxy wrapperProxy = new ERC1967Proxy(address(wrapperImpl), wrapperInitData);
+
         console.log("Deploying Dual Token Staking...");
-        
+
         // Deploy Dual Token Staking
         DualTokenStaking stakingImpl = new DualTokenStaking();
-        bytes memory stakingInitData = abi.encodeCall(
-            DualTokenStaking.initialize,
-            (config.owner, address(sovaBTCProxy), config.sovaToken)
-        );
-        ERC1967Proxy stakingProxy = new ERC1967Proxy(
-            address(stakingImpl),
-            stakingInitData
-        );
-        
+        bytes memory stakingInitData =
+            abi.encodeCall(DualTokenStaking.initialize, (config.owner, address(sovaBTCProxy), config.sovaToken));
+        ERC1967Proxy stakingProxy = new ERC1967Proxy(address(stakingImpl), stakingInitData);
+
         return DeployedContracts({
             sovaBTCToken: address(sovaBTCProxy),
             sovaBTCWrapper: address(wrapperProxy),
@@ -130,29 +111,23 @@ contract DeploySovaBTC is Script {
         });
     }
 
-    function configureContracts(
-        DeployConfig memory config,
-        DeployedContracts memory contracts
-    ) internal {
+    function configureContracts(DeployConfig memory config, DeployedContracts memory contracts) internal {
         console.log("Configuring contracts...");
-        
+
         SovaBTCToken sovaBTC = SovaBTCToken(contracts.sovaBTCToken);
         SovaBTCWrapper wrapper = SovaBTCWrapper(contracts.sovaBTCWrapper);
-        
+
         // Set wrapper as minter for SovaBTC token
         sovaBTC.setWrapper(contracts.sovaBTCWrapper);
-        
+
         // Add initial supported tokens
         for (uint256 i = 0; i < config.initialTokens.length; i++) {
             if (config.initialTokens[i] != address(0)) {
-                wrapper.addSupportedToken(
-                    config.initialTokens[i],
-                    config.tokenNames[i]
-                );
+                wrapper.addSupportedToken(config.initialTokens[i], config.tokenNames[i]);
                 console.log("Added token:", config.tokenNames[i], config.initialTokens[i]);
             }
         }
-        
+
         console.log("Configuration complete!");
     }
 
@@ -170,19 +145,29 @@ contract DeploySovaBTC is Script {
     function saveDeployment(DeployedContracts memory contracts) internal {
         string memory chainId = vm.toString(block.chainid);
         string memory filename = string.concat("deployments/", chainId, ".json");
-        
+
         string memory json = string.concat(
-            '{\n',
-            '  "chainId": ', chainId, ',\n',
-            '  "blockNumber": ', vm.toString(block.number), ',\n',
+            "{\n",
+            '  "chainId": ',
+            chainId,
+            ",\n",
+            '  "blockNumber": ',
+            vm.toString(block.number),
+            ",\n",
             '  "contracts": {\n',
-            '    "sovaBTCToken": "', vm.toString(contracts.sovaBTCToken), '",\n',
-            '    "sovaBTCWrapper": "', vm.toString(contracts.sovaBTCWrapper), '",\n',
-            '    "dualTokenStaking": "', vm.toString(contracts.dualTokenStaking), '"\n',
-            '  }\n',
-            '}'
+            '    "sovaBTCToken": "',
+            vm.toString(contracts.sovaBTCToken),
+            '",\n',
+            '    "sovaBTCWrapper": "',
+            vm.toString(contracts.sovaBTCWrapper),
+            '",\n',
+            '    "dualTokenStaking": "',
+            vm.toString(contracts.dualTokenStaking),
+            '"\n',
+            "  }\n",
+            "}"
         );
-        
+
         vm.writeFile(filename, json);
         console.log("Deployment saved to:", filename);
     }

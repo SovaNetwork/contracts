@@ -12,7 +12,7 @@ contract UpgradeSovaBTC is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
-        
+
         console.log("Upgrading contracts with deployer:", deployer);
 
         // Load existing deployment addresses
@@ -34,22 +34,13 @@ contract UpgradeSovaBTC is Script {
 
         // Upgrade contracts
         console.log("Upgrading SovaBTC Token...");
-        SovaBTCToken(sovaBTCProxy).upgradeToAndCall(
-            address(newSovaBTCImpl),
-            ""
-        );
+        SovaBTCToken(sovaBTCProxy).upgradeToAndCall(address(newSovaBTCImpl), "");
 
         console.log("Upgrading SovaBTC Wrapper...");
-        SovaBTCWrapper(wrapperProxy).upgradeToAndCall(
-            address(newWrapperImpl),
-            ""
-        );
+        SovaBTCWrapper(wrapperProxy).upgradeToAndCall(address(newWrapperImpl), "");
 
         console.log("Upgrading Dual Token Staking...");
-        DualTokenStaking(stakingProxy).upgradeToAndCall(
-            address(newStakingImpl),
-            ""
-        );
+        DualTokenStaking(stakingProxy).upgradeToAndCall(address(newStakingImpl), "");
 
         vm.stopBroadcast();
 

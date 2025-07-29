@@ -13,11 +13,11 @@ contract SovaBTCWrapperTest is Test {
     SovaBTCWrapper public wrapper;
     ERC20Mock public wbtc;
     ERC20Mock public cbbtc;
-    
+
     address public owner;
     address public user1;
     address public user2;
-    
+
     uint256 public constant QUEUE_DURATION = 7 days;
     uint256 public constant WBTC_DECIMALS = 8;
     uint256 public constant CBBTC_DECIMALS = 8;
@@ -34,14 +34,14 @@ contract SovaBTCWrapperTest is Test {
         // Deploy mock tokens with 8 decimals (like real BTC tokens)
         wbtc = new ERC20Mock();
         cbbtc = new ERC20Mock();
-        
+
         // Set up mock tokens to return 8 decimals
         vm.mockCall(address(wbtc), abi.encodeWithSignature("decimals()"), abi.encode(uint8(8)));
         vm.mockCall(address(cbbtc), abi.encodeWithSignature("decimals()"), abi.encode(uint8(8)));
 
         // Deploy SovaBTC token
         vm.startPrank(owner);
-        
+
         SovaBTCToken sovaBTCImpl = new SovaBTCToken();
         bytes memory sovaBTCInitData = abi.encodeCall(SovaBTCToken.initialize, (owner));
         ERC1967Proxy sovaBTCProxy = new ERC1967Proxy(address(sovaBTCImpl), sovaBTCInitData);
@@ -49,10 +49,8 @@ contract SovaBTCWrapperTest is Test {
 
         // Deploy wrapper contract
         SovaBTCWrapper wrapperImpl = new SovaBTCWrapper();
-        bytes memory wrapperInitData = abi.encodeCall(
-            SovaBTCWrapper.initialize, 
-            (owner, address(sovaBTC), QUEUE_DURATION)
-        );
+        bytes memory wrapperInitData =
+            abi.encodeCall(SovaBTCWrapper.initialize, (owner, address(sovaBTC), QUEUE_DURATION));
         ERC1967Proxy wrapperProxy = new ERC1967Proxy(address(wrapperImpl), wrapperInitData);
         wrapper = SovaBTCWrapper(address(wrapperProxy));
 
@@ -62,9 +60,9 @@ contract SovaBTCWrapperTest is Test {
         vm.stopPrank();
 
         // Mint tokens to users (larger amounts to meet minimum requirements)
-        wbtc.mint(user1, 100 * 10**WBTC_DECIMALS);
-        wbtc.mint(user2, 50 * 10**WBTC_DECIMALS);
-        cbbtc.mint(user1, 80 * 10**CBBTC_DECIMALS);
+        wbtc.mint(user1, 100 * 10 ** WBTC_DECIMALS);
+        wbtc.mint(user2, 50 * 10 ** WBTC_DECIMALS);
+        cbbtc.mint(user1, 80 * 10 ** CBBTC_DECIMALS);
     }
 
     function testInitialization() public view {
@@ -72,7 +70,7 @@ contract SovaBTCWrapperTest is Test {
         assertEq(sovaBTC.symbol(), "sovaBTC");
         assertEq(sovaBTC.decimals(), 8);
         assertEq(sovaBTC.owner(), owner);
-        
+
         assertEq(address(wrapper.sovaBTC()), address(sovaBTC));
         assertEq(wrapper.queueDuration(), QUEUE_DURATION);
         assertEq(wrapper.owner(), owner);
@@ -82,11 +80,11 @@ contract SovaBTCWrapperTest is Test {
         vm.prank(owner);
         vm.expectEmit(true, false, false, true);
         emit TokenAdded(address(wbtc), "Wrapped Bitcoin", uint8(WBTC_DECIMALS));
-        
+
         wrapper.addSupportedToken(address(wbtc), "Wrapped Bitcoin");
-        
+
         assertTrue(wrapper.isTokenSupported(address(wbtc)));
-        
+
         ISovaBTCWrapper.SupportedToken memory tokenInfo = wrapper.getSupportedToken(address(wbtc));
         assertTrue(tokenInfo.isSupported);
         assertEq(tokenInfo.decimals, uint8(WBTC_DECIMALS));
@@ -105,32 +103,32 @@ contract SovaBTCWrapperTest is Test {
         vm.prank(owner);
         wrapper.addSupportedToken(address(wbtc), "Wrapped Bitcoin");
 
-        uint256 depositAmount = 1 * 10**WBTC_DECIMALS;
-        
+        uint256 depositAmount = 1 * 10 ** WBTC_DECIMALS;
+
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), depositAmount);
-        
+
         vm.expectEmit(true, true, false, true);
         emit Deposit(user1, address(wbtc), depositAmount, depositAmount);
-        
+
         wrapper.deposit(address(wbtc), depositAmount);
         vm.stopPrank();
 
         // Check balances
         assertEq(sovaBTC.balanceOf(user1), depositAmount);
         assertEq(wbtc.balanceOf(address(wrapper)), depositAmount);
-        
+
         // Check wrapper state
         ISovaBTCWrapper.SupportedToken memory tokenInfo = wrapper.getSupportedToken(address(wbtc));
         assertEq(tokenInfo.totalDeposited, depositAmount);
     }
 
     function testDepositUnsupportedToken() public {
-        uint256 depositAmount = 1 * 10**WBTC_DECIMALS;
-        
+        uint256 depositAmount = 1 * 10 ** WBTC_DECIMALS;
+
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), depositAmount);
-        
+
         vm.expectRevert(ISovaBTCWrapper.TokenNotSupported.selector);
         wrapper.deposit(address(wbtc), depositAmount);
         vm.stopPrank();
@@ -151,17 +149,17 @@ contract SovaBTCWrapperTest is Test {
         vm.prank(owner);
         wrapper.addSupportedToken(address(wbtc), "Wrapped Bitcoin");
 
-        uint256 depositAmount = 1 * 10**WBTC_DECIMALS;
+        uint256 depositAmount = 1 * 10 ** WBTC_DECIMALS;
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), depositAmount);
         wrapper.deposit(address(wbtc), depositAmount);
 
         // Request redemption
         uint256 redeemAmount = depositAmount / 2;
-        
+
         vm.expectEmit(true, true, false, true);
         emit RedemptionRequested(1, user1, redeemAmount, address(wbtc));
-        
+
         uint256 requestId = wrapper.requestRedemption(redeemAmount, address(wbtc));
         vm.stopPrank();
 
@@ -181,7 +179,7 @@ contract SovaBTCWrapperTest is Test {
 
         vm.startPrank(user1);
         vm.expectRevert(ISovaBTCWrapper.InsufficientBalance.selector);
-        wrapper.requestRedemption(1 * 10**8, address(wbtc));
+        wrapper.requestRedemption(1 * 10 ** 8, address(wbtc));
         vm.stopPrank();
     }
 
@@ -190,7 +188,7 @@ contract SovaBTCWrapperTest is Test {
         vm.prank(owner);
         wrapper.addSupportedToken(address(wbtc), "Wrapped Bitcoin");
 
-        uint256 depositAmount = 1 * 10**WBTC_DECIMALS;
+        uint256 depositAmount = 1 * 10 ** WBTC_DECIMALS;
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), depositAmount);
         wrapper.deposit(address(wbtc), depositAmount);
@@ -206,7 +204,7 @@ contract SovaBTCWrapperTest is Test {
         wrapper.claimRedemption(requestId);
 
         // Check balances
-        assertEq(wbtc.balanceOf(user1), 99 * 10**WBTC_DECIMALS + depositAmount); // original - deposit + redemption
+        assertEq(wbtc.balanceOf(user1), 99 * 10 ** WBTC_DECIMALS + depositAmount); // original - deposit + redemption
         assertEq(sovaBTC.balanceOf(user1), 0);
 
         // Check request is fulfilled
@@ -219,7 +217,7 @@ contract SovaBTCWrapperTest is Test {
         vm.prank(owner);
         wrapper.addSupportedToken(address(wbtc), "Wrapped Bitcoin");
 
-        uint256 depositAmount = 1 * 10**WBTC_DECIMALS;
+        uint256 depositAmount = 1 * 10 ** WBTC_DECIMALS;
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), depositAmount);
         wrapper.deposit(address(wbtc), depositAmount);
@@ -238,7 +236,7 @@ contract SovaBTCWrapperTest is Test {
         vm.prank(owner);
         wrapper.addSupportedToken(address(wbtc), "Wrapped Bitcoin");
 
-        uint256 depositAmount = 1 * 10**WBTC_DECIMALS;
+        uint256 depositAmount = 1 * 10 ** WBTC_DECIMALS;
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), depositAmount);
         wrapper.deposit(address(wbtc), depositAmount);
@@ -263,10 +261,10 @@ contract SovaBTCWrapperTest is Test {
 
     function testSetQueueDuration() public {
         uint256 newDuration = 14 days;
-        
+
         vm.prank(owner);
         wrapper.setQueueDuration(newDuration);
-        
+
         assertEq(wrapper.queueDuration(), newDuration);
     }
 
@@ -302,8 +300,8 @@ contract SovaBTCWrapperTest is Test {
         vm.stopPrank();
 
         // Deposit both tokens
-        uint256 wbtcAmount = 1 * 10**WBTC_DECIMALS;
-        uint256 cbbtcAmount = 2 * 10**CBBTC_DECIMALS;
+        uint256 wbtcAmount = 1 * 10 ** WBTC_DECIMALS;
+        uint256 cbbtcAmount = 2 * 10 ** CBBTC_DECIMALS;
 
         vm.startPrank(user1);
         wbtc.approve(address(wrapper), wbtcAmount);

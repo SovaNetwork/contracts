@@ -11,7 +11,7 @@ contract DualTokenStakingTest is Test {
     DualTokenStaking public staking;
     ERC20Mock public sovaBTC;
     ERC20Mock public sova;
-    
+
     address public owner;
     address public user1;
     address public user2;
@@ -31,32 +31,30 @@ contract DualTokenStakingTest is Test {
 
         // Deploy staking contract
         vm.startPrank(owner);
-        
+
         DualTokenStaking stakingImpl = new DualTokenStaking();
-        bytes memory stakingInitData = abi.encodeCall(
-            DualTokenStaking.initialize, 
-            (owner, address(sovaBTC), address(sova))
-        );
+        bytes memory stakingInitData =
+            abi.encodeCall(DualTokenStaking.initialize, (owner, address(sovaBTC), address(sova)));
         ERC1967Proxy stakingProxy = new ERC1967Proxy(address(stakingImpl), stakingInitData);
         staking = DualTokenStaking(address(stakingProxy));
 
         vm.stopPrank();
 
         // Mint tokens to users
-        sovaBTC.mint(user1, 10 * 10**8);
-        sovaBTC.mint(user2, 5 * 10**8);
-        sova.mint(user1, 1000 * 10**18);
-        sova.mint(user2, 500 * 10**18);
+        sovaBTC.mint(user1, 10 * 10 ** 8);
+        sovaBTC.mint(user2, 5 * 10 ** 8);
+        sova.mint(user1, 1000 * 10 ** 18);
+        sova.mint(user2, 500 * 10 ** 18);
 
         // Mint reward tokens to owner
-        sovaBTC.mint(owner, 100 * 10**8);
-        sova.mint(owner, 10000 * 10**18);
+        sovaBTC.mint(owner, 100 * 10 ** 8);
+        sova.mint(owner, 10000 * 10 ** 18);
 
         // Add rewards to staking contract
         vm.startPrank(owner);
-        sovaBTC.approve(address(staking), 100 * 10**8);
-        sova.approve(address(staking), 10000 * 10**18);
-        staking.addRewards(100 * 10**8, 10000 * 10**18);
+        sovaBTC.approve(address(staking), 100 * 10 ** 8);
+        sova.approve(address(staking), 10000 * 10 ** 18);
+        staking.addRewards(100 * 10 ** 8, 10000 * 10 ** 18);
         vm.stopPrank();
     }
 
@@ -72,7 +70,7 @@ contract DualTokenStakingTest is Test {
     }
 
     function testStakeSovaBTC() public {
-        uint256 stakeAmount = 1 * 10**8;
+        uint256 stakeAmount = 1 * 10 ** 8;
         uint256 lockPeriod = 30 days;
 
         vm.startPrank(user1);
@@ -92,11 +90,11 @@ contract DualTokenStakingTest is Test {
 
         // Check total staked
         assertEq(staking.totalSovaBTCStaked(), stakeAmount);
-        assertEq(sovaBTC.balanceOf(address(staking)), stakeAmount + 100 * 10**8); // includes rewards
+        assertEq(sovaBTC.balanceOf(address(staking)), stakeAmount + 100 * 10 ** 8); // includes rewards
     }
 
     function testStakeSova() public {
-        uint256 stakeAmount = 100 * 10**18;
+        uint256 stakeAmount = 100 * 10 ** 18;
         uint256 lockPeriod = 90 days;
 
         vm.startPrank(user1);
@@ -119,8 +117,8 @@ contract DualTokenStakingTest is Test {
     }
 
     function testStakeBothTokens() public {
-        uint256 sovaBTCAmount = 1 * 10**8;
-        uint256 sovaAmount = 100 * 10**18;
+        uint256 sovaBTCAmount = 1 * 10 ** 8;
+        uint256 sovaAmount = 100 * 10 ** 18;
         uint256 lockPeriod = 180 days;
 
         vm.startPrank(user1);
@@ -139,7 +137,7 @@ contract DualTokenStakingTest is Test {
     }
 
     function testStakeInvalidLockPeriod() public {
-        uint256 stakeAmount = 1 * 10**8;
+        uint256 stakeAmount = 1 * 10 ** 8;
         uint256 invalidLockPeriod = 999 days; // Not in the predefined lock periods
 
         vm.startPrank(user1);
@@ -162,7 +160,7 @@ contract DualTokenStakingTest is Test {
     }
 
     function testUnstakeSovaBTC() public {
-        uint256 stakeAmount = 1 * 10**8;
+        uint256 stakeAmount = 1 * 10 ** 8;
         uint256 lockPeriod = 0; // No lock period
 
         // Stake first
@@ -179,11 +177,11 @@ contract DualTokenStakingTest is Test {
         assertEq(stakeInfo.sovaBTCAmount, 0);
 
         // Check balance returned
-        assertEq(sovaBTC.balanceOf(user1), 10 * 10**8); // Original amount
+        assertEq(sovaBTC.balanceOf(user1), 10 * 10 ** 8); // Original amount
     }
 
     function testUnstakeBeforeLockExpiry() public {
-        uint256 stakeAmount = 1 * 10**8;
+        uint256 stakeAmount = 1 * 10 ** 8;
         uint256 lockPeriod = 30 days;
 
         // Stake with lock period
@@ -198,7 +196,7 @@ contract DualTokenStakingTest is Test {
     }
 
     function testUnstakeAfterLockExpiry() public {
-        uint256 stakeAmount = 1 * 10**8;
+        uint256 stakeAmount = 1 * 10 ** 8;
         uint256 lockPeriod = 30 days;
 
         // Stake with lock period
@@ -213,12 +211,12 @@ contract DualTokenStakingTest is Test {
         staking.unstakeSovaBTC(stakeAmount);
         vm.stopPrank();
 
-        assertEq(sovaBTC.balanceOf(user1), 10 * 10**8);
+        assertEq(sovaBTC.balanceOf(user1), 10 * 10 ** 8);
     }
 
     function testRewardAccrual() public {
-        uint256 sovaBTCStakeAmount = 1 * 10**8;
-        uint256 sovaStakeAmount = 100 * 10**18;
+        uint256 sovaBTCStakeAmount = 1 * 10 ** 8;
+        uint256 sovaStakeAmount = 100 * 10 ** 18;
 
         // Stake both tokens
         vm.startPrank(user1);
@@ -234,14 +232,14 @@ contract DualTokenStakingTest is Test {
 
         // Check pending rewards
         (uint256 sovaBTCRewards, uint256 sovaRewards) = staking.getPendingRewards(user1);
-        
+
         // Should have some rewards (exact calculation depends on rates)
         assertGt(sovaBTCRewards, 0);
         assertGt(sovaRewards, 0);
     }
 
     function testClaimRewards() public {
-        uint256 sovaBTCStakeAmount = 1 * 10**8;
+        uint256 sovaBTCStakeAmount = 1 * 10 ** 8;
 
         // Stake SovaBTC
         vm.startPrank(user1);
@@ -261,7 +259,7 @@ contract DualTokenStakingTest is Test {
     }
 
     function testCompound() public {
-        uint256 sovaBTCStakeAmount = 1 * 10**8;
+        uint256 sovaBTCStakeAmount = 1 * 10 ** 8;
 
         // Stake SovaBTC
         vm.startPrank(user1);
@@ -284,15 +282,15 @@ contract DualTokenStakingTest is Test {
     }
 
     function testEmergencyUnstake() public {
-        uint256 sovaBTCStakeAmount = 1 * 10**8;
-        uint256 sovaStakeAmount = 100 * 10**18;
+        uint256 sovaBTCStakeAmount = 1 * 10 ** 8;
+        uint256 sovaStakeAmount = 100 * 10 ** 18;
         uint256 lockPeriod = 365 days;
 
         // Stake both tokens with long lock period
         vm.startPrank(user1);
         sovaBTC.approve(address(staking), sovaBTCStakeAmount);
         sova.approve(address(staking), sovaStakeAmount);
-        
+
         staking.stakeSovaBTC(sovaBTCStakeAmount, lockPeriod);
         staking.stakeSova(sovaStakeAmount, lockPeriod);
 
@@ -306,7 +304,7 @@ contract DualTokenStakingTest is Test {
         // Should get back tokens minus penalty
         assertGt(sovaBTC.balanceOf(user1), initialSovaBTCBalance);
         assertGt(sova.balanceOf(user1), initialSovaBalance);
-        
+
         // But less than full amount due to penalty
         assertLt(sovaBTC.balanceOf(user1), initialSovaBTCBalance + sovaBTCStakeAmount);
         assertLt(sova.balanceOf(user1), initialSovaBalance + sovaStakeAmount);
@@ -339,8 +337,8 @@ contract DualTokenStakingTest is Test {
     }
 
     function testDualStakeBonus() public {
-        uint256 sovaBTCStakeAmount = 1 * 10**8;
-        uint256 sovaStakeAmount = 100 * 10**18;
+        uint256 sovaBTCStakeAmount = 1 * 10 ** 8;
+        uint256 sovaStakeAmount = 100 * 10 ** 18;
 
         // User1: Stake both tokens (dual stake bonus)
         vm.startPrank(user1);
