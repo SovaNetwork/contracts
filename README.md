@@ -17,19 +17,33 @@ The SovaBTC Yield System is a multi-chain yield-generating vault that accepts va
 
 ### 🏗️ System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    SovaBTC Yield System                        │
-├─────────────────┬─────────────────┬─────────────────────────────┤
-│  Yield Vault    │  Cross-Chain    │     Dual Staking           │
-│                 │    Bridge       │                             │
-│ ┌─────────────┐ │ ┌─────────────┐ │ ┌─────────────────────────┐ │
-│ │SovaBTCYield │ │ │BridgedSova  │ │ │SovaBTCYieldStaking      │ │
-│ │Vault        │ │ │BTC          │ │ │                         │ │
-│ │(ERC-4626)   │ │ │(Hyperlane)  │ │ │Level 1: Vault → SOVA   │ │
-│ └─────────────┘ │ └─────────────┘ │ │Level 2: SOVA → sovaBTC │ │
-│                 │                 │ └─────────────────────────┘ │
-└─────────────────┴─────────────────┴─────────────────────────────┘
+```mermaid
+graph TB
+    subgraph "SovaBTC Yield System"
+        subgraph "Yield Generation"
+            A[User] -->|Deposit WBTC/cbBTC/tBTC| B[SovaBTCYieldVault]
+            B -->|Mint| C[sovaBTCYield Tokens]
+            B -->|Admin Withdraw| D[Investment Strategies]
+            D -->|Generated Yield| E[sovaBTC/BridgedSovaBTC]
+            E -->|Add Yield| B
+        end
+        
+        subgraph "Cross-Chain Bridge"
+            F[BridgedSovaBTC] <-->|Hyperlane| G[Sova Network]
+            G -->|Native| H[sovaBTC]
+        end
+        
+        subgraph "Dual Token Staking"
+            C -->|Stake| I[SovaBTCYieldStaking]
+            I -->|Earn| J[SOVA Tokens]
+            J -->|Stake + Hold sovaBTCYield| I
+            I -->|Earn| K[sovaBTC Rewards]
+        end
+    end
+    
+    style B fill:#e1f5fe
+    style I fill:#f3e5f5
+    style F fill:#fff3e0
 ```
 
 ## 📋 Core Contracts
@@ -240,6 +254,172 @@ Deployment information is automatically saved to `deployments/yield-system-{chai
     "yieldStaking": "0x..."
   }
 }
+```
+
+## 🔄 System Flow Diagrams
+
+### User Journey: Deposit to Staking Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant WBTC as WBTC Token
+    participant Vault as SovaBTCYieldVault
+    participant Staking as SovaBTCYieldStaking
+    participant SOVA as SOVA Token
+    participant Rewards as Reward System
+
+    Note over User,Rewards: Complete User Journey from Deposit to Rewards
+
+    User->>WBTC: approve(vault, amount)
+    User->>Vault: depositAsset(WBTC, amount, user)
+    Vault->>WBTC: transferFrom(user, vault, amount)
+    Vault->>Vault: _normalizeAmount(8 decimals)
+    Vault->>User: mint(sovaBTCYield shares)
+
+    Note over User,Staking: Level 1: Stake Vault Tokens for SOVA
+
+    User->>Vault: approve(staking, shares)
+    User->>Staking: stakeVaultTokens(shares, lockPeriod)
+    Staking->>Vault: transferFrom(user, staking, shares)
+    Staking->>User: Start earning SOVA rewards
+
+    Note over User,Rewards: Level 2: Stake SOVA for sovaBTC Rewards
+
+    User->>SOVA: approve(staking, sovaAmount)
+    User->>Staking: stakeSova(sovaAmount, lockPeriod)
+    Staking->>SOVA: transferFrom(user, staking, sovaAmount)
+    Staking->>User: Start earning sovaBTC rewards
+
+    User->>Staking: claimRewards()
+    Staking->>Rewards: Calculate pending rewards
+    Staking->>User: Transfer SOVA + sovaBTC rewards
+```
+
+### Admin Yield Management Flow
+
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant Vault as SovaBTCYieldVault
+    participant Strategy as Investment Strategy
+    participant WBTC as WBTC Pool
+    participant sovaBTC as sovaBTC Rewards
+
+    Note over Admin,sovaBTC: Admin Manages Assets for Yield Generation
+
+    Admin->>Vault: adminWithdraw(WBTC, amount, strategy)
+    Vault->>WBTC: transfer(strategy, amount)
+    Vault->>Vault: assetsUnderManagement += amount
+
+    Note over Strategy: Investment Strategy Generates Yield
+
+    Strategy->>Strategy: Manage investments
+    Strategy->>sovaBTC: Generate yield returns
+
+    Admin->>sovaBTC: approve(vault, yieldAmount)
+    Admin->>Vault: addYield(yieldAmount)
+    Vault->>sovaBTC: transferFrom(admin, vault, yieldAmount)
+    Vault->>Vault: Update exchangeRate
+    
+    Note over Vault: Users can now redeem at higher rate
+```
+
+### Cross-Chain Bridging Flow
+
+```mermaid
+graph LR
+    subgraph "Ethereum/Base"
+        A[User] -->|Bridge Request| B[BridgedSovaBTC]
+        B -->|Burn Tokens| C[Token Supply]
+        B -->|Send Message| D[Hyperlane Mailbox]
+    end
+    
+    subgraph "Hyperlane Network"
+        D -->|Cross-Chain Message| E[Message Relay]
+        E -->|Route Message| F[Sova Mailbox]
+    end
+    
+    subgraph "Sova Network"
+        F -->|Handle Message| G[Native sovaBTC]
+        G -->|Mint Tokens| H[User Wallet]
+    end
+    
+    style B fill:#ffecb3
+    style G fill:#c8e6c9
+    style E fill:#e1f5fe
+```
+
+### Multi-Network Deployment Architecture
+
+```mermaid
+graph TB
+    subgraph "Ethereum Mainnet"
+        E1[WBTC] --> E2[SovaBTCYieldVault]
+        E2 --> E3[sovaBTCYield]
+        E3 --> E4[SovaBTCYieldStaking]
+        E4 --> E5[BridgedSovaBTC Rewards]
+        E6[BridgedSovaBTC] --> E7[Hyperlane Bridge]
+    end
+    
+    subgraph "Base Network"
+        B1[cbBTC] --> B2[SovaBTCYieldVault]
+        B2 --> B3[sovaBTCYield]
+        B3 --> B4[SovaBTCYieldStaking]
+        B4 --> B5[BridgedSovaBTC Rewards]
+        B6[BridgedSovaBTC] --> B7[Hyperlane Bridge]
+    end
+    
+    subgraph "Sova Network"
+        S1[Native sovaBTC] --> S2[SovaBTCYieldVault]
+        S2 --> S3[sovaBTCYield]
+        S3 --> S4[SovaBTCYieldStaking]
+        S4 --> S5[Native sovaBTC Rewards]
+        S6[Native sovaBTC] --> S7[Hyperlane Bridge]
+    end
+    
+    E7 -.->|Cross-Chain| S7
+    B7 -.->|Cross-Chain| S7
+    S7 -.->|Cross-Chain| E7
+    S7 -.->|Cross-Chain| B7
+    
+    style E2 fill:#e3f2fd
+    style B2 fill:#e8f5e8
+    style S2 fill:#fff3e0
+```
+
+### Dual Token Staking Reward Mechanics
+
+```mermaid
+graph TD
+    A[User Deposits BTC Variant] --> B[Receives sovaBTCYield Tokens]
+    
+    B --> C{Staking Decision}
+    
+    C -->|Level 1 Only| D[Stake sovaBTCYield]
+    C -->|Level 1 + 2| E[Stake sovaBTCYield + SOVA]
+    
+    D --> F[Earn SOVA Tokens]
+    F --> G[Base Reward Rate]
+    
+    E --> H[Earn SOVA + sovaBTC]
+    H --> I[Enhanced Reward Rate]
+    I --> J[Dual Staking Bonus: +20%]
+    
+    subgraph "Lock Period Multipliers"
+        K[No Lock: 1.0x]
+        L[30 Days: 1.1x]
+        M[90 Days: 1.25x]
+        N[180 Days: 1.5x]
+        O[365 Days: 2.0x]
+    end
+    
+    G --> K
+    I --> K
+    
+    style B fill:#e1f5fe
+    style H fill:#e8f5e8
+    style J fill:#fff3e0
 ```
 
 ## 📊 Usage Examples
