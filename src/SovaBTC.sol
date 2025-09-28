@@ -209,8 +209,9 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
             revert PendingTransactionExists();
         }
 
-        _pendingUserWithdrawRequests[msg.sender] =
-            UserWithdrawRequest({amount: amount, btcGasLimit: btcGasLimit, operatorFee: operatorFee, destination: dest});
+        _pendingUserWithdrawRequests[msg.sender] = UserWithdrawRequest({
+            amount: amount, btcGasLimit: btcGasLimit, operatorFee: operatorFee, destination: dest
+        });
 
         emit WithdrawSignaled(msg.sender, amount, btcGasLimit, operatorFee, dest);
     }
