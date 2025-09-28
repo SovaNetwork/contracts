@@ -189,10 +189,6 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
             revert ZeroGasLimit();
         }
 
-        if (btcGasLimit > amount) {
-            revert GasLimitTooHigh();
-        }
-
         uint256 totalRequired = amount + btcGasLimit + operatorFee;
         if (balanceOf(msg.sender) < totalRequired) {
             revert InsufficientAmount();
