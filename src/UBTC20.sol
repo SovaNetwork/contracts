@@ -27,13 +27,17 @@ abstract contract UBTC20 is ERC20 {
 
     /// @notice Modifier to prevent transfers when user has a pending deposit or withdrawal.
     modifier noPendingTransactions(address user) {
-        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
-            revert PendingTransactionExists();
-        }
+        _noPendingTransactions(user);
         _;
     }
 
-    /* ------------------------------ GETTERS ------------------------------ */
+    function _noPendingTransactions(address user) internal view {
+        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
+            revert PendingTransactionExists();
+        }
+    }
+
+    /* ------------------------------- VIEW ------------------------------- */
 
     function pendingDepositAmountOf(address user) public view returns (uint256) {
         return _pendingDeposits[user].amount;
@@ -67,7 +71,7 @@ abstract contract UBTC20 is ERC20 {
         return _pendingUserWithdrawRequests[user].destination;
     }
 
-    /* ----------------------------- OVERRIDES ------------------------------ */
+    /* ----------------------------- ERC20 OVERRIDES ------------------------------ */
 
     /// @notice Override transfer to prevent transfers during pending states
     function transfer(address to, uint256 amount) public override noPendingTransactions(msg.sender) returns (bool) {
@@ -84,7 +88,7 @@ abstract contract UBTC20 is ERC20 {
         return super.transferFrom(from, to, amount);
     }
 
-    /* ------------------------------- INTERNAL ------------------------------- */
+    /* -------------------------------- INTERNAL -------------------------------- */
 
     /**
      * @notice Deferred accounting mechanism. The 'pending' mechanics are enforced

@@ -17,6 +17,10 @@ import "./UBTC20.sol";
  * @author Sova Labs
  *
  * Bitcoin meets ERC20. Bitcoin meets composability.
+ *
+ * @notice Uses sol compiler 0.8.15 for compatibility with Optimism Bedrock contracts
+ *         that Sova Network used for chain artifacts creation.
+ *         Ref: https://github.com/SovaNetwork/optimism/tree/op-deployer-v0.3.3-mainnet
  */
 contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
@@ -68,27 +72,6 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     event WithdrawSignerAdded(address indexed signer);
     event WithdrawSignerRemoved(address indexed signer);
 
-    modifier whenNotPaused() {
-        if (_paused) {
-            revert ContractPaused();
-        }
-        _;
-    }
-
-    modifier whenPaused() {
-        if (!_paused) {
-            revert ContractNotPaused();
-        }
-        _;
-    }
-
-    modifier onlyWithdrawSigner() {
-        if (!withdrawSigners[msg.sender]) {
-            revert UnauthorizedWithdrawSigner();
-        }
-        _;
-    }
-
     constructor() Ownable() {
         _initializeOwner(msg.sender);
 
@@ -100,6 +83,43 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         withdrawSigners[0xd94FcA65c01b7052469A653dB466cB91d8782125] = true;
         emit WithdrawSignerAdded(0xd94FcA65c01b7052469A653dB466cB91d8782125);
     }
+
+    /// Modifiers
+
+    modifier whenNotPaused() {
+        _whenNotPaused();
+        _;
+    }
+
+    function _whenNotPaused() internal view {
+        if (_paused) {
+            revert ContractPaused();
+        }
+    }
+
+    modifier whenPaused() {
+        _whenPaused();
+        _;
+    }
+
+    function _whenPaused() internal view {
+        if (!_paused) {
+            revert ContractNotPaused();
+        }
+    }
+
+    modifier onlyWithdrawSigner() {
+        _onlyWithdrawSigner();
+        _;
+    }
+
+    function _onlyWithdrawSigner() internal view {
+        if (!withdrawSigners[msg.sender]) {
+            revert UnauthorizedWithdrawSigner();
+        }
+    }
+
+    /// External
 
     function isPaused() external view returns (bool) {
         return _paused;
@@ -216,21 +236,18 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
      * @param user        The address of the user who signaled the withdrawal
      * @param signedTx    The signed Bitcoin transaction to broadcast
      */
-    function withdraw(address user, bytes calldata signedTx) external whenNotPaused onlyWithdrawSigner {
+    function withdraw(address user, bytes calldata signedTx, uint64 amount, uint64 btcGasLimit, uint64 operatorFee)
+        external
+        whenNotPaused
+        onlyWithdrawSigner
+    {
         // Check if user has a pending withdrawal already
         if (_pendingWithdrawals[user].amount > 0) revert PendingWithdrawalExists();
 
         // decode signed tx so that we know it is a valid bitcoin tx
         SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
 
-        UserWithdrawRequest memory request = _pendingUserWithdrawRequests[user];
-
-        // Check that a withdraw request exists
-        if (request.amount == 0) {
-            revert PendingUserWithdrawalRequestExists();
-        }
-
-        uint256 totalRequired = request.amount + uint256(request.btcGasLimit) + uint256(request.operatorFee);
+        uint256 totalRequired = amount + uint256(btcGasLimit) + uint256(operatorFee);
 
         if (balanceOf(user) < totalRequired) revert InsufficientAmount();
 
@@ -245,6 +262,8 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
 
         emit Withdraw(user, btcTx.txid);
     }
+
+    /// Admin
 
     /**
      * @notice Admin function to burn tokens from a specific wallet
