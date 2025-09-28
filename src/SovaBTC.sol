@@ -34,6 +34,9 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /// @notice Mapping to track Bitcoin txids that have been used for deposits
     mapping(bytes32 => bool) private usedTxids;
 
+    /// @notice Mapping to track authorized withdraw signers
+    mapping(address => bool) public withdrawSigners;
+
     error InsufficientDeposit();
     error InsufficientInput();
     error InsufficientAmount();
@@ -53,14 +56,22 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     error TransactionAlreadyUsed();
     error PendingDepositExists();
     error PendingWithdrawalExists();
+    error UnauthorizedWithdrawSigner();
+    error SignerAlreadyExists();
+    error SignerDoesNotExist();
 
     event Deposit(address caller, bytes32 txid, uint256 amount);
-    event Withdraw(address caller, bytes32 txid, uint256 amount);
+    event WithdrawSignaled(
+        address indexed user, uint256 amount, uint64 btcGasBid, uint64 operatorFee, string destination
+    );
+    event Withdraw(address user, bytes32 txid);
     event MinDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxGasLimitAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event ContractPausedByOwner(address indexed account);
     event ContractUnpausedByOwner(address indexed account);
+    event WithdrawSignerAdded(address indexed signer);
+    event WithdrawSignerRemoved(address indexed signer);
 
     modifier whenNotPaused() {
         if (_paused) {
@@ -76,6 +87,13 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         _;
     }
 
+    modifier onlyWithdrawSigner() {
+        if (!withdrawSigners[msg.sender]) {
+            revert UnauthorizedWithdrawSigner();
+        }
+        _;
+    }
+
     constructor() Ownable() {
         _initializeOwner(msg.sender);
 
@@ -83,6 +101,10 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         maxDepositAmount = 100_000_000_000; // (starts at 1000 BTC = 100 billion sats)
         maxGasLimitAmount = 50_000_000; // (starts at 0.5 BTC = 50,000,000 sats)
         _paused = false;
+
+        // Set initial withdrawal signer
+        withdrawSigners[0xd94FcA65c01b7052469A653dB466cB91d8782125] = true;
+        emit WithdrawSignerAdded(0xd94FcA65c01b7052469A653dB466cB91d8782125);
     }
 
     function isPaused() external view returns (bool) {
@@ -151,26 +173,11 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         emit Deposit(msg.sender, btcTx.txid, amount);
     }
 
-    /**
-     * @notice Withdraws Bitcoin by burning uBTC tokens. Then triggering the signing, and broadcasting
-     *         of a Bitcoin transaction.
-     *
-     * @dev For obvious reasons the UBTC_SIGN_TX_BYTES precompile is a sensitive endpoint. It is enforced
-     *      in the execution client that only this contract can all that precompile functionality.
-     * @dev The hope is that in the future more SIGN_TX_BYTES endpoints can be added to the network
-     *      and the backends are controlled by 3rd party signer entities.
-     *
-     * @param amount            The amount of satoshis to withdraw
-     * @param btcGasLimit       Specified gas limit for the Bitcoin transaction (in satoshis)
-     * @param btcBlockHeight    The current BTC block height. This is used to source spendable Bitcoin UTXOs
-     * @param dest              The destination Bitcoin address (bech32)
-     */
-    function withdraw(uint64 amount, uint64 btcGasLimit, uint64 btcBlockHeight, string calldata dest)
+    function signalWithdraw(uint64 amount, uint64 btcGasLimit, uint64 operatorFee, string calldata dest)
         external
-        nonReentrant
         whenNotPaused
+        noPendingTransactions(msg.sender)
     {
-        // Input validation
         if (amount == 0) {
             revert ZeroAmount();
         }
@@ -188,15 +195,45 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
             revert InsufficientAmount();
         }
 
-        if (_pendingWithdrawals[msg.sender].amount > 0) revert PendingWithdrawalExists();
+        if (bytes(dest).length == 0) {
+            revert EmptyDestination();
+        }
+
+        // check if user already has a pending withdrawal
+        if (_pendingWithdrawals[msg.sender].amount > 0) {
+            revert PendingWithdrawalExists();
+        }
+
+        // check if user already has a pending withdraw request
+        if (_pendingUserWithdrawRequests[msg.sender].amount > 0) {
+            revert PendingTransactionExists();
+        }
+
+        _pendingUserWithdrawRequests[msg.sender] =
+            UserWithdrawRequest({amount: amount, btcGasLimit: btcGasLimit, operatorFee: operatorFee, destination: dest});
+
+        emit WithdrawSignaled(msg.sender, amount, btcGasLimit, operatorFee, dest);
+    }
+
+    function withdraw(address user, bytes calldata signedTx) external onlyWithdrawSigner whenNotPaused {
+        // decode signed tx so that we can validate it against the user request
+        SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
+
+        // TODO ensure the signed tx fulfills the user request
+
+        UserWithdrawRequest memory request = _pendingUserWithdrawRequests[user];
+
+        uint256 totalRequired = request.amount + uint256(request.btcGasLimit);
+
+        if (_pendingWithdrawals[user].amount > 0) revert PendingWithdrawalExists();
 
         // Track pending withdrawal
-        _setPendingWithdrawal(msg.sender, totalRequired);
+        _setPendingWithdrawal(user, totalRequired);
 
-        // Call Bitcoin precompile to construct the BTC tx and lock the slot
-        bytes32 btcTxid = SovaBitcoin.vaultSpend(msg.sender, amount, btcGasLimit, btcBlockHeight, dest);
+        // Broadcast the signed BTC tx
+        SovaBitcoin.broadcastBitcoinTx(signedTx);
 
-        emit Withdraw(msg.sender, btcTxid, amount);
+        emit Withdraw(user, btcTx.txid);
     }
 
     /**
@@ -273,5 +310,33 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         _paused = false;
 
         emit ContractUnpausedByOwner(msg.sender);
+    }
+
+    /**
+     * @notice Admin function to add a withdraw signer
+     *
+     * @param signer The address to add as a withdraw signer
+     */
+    function addWithdrawSigner(address signer) external onlyOwner {
+        if (withdrawSigners[signer]) {
+            revert SignerAlreadyExists();
+        }
+
+        withdrawSigners[signer] = true;
+        emit WithdrawSignerAdded(signer);
+    }
+
+    /**
+     * @notice Admin function to remove a withdraw signer
+     *
+     * @param signer The address to remove as a withdraw signer
+     */
+    function removeWithdrawSigner(address signer) external onlyOwner {
+        if (!withdrawSigners[signer]) {
+            revert SignerDoesNotExist();
+        }
+
+        withdrawSigners[signer] = false;
+        emit WithdrawSignerRemoved(signer);
     }
 }

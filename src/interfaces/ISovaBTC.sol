@@ -4,7 +4,8 @@ pragma solidity 0.8.15;
 interface ISovaBTC {
     /// @notice Bitcoin-specific functions
     function depositBTC(uint64 amount, bytes calldata signedTx, uint8 voutIndex) external;
-    function withdraw(uint64 amount, uint64 btcGasLimit, uint64 btcBlockHeight, string calldata dest) external;
+    function signalWithdraw(uint64 amount, uint64 btcGasLimit, uint64 operatorFee, string calldata dest) external;
+    function withdraw(address user, bytes calldata signedTx) external;
     function isTransactionUsed(bytes32 txid) external view returns (bool);
     function isPaused() external view returns (bool);
 
@@ -15,4 +16,6 @@ interface ISovaBTC {
     function setMaxGasLimitAmount(uint64 _maxGasLimitAmount) external;
     function pause() external;
     function unpause() external;
+    function addWithdrawSigner(address signer) external;
+    function removeWithdrawSigner(address signer) external;
 }

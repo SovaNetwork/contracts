@@ -9,8 +9,16 @@ abstract contract UBTC20 is ERC20 {
         uint256 timestamp;
     }
 
+    struct UserWithdrawRequest {
+        uint256 amount;
+        uint64 btcGasLimit;
+        uint64 operatorFee;
+        string destination;
+    }
+
     mapping(address => Pending) internal _pendingDeposits;
     mapping(address => Pending) internal _pendingWithdrawals;
+    mapping(address => UserWithdrawRequest) internal _pendingUserWithdrawRequests;
 
     error PendingTransactionExists();
 
@@ -18,7 +26,10 @@ abstract contract UBTC20 is ERC20 {
 
     /// @notice Modifier to prevent transfers when user has a pending deposit or withdrawal.
     modifier noPendingTransactions(address user) {
-        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
+        if (
+            _pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0
+                || _pendingUserWithdrawRequests[user].amount > 0
+        ) {
             revert PendingTransactionExists();
         }
         _;
