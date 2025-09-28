@@ -63,7 +63,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     event WithdrawSignaled(
         address indexed user, uint256 amount, uint64 btcGasBid, uint64 operatorFee, string destination
     );
-    event Withdraw(address user, bytes32 txid);
+    event Withdraw(address user, bytes32 txid, uint256 totalAmount);
     event MinDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxDepositAmountUpdated(uint64 oldAmount, uint64 newAmount);
     event MaxGasLimitAmountUpdated(uint64 oldAmount, uint64 newAmount);
@@ -247,12 +247,12 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         // decode signed tx so that we know it is a valid bitcoin tx
         SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
 
-        uint256 totalRequired = amount + uint256(btcGasLimit) + uint256(operatorFee);
+        uint256 totalAmount = amount + uint256(btcGasLimit) + uint256(operatorFee);
 
-        if (balanceOf(user) < totalRequired) revert InsufficientAmount();
+        if (balanceOf(user) < totalAmount) revert InsufficientAmount();
 
         // Track pending withdrawal
-        _setPendingWithdrawal(user, totalRequired);
+        _setPendingWithdrawal(user, totalAmount);
 
         // Clear the withdraw request
         delete _pendingUserWithdrawRequests[user];
@@ -260,7 +260,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         // Broadcast the signed BTC tx
         SovaBitcoin.broadcastBitcoinTx(signedTx);
 
-        emit Withdraw(user, btcTx.txid);
+        emit Withdraw(user, btcTx.txid, totalAmount);
     }
 
     /// Admin
