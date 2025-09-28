@@ -22,9 +22,6 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /// @notice Minimum deposit amount in satoshis
     uint64 public minDepositAmount;
 
-    /// @notice Maximum deposit amount in satoshis
-    uint64 public maxDepositAmount;
-
     /// @notice Pause state of the contract
     bool private _paused;
 
@@ -94,9 +91,8 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     constructor() Ownable() {
         _initializeOwner(msg.sender);
 
-        minDepositAmount = 10_000; // (starts at 10,000 sats)
-        maxDepositAmount = 100_000_000_000; // (starts at 1000 BTC = 100 billion sats)
-        maxGasLimitAmount = 50_000_000; // (starts at 0.5 BTC = 50,000,000 sats)
+        minDepositAmount = 10_000; // 10,000 sat = 0.0001 BTC
+
         _paused = false;
 
         // Set initial withdrawal signer
@@ -144,9 +140,6 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         // Enforce deposit amount limits
         if (amount < minDepositAmount) {
             revert DepositBelowMinimum();
-        }
-        if (amount > maxDepositAmount) {
-            revert DepositAboveMaximum();
         }
 
         // Validate the BTC transaction and extract metadata
@@ -271,30 +264,10 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
      * @param _minAmount New minimum deposit amount in satoshis
      */
     function setMinDepositAmount(uint64 _minAmount) external onlyOwner {
-        if (_minAmount >= maxDepositAmount) {
-            revert InvalidDepositLimits();
-        }
-
         uint64 oldAmount = minDepositAmount;
         minDepositAmount = _minAmount;
 
         emit MinDepositAmountUpdated(oldAmount, _minAmount);
-    }
-
-    /**
-     * @notice Admin function to set the maximum deposit amount
-     *
-     * @param _maxAmount New maximum deposit amount in satoshis
-     */
-    function setMaxDepositAmount(uint64 _maxAmount) external onlyOwner {
-        if (_maxAmount <= minDepositAmount) {
-            revert InvalidDepositLimits();
-        }
-
-        uint64 oldAmount = maxDepositAmount;
-        maxDepositAmount = _maxAmount;
-
-        emit MaxDepositAmountUpdated(oldAmount, _maxAmount);
     }
 
     /**
