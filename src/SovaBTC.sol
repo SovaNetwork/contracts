@@ -50,6 +50,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     error TransactionAlreadyUsed();
     error PendingDepositExists();
     error PendingWithdrawalExists();
+    error PendingUserWithdrawalRequestExists();
     error UnauthorizedWithdrawSigner();
     error SignerAlreadyExists();
     error SignerDoesNotExist();
@@ -226,7 +227,7 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
 
         // Check that a withdraw request exists
         if (request.amount == 0) {
-            revert PendingTransactionExists();
+            revert PendingUserWithdrawalRequestExists();
         }
 
         uint256 totalRequired = request.amount + uint256(request.btcGasLimit) + uint256(request.operatorFee);
