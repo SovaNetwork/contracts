@@ -25,9 +25,6 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
     /// @notice Maximum deposit amount in satoshis
     uint64 public maxDepositAmount;
 
-    /// @notice Maximum gas limit amount in satoshis
-    uint64 public maxGasLimitAmount;
-
     /// @notice Pause state of the contract
     bool private _paused;
 
@@ -173,11 +170,24 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         emit Deposit(msg.sender, btcTx.txid, amount);
     }
 
+    /**
+     * @notice Signals a withdrawal request by saving the withdrawal request.
+     *
+     * @dev The user must have enough sovaBTC to cover the amount + gas limit + operatorFee fee.
+     *
+     * @param amount        The amount of satoshis to withdraw (excluding gas)
+     * @param btcGasLimit  The gas limit bid for the Bitcoin transaction in satoshis
+     * @param operatorFee  The fee offered to the operator for processing the withdrawal in satoshis
+     * @param dest         The Bitcoin address to send the withdrawn BTC to
+     */
     function signalWithdraw(uint64 amount, uint64 btcGasLimit, uint64 operatorFee, string calldata dest)
         external
         whenNotPaused
-        noPendingTransactions(msg.sender)
     {
+        if (bytes(dest).length == 0) {
+            revert EmptyDestination();
+        }
+
         if (amount == 0) {
             revert ZeroAmount();
         }
@@ -186,17 +196,13 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
             revert ZeroGasLimit();
         }
 
-        if (btcGasLimit > maxGasLimitAmount) {
+        if (btcGasLimit > amount) {
             revert GasLimitTooHigh();
         }
 
-        uint256 totalRequired = amount + btcGasLimit;
+        uint256 totalRequired = amount + btcGasLimit + operatorFee;
         if (balanceOf(msg.sender) < totalRequired) {
             revert InsufficientAmount();
-        }
-
-        if (bytes(dest).length == 0) {
-            revert EmptyDestination();
         }
 
         // check if user already has a pending withdrawal
@@ -204,19 +210,26 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
             revert PendingWithdrawalExists();
         }
 
-        // check if user already has a pending withdraw request
-        if (_pendingUserWithdrawRequests[msg.sender].amount > 0) {
-            revert PendingTransactionExists();
-        }
-
+        // Store the withdraw request
         _pendingUserWithdrawRequests[msg.sender] =
             UserWithdrawRequest({amount: amount, btcGasLimit: btcGasLimit, operatorFee: operatorFee, destination: dest});
 
         emit WithdrawSignaled(msg.sender, amount, btcGasLimit, operatorFee, dest);
     }
 
-    function withdraw(address user, bytes calldata signedTx) external onlyWithdrawSigner whenNotPaused {
-        // decode signed tx so that we can validate it against the user request
+    /**
+     * @notice Processes a withdrawal signal by broadcasting a signed Bitcoin transaction.
+     *
+     * @dev Only authorized withdraw signers can call this function.
+     *
+     * @param user        The address of the user who signaled the withdrawal
+     * @param signedTx    The signed Bitcoin transaction to broadcast
+     */
+    function withdraw(address user, bytes calldata signedTx) external whenNotPaused onlyWithdrawSigner {
+        // Check if user has a pending withdrawal already
+        if (_pendingWithdrawals[user].amount > 0) revert PendingWithdrawalExists();
+
+        // decode signed tx so that we know it is a valid bitcoin tx
         SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
 
         UserWithdrawRequest memory request = _pendingUserWithdrawRequests[user];
@@ -226,11 +239,9 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
             revert PendingTransactionExists();
         }
 
-        uint256 totalRequired = request.amount + uint256(request.btcGasLimit);
+        uint256 totalRequired = request.amount + uint256(request.btcGasLimit) + uint256(request.operatorFee);
 
         if (balanceOf(user) < totalRequired) revert InsufficientAmount();
-
-        if (_pendingWithdrawals[user].amount > 0) revert PendingWithdrawalExists();
 
         // Track pending withdrawal
         _setPendingWithdrawal(user, totalRequired);
@@ -284,22 +295,6 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         maxDepositAmount = _maxAmount;
 
         emit MaxDepositAmountUpdated(oldAmount, _maxAmount);
-    }
-
-    /**
-     * @notice Admin function to set the maximum gas limit amount
-     *
-     * @param _maxGasLimitAmount New maximum gas limit amount in satoshis
-     */
-    function setMaxGasLimitAmount(uint64 _maxGasLimitAmount) external onlyOwner {
-        if (_maxGasLimitAmount == 0) {
-            revert ZeroAmount();
-        }
-
-        uint64 oldAmount = maxGasLimitAmount;
-        maxGasLimitAmount = _maxGasLimitAmount;
-
-        emit MaxGasLimitAmountUpdated(oldAmount, _maxGasLimitAmount);
     }
 
     /**

@@ -18,6 +18,7 @@ abstract contract UBTC20 is ERC20 {
 
     mapping(address => Pending) internal _pendingDeposits;
     mapping(address => Pending) internal _pendingWithdrawals;
+
     mapping(address => UserWithdrawRequest) internal _pendingUserWithdrawRequests;
 
     error PendingTransactionExists();
@@ -26,10 +27,7 @@ abstract contract UBTC20 is ERC20 {
 
     /// @notice Modifier to prevent transfers when user has a pending deposit or withdrawal.
     modifier noPendingTransactions(address user) {
-        if (
-            _pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0
-                || _pendingUserWithdrawRequests[user].amount > 0
-        ) {
+        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
             revert PendingTransactionExists();
         }
         _;
@@ -51,6 +49,22 @@ abstract contract UBTC20 is ERC20 {
 
     function pendingWithdrawalTimestampOf(address user) public view returns (uint256) {
         return _pendingWithdrawals[user].timestamp;
+    }
+
+    function pendingUserWithdrawRequestAmountOf(address user) public view returns (uint256) {
+        return _pendingUserWithdrawRequests[user].amount;
+    }
+
+    function pendingUserWithdrawRequestBtcGasLimitOf(address user) public view returns (uint64) {
+        return _pendingUserWithdrawRequests[user].btcGasLimit;
+    }
+
+    function pendingUserWithdrawRequestOperatorFeeOf(address user) public view returns (uint64) {
+        return _pendingUserWithdrawRequests[user].operatorFee;
+    }
+
+    function pendingUserWithdrawRequestDestinationOf(address user) public view returns (string memory) {
+        return _pendingUserWithdrawRequests[user].destination;
     }
 
     /* ----------------------------- OVERRIDES ------------------------------ */
