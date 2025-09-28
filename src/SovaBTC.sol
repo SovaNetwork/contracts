@@ -220,16 +220,24 @@ contract SovaBTC is ISovaBTC, UBTC20, Ownable, ReentrancyGuard {
         // decode signed tx so that we can validate it against the user request
         SovaBitcoin.BitcoinTx memory btcTx = SovaBitcoin.decodeBitcoinTx(signedTx);
 
-        // TODO ensure the signed tx fulfills the user request
-
         UserWithdrawRequest memory request = _pendingUserWithdrawRequests[user];
 
+        // Check that a withdraw request exists
+        if (request.amount == 0) {
+            revert PendingTransactionExists();
+        }
+
         uint256 totalRequired = request.amount + uint256(request.btcGasLimit);
+
+        if (balanceOf(user) < totalRequired) revert InsufficientAmount();
 
         if (_pendingWithdrawals[user].amount > 0) revert PendingWithdrawalExists();
 
         // Track pending withdrawal
         _setPendingWithdrawal(user, totalRequired);
+
+        // Clear the withdraw request
+        delete _pendingUserWithdrawRequests[user];
 
         // Broadcast the signed BTC tx
         SovaBitcoin.broadcastBitcoinTx(signedTx);
