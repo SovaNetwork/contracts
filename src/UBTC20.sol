@@ -9,8 +9,17 @@ abstract contract UBTC20 is ERC20 {
         uint256 timestamp;
     }
 
+    struct UserWithdrawRequest {
+        uint256 amount;
+        uint64 btcGasLimit;
+        uint64 operatorFee;
+        string destination;
+    }
+
     mapping(address => Pending) internal _pendingDeposits;
     mapping(address => Pending) internal _pendingWithdrawals;
+
+    mapping(address => UserWithdrawRequest) internal _pendingUserWithdrawRequests;
 
     error PendingTransactionExists();
 
@@ -18,13 +27,17 @@ abstract contract UBTC20 is ERC20 {
 
     /// @notice Modifier to prevent transfers when user has a pending deposit or withdrawal.
     modifier noPendingTransactions(address user) {
-        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
-            revert PendingTransactionExists();
-        }
+        _noPendingTransactions(user);
         _;
     }
 
-    /* ------------------------------ GETTERS ------------------------------ */
+    function _noPendingTransactions(address user) internal view {
+        if (_pendingDeposits[user].amount > 0 || _pendingWithdrawals[user].amount > 0) {
+            revert PendingTransactionExists();
+        }
+    }
+
+    /* ------------------------------- VIEW ------------------------------- */
 
     function pendingDepositAmountOf(address user) public view returns (uint256) {
         return _pendingDeposits[user].amount;
@@ -42,7 +55,23 @@ abstract contract UBTC20 is ERC20 {
         return _pendingWithdrawals[user].timestamp;
     }
 
-    /* ----------------------------- OVERRIDES ------------------------------ */
+    function pendingUserWithdrawRequestAmountOf(address user) public view returns (uint256) {
+        return _pendingUserWithdrawRequests[user].amount;
+    }
+
+    function pendingUserWithdrawRequestBtcGasLimitOf(address user) public view returns (uint64) {
+        return _pendingUserWithdrawRequests[user].btcGasLimit;
+    }
+
+    function pendingUserWithdrawRequestOperatorFeeOf(address user) public view returns (uint64) {
+        return _pendingUserWithdrawRequests[user].operatorFee;
+    }
+
+    function pendingUserWithdrawRequestDestinationOf(address user) public view returns (string memory) {
+        return _pendingUserWithdrawRequests[user].destination;
+    }
+
+    /* ----------------------------- ERC20 OVERRIDES ------------------------------ */
 
     /// @notice Override transfer to prevent transfers during pending states
     function transfer(address to, uint256 amount) public override noPendingTransactions(msg.sender) returns (bool) {
@@ -59,7 +88,7 @@ abstract contract UBTC20 is ERC20 {
         return super.transferFrom(from, to, amount);
     }
 
-    /* ------------------------------- INTERNAL ------------------------------- */
+    /* -------------------------------- INTERNAL -------------------------------- */
 
     /**
      * @notice Deferred accounting mechanism. The 'pending' mechanics are enforced
