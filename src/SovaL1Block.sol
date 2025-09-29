@@ -13,7 +13,7 @@ import "./interfaces/ISovaL1Block.sol";
  * @author Sova Labs
  *
  * SovaL1Block provides information about the state of the Bitcoin chain.
- * Values stored in this contract are used by validators to verify block execution.
+ * Values stored in this contract are used by validators to verify BTC block execution.
  * The primary values used here are the Bitcoin block height and trailing block hash.
  */
 contract SovaL1Block is ISovaL1Block, Ownable {
@@ -21,14 +21,12 @@ contract SovaL1Block is ISovaL1Block, Ownable {
     bytes32 private blockHashSixBlocksBack;
     uint256 private lastUpdatedBlock;
 
-    address private constant SYSTEM_ACCOUNT_ADDRESS = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
-
     constructor() Ownable() {
         _initializeOwner(msg.sender);
     }
 
     function version() external pure virtual returns (string memory) {
-        return "0.1.0-beta.1";
+        return "0.1.0-beta.2";
     }
 
     function setBitcoinBlockData(uint64 _blockHeight, bytes32 _blockHash) external {

@@ -12,7 +12,6 @@ library SovaBitcoin {
     address public constant BROADCAST_TRANSACTION_PRECOMPILE_ADDRESS = address(0x999);
     address public constant DECODE_TRANSACTION_PRECOMPILE_ADDRESS = address(0x998);
     address public constant CONVERT_ADDRESS_PRECOMPILE_ADDRESS = address(0x997);
-    address public constant VAULT_SPEND_PRECOMPILE_ADDRESS = address(0x996);
 
     /// @notice Bitcoin context contract address
     address public constant SOVA_L1_BLOCK_ADDRESS = 0x2100000000000000000000000000000000000015;
@@ -46,9 +45,9 @@ library SovaBitcoin {
     error InsufficientInput();
     error InvalidLocktime();
 
-    /// @custom:semver 0.1.0-beta.1
+    /// @custom:semver 0.1.0-beta.2
     function version() public pure returns (string memory) {
-        return "0.1.0-beta.1";
+        return "0.1.0-beta.2";
     }
 
     /**
